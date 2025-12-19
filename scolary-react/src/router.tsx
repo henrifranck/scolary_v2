@@ -2,6 +2,7 @@ import { Outlet, createRoute, createRouter, redirect } from '@tanstack/react-rou
 import { DashboardPage } from './pages/dashboard/dashboard-page';
 import { NotesPage } from './pages/user/notes/notes-page';
 import { ReinscriptionPage } from './pages/user/reinscription/reinscription-page';
+import { ReinscriptionTrashPage } from './pages/user/reinscription/reinscription-trash-page';
 import { InscriptionPage } from './pages/user/inscription/inscription-page';
 import { DossierSelectionPage } from './pages/user/dossier-selection/dossier-selection-page';
 import { ConcoursPage } from './pages/user/concours/concours-page';
@@ -58,6 +59,12 @@ const reinscriptionRoute = createRoute({
   getParentRoute: () => userRoute,
   path: 're-inscription',
   component: ReinscriptionPage
+});
+
+const reinscriptionTrashRoute = createRoute({
+  getParentRoute: () => userRoute,
+  path: 're-inscription-trash',
+  component: ReinscriptionTrashPage
 });
 
 const inscriptionRoute = createRoute({
@@ -186,6 +193,7 @@ const routeTree = rootRoute.addChildren([
   userRoute.addChildren([
     userNotesRoute,
     reinscriptionRoute,
+    reinscriptionTrashRoute,
     inscriptionRoute,
     dossierSelectionRoute,
     concoursRoute

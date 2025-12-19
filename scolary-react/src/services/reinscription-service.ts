@@ -21,6 +21,7 @@ export interface ReinscriptionStudent {
   status: ReinscriptionStatus;
   lastUpdate: string;
   photoUrl: string;
+  deletedAt?: string;
   annualRegister?: any;
 }
 
@@ -29,10 +30,13 @@ export interface ReinscriptionFilters {
   journeyId?: string;
   semester?: string;
   academicYearId?: string;
+  annualRegisterId?: string | number;
   id_mention?: string;
   id_journey?: string;
+  id_annual_register?: string | number;
   id_year?: string;
   search?: string;
+  deletedOnly?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -77,6 +81,7 @@ type ApiReinscriptionStudent = {
   photo_url?: string | null;
   photo?: string | null;
   picture?: string | null;
+  deleted_at?: string | null;
   updated_at?: string | null;
   last_update?: string | null;
 };
@@ -152,7 +157,8 @@ const normalizeStudent = (
     lastUpdate: student.last_update ?? student.updated_at ?? "",
     photoUrl: resolveAssetUrl(
       student.photo_url ?? student.photo ?? student.picture ?? ""
-    )
+    ),
+    deletedAt: student.deleted_at ?? ""
   };
 };
 
@@ -160,6 +166,7 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
   const where: Array<Record<string, unknown>> = [];
   const academicYear = filters.id_year ?? filters.academicYearId;
   const journeyId = filters.id_journey ?? filters.journeyId;
+  const annualRegisterId = filters.id_annual_register ?? filters.annualRegisterId;
   const semester = filters.semester;
 
   if (academicYear) {
@@ -185,11 +192,26 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
       value: semester
     });
   }
-  where.push({
-    key: "deleted_at",
-    operator: "isNull",
-    value: ""
-  });
+  if (annualRegisterId) {
+    where.push({
+      key: "annual_register.id",
+      operator: "==",
+      value: annualRegisterId
+    });
+  }
+  if (filters.deletedOnly) {
+    where.push({
+      key: "deleted_at",
+      operator: "isNotNull",
+      value: ""
+    });
+  } else {
+    where.push({
+      key: "deleted_at",
+      operator: "isNull",
+      value: ""
+    });
+  }
 
   const trimmedSearch = (filters.search ?? "").trim();
   if (trimmedSearch) {
@@ -203,6 +225,7 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
   return {
     limit: filters.limit,
     offset: filters.offset,
+    include_deleted: filters.deletedOnly ? true : false,
     where: JSON.stringify(where),
     relation: JSON.stringify([
       "annual_register",

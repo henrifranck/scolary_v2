@@ -26,6 +26,7 @@ def read_students(
         where_relation: str = "[]",
         base_column: str = "[]",
         where: str = "[]",
+        include_deleted: bool = False,
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
@@ -49,9 +50,20 @@ def read_students(
         wheres += ast.literal_eval(where)
 
     students = crud.student.get_multi_where_array(
-        db=db, relations=relations, skip=offset, limit=limit, where=wheres, base_columns=base_columns,
-        where_relation=wheres_relations)
-    count = crud.student.get_count_where_array(db=db, where=wheres)
+        db=db,
+        relations=relations,
+        skip=offset,
+        limit=limit,
+        where=wheres,
+        base_columns=base_columns,
+        where_relation=wheres_relations,
+        include_deleted=include_deleted
+    )
+    count = crud.student.get_count_where_array(
+        db=db,
+        where=wheres,
+        include_deleted=include_deleted
+    )
     response = schemas.ResponseStudent(**{'count': count, 'data': jsonable_encoder(students)})
     return response
 
@@ -231,3 +243,86 @@ def soft_delete_student(
         obj_in={'deleted_at': datetime.utcnow()},
     )
     return student
+
+
+@router.post('/{student_id}/restore', response_model=schemas.Student)
+def restore_student(
+        *,
+        db: Session = Depends(deps.get_db),
+        student_id: int,
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Restore a soft-deleted student.
+    """
+    student = crud.student.get(db=db, id=student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail='Student not found')
+    student = crud.student.update(
+        db=db,
+        db_obj=student,
+        obj_in={'deleted_at': None},
+    )
+    return student
+
+
+@router.delete('/{student_id}/hard_delete', response_model=schemas.Msg)
+def hard_delete_student(
+        *,
+        db: Session = Depends(deps.get_db),
+        student_id: int,
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Permanently delete a student and related records.
+    """
+    student = crud.student.get(db=db, id=student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail='Student not found')
+
+    annual_registers = crud.annual_register.get_multi_where_array(
+        db=db,
+        where=[{"key": "num_carte", "operator": "==", "value": student.num_carte}],
+        limit=1000
+    )
+    annual_ids = [annual.id for annual in annual_registers if annual.id]
+    if annual_ids:
+        register_semesters = crud.register_semester.get_multi_where_array(
+            db=db,
+            where=[{"key": "id_annual_register", "operator": "in", "value": annual_ids}],
+            limit=1000
+        )
+        register_ids = [semester.id for semester in register_semesters if semester.id]
+        if register_ids:
+            db.query(models.Note).filter(
+                models.Note.id_register_semester.in_(register_ids)
+            ).delete(synchronize_session=False)
+            db.query(models.ResultTeachingUnit).filter(
+                models.ResultTeachingUnit.id_register_semester.in_(register_ids)
+            ).delete(synchronize_session=False)
+            db.query(models.RegisterSemester).filter(
+                models.RegisterSemester.id.in_(register_ids)
+            ).delete(synchronize_session=False)
+
+        db.query(models.Payement).filter(
+            models.Payement.id_annual_register.in_(annual_ids)
+        ).delete(synchronize_session=False)
+        db.query(models.StudentSubscription).filter(
+            models.StudentSubscription.id_annual_register.in_(annual_ids)
+        ).delete(synchronize_session=False)
+        db.query(models.AnnualRegister).filter(
+            models.AnnualRegister.id.in_(annual_ids)
+        ).delete(synchronize_session=False)
+
+    if student.picture:
+        picture_path = Path(student.picture.lstrip("/"))
+        if picture_path.parts[:2] == ("files", "pictures"):
+            try:
+                (Path(".") / picture_path).unlink(missing_ok=True)
+            except TypeError:
+                if (Path(".") / picture_path).exists():
+                    (Path(".") / picture_path).unlink()
+
+    db.commit()
+    crud.student.remove(db=db, id=student_id)
+    return schemas.Msg(msg='Student deleted successfully')

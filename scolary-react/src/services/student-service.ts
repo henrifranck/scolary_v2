@@ -156,9 +156,35 @@ export const softDeleteStudent = async (
   });
 };
 
+export const restoreStudent = async (
+  studentId: string | number
+): Promise<StudentProfile> => {
+  if (!studentId) {
+    throw new Error("Missing student identifier for restore.");
+  }
+
+  return apiRequest<StudentProfile>(`/students/${studentId}/restore`, {
+    method: "POST"
+  });
+};
+
+export const hardDeleteStudent = async (
+  studentId: string | number
+): Promise<void> => {
+  if (!studentId) {
+    throw new Error("Missing student identifier for delete.");
+  }
+
+  await apiRequest<void>(`/students/${studentId}/hard_delete`, {
+    method: "DELETE"
+  });
+};
+
 export const studentService = {
   fetchStudentByCardNumber,
   updateStudentProfile,
   uploadStudentPicture,
-  softDeleteStudent
+  softDeleteStudent,
+  restoreStudent,
+  hardDeleteStudent
 };
