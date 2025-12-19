@@ -29,7 +29,6 @@ htmlcov/
 
 # Environments and secrets
 .env
-.env.*
 .envrc
 venv/
 .venv/
