@@ -386,6 +386,11 @@ export const ReinscriptionPage = () => {
   const [formState, setFormState] = useState<ReinscriptionFormState>(() =>
     createFormState({ semester: defaultSemester })
   );
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ReinscriptionStudent[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [editingSections, setEditingSections] = useState<
     Record<EditableSection, boolean>
   >(() => createEditingSectionsState());
@@ -428,6 +433,53 @@ export const ReinscriptionPage = () => {
     }
     window.localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
   }, [filters]);
+
+  const runHeaderSearch = useCallback(
+    async (query: string) => {
+      setSearchError(null);
+      setSearchLoading(true);
+      try {
+        const response = await fetchReinscriptionsWithMeta({
+          search: query,
+          limit: 50,
+          offset: 0
+        });
+        setSearchResults(response.data ?? []);
+      } catch (error) {
+        setSearchError(
+          error instanceof Error
+            ? error.message
+            : "Impossible de charger les étudiants."
+        );
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    },
+    [filters]
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const handleHeaderSearch = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent ? (event.detail as { scope?: string; query?: string }) : {};
+      if (detail.scope !== "student") {
+        return;
+      }
+      const query = String(detail.query ?? "").trim();
+      if (!query) {
+        return;
+      }
+      setHeaderSearchQuery(query);
+      setSearchModalOpen(true);
+      void runHeaderSearch(query);
+    };
+    window.addEventListener("app-search", handleHeaderSearch);
+    return () => window.removeEventListener("app-search", handleHeaderSearch);
+  }, [runHeaderSearch]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -754,6 +806,57 @@ export const ReinscriptionPage = () => {
           onPageSizeChange={handlePageSizeChange}
         />
       </div>
+
+      <Dialog open={searchModalOpen} onOpenChange={setSearchModalOpen}>
+        <DialogContent className="sm:max-w-2xl h-[70vh] max-h-[70vh] overflow-hidden p-0 flex flex-col min-h-0">
+          <DialogHeader className="sticky top-0 z-10 border-b bg-background/95 px-6 py-4 backdrop-blur">
+            <DialogTitle>Search students</DialogTitle>
+            <DialogDescription>
+              Results for "{headerSearchQuery}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {searchLoading ? (
+              <p className="text-sm text-muted-foreground">
+                Searching students...
+              </p>
+            ) : searchError ? (
+              <p className="text-sm text-destructive">{searchError}</p>
+            ) : searchResults.length ? (
+              <div className="space-y-2">
+                {searchResults.map((student) => (
+                  <Button
+                    key={`${student.recordId}-${student.id}`}
+                    type="button"
+                    variant="ghost"
+                    className="w-full justify-between border border-transparent hover:border-border"
+                    onClick={() => {
+                      handleEditStudent(student);
+                      setSearchModalOpen(false);
+                    }}
+                  >
+                    <span className="text-left">
+                      <span className="block font-medium">
+                        {student.fullName}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {student.id} · {student.journeyLabel}
+                      </span>
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {student.semester || "—"}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No students match this search.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-4xl lg:max-w-6xl h-[90vh] max-h-[90vh] overflow-hidden p-0 flex flex-col min-h-0">

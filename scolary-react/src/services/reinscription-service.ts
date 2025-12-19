@@ -31,6 +31,7 @@ export interface ReinscriptionFilters {
   id_mention?: string;
   id_journey?: string;
   id_year?: string;
+  search?: string;
   limit?: number;
   offset?: number;
 }
@@ -154,28 +155,52 @@ const normalizeStudent = (
   };
 };
 
-const buildQueryParams = (filters: ReinscriptionFilters) => ({
-  limit: filters.limit,
-  offset: filters.offset,
-  where: JSON.stringify([
-    {
+const buildQueryParams = (filters: ReinscriptionFilters) => {
+  const where: Array<Record<string, unknown>> = [];
+  const academicYear = filters.id_year ?? filters.academicYearId;
+  const journeyId = filters.id_journey ?? filters.journeyId;
+  const semester = filters.semester;
+
+  if (academicYear) {
+    where.push({
       key: "annual_register.id_academic_year",
       operator: "==",
-      value: filters.id_year ?? filters.academicYearId ?? ""
-    },
-    {
+      value: academicYear
+    });
+  }
+
+  if (journeyId) {
+    where.push({
       key: "annual_register.register_semester.id_journey",
       operator: "==",
-      value: filters.id_journey ?? filters.journeyId
-    },
-    {
+      value: journeyId
+    });
+  }
+
+  if (semester) {
+    where.push({
       key: "annual_register.register_semester.semester",
       operator: "==",
-      value: filters.semester
-    }
-  ]),
-  relations: JSON.stringify(["student_year.journey.mention", "student_year"])
-});
+      value: semester
+    });
+  }
+
+  const trimmedSearch = (filters.search ?? "").trim();
+  if (trimmedSearch) {
+    where.push({
+      key: ["first_name", "last_name", "num_carte", "num_select"],
+      operator: ["like", "like", "like", "like"],
+      value: [trimmedSearch, trimmedSearch, trimmedSearch, trimmedSearch]
+    });
+  }
+
+  return {
+    limit: filters.limit,
+    offset: filters.offset,
+    where: JSON.stringify(where),
+    relations: JSON.stringify(["student_year.journey.mention", "student_year"])
+  };
+};
 
 type ApiReinscriptionPayload =
   | ApiListResponse<ApiReinscriptionStudent>

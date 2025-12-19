@@ -151,6 +151,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const isReinscriptionPage = location.pathname.startsWith('/user/re-inscription');
   const [selectedYear, setSelectedYear] = useState('2024-2025');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -168,6 +169,24 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     store.logout();
     router.navigate({ to: '/auth/login' });
   };
+
+  useEffect(() => {
+    if (!isReinscriptionPage || typeof window === 'undefined') {
+      return;
+    }
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('app-search', {
+          detail: { scope: 'student', query: trimmed }
+        })
+      );
+    }, 3000);
+    return () => window.clearTimeout(timeout);
+  }, [searchQuery, isReinscriptionPage]);
 
   const getRoleBadgeVariant = (role: AuthRole) => {
     return role === 'admin' ? 'default' : 'secondary';

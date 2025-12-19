@@ -50,17 +50,23 @@ export type FormItemComponentType = {
 };
 
 export type ReinscriptionAnnualProps = {
+  id?: number;
   payment: Array<ReinscriptionPaymentState>;
   register_semester: Array<ReinscriptionSemesterState>;
 };
 
 export type ReinscriptionPaymentState = {
+  id?: number;
+  id_annual_register?: number;
   num_receipt: string;
   date_receipt: string;
   payed: number;
 };
 
 export type ReinscriptionSemesterState = {
+  id?: number;
+  id_annual_register?: number;
+  id_journey?: number;
   semester: string;
   repeat_status: string;
   journey: Journey;

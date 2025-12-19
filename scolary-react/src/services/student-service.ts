@@ -30,7 +30,7 @@ export interface StudentUpdatePayload {
 
 const relations = JSON.stringify([
   "annual_register.register_semester",
-  "annual_register.register_semester{id_journey,semester,repeat_status}",
+  "annual_register.register_semester{id,id_annual_register,id_journey,semester,repeat_status}",
   "annual_register.register_semester.journey{id_mention,name}",
   "annual_register.register_semester.journey.mention{name}",
   "annual_register.payment{id,payed,num_receipt,date_receipt}"

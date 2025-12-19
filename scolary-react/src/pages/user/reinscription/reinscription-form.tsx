@@ -433,7 +433,6 @@ export const ReinscriptionForm = ({
 
             <ReinscriptionAnnualRegister
               annualRegister={annualRegister}
-              setEditingSections={setEditingSections}
               editingSections={editingSections}
               cardNumber={formState.cardNumber}
               filters={filters}
