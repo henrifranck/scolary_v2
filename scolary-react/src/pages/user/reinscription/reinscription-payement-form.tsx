@@ -24,6 +24,7 @@ import {
   updatePayement,
   updateRegisterSemester
 } from "@/services/annual-register-service";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface ReinscriptionAnnualFormProps {
   annualRegister: Array<ReinscriptionAnnualProps>;
@@ -54,6 +55,9 @@ export const ReinscriptionAnnualRegister = ({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [annualRegisterLoading, setAnnualRegisterLoading] = useState(false);
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
+    null
+  );
 
   const emptyJourney = {
     id: 0,
@@ -650,7 +654,7 @@ export const ReinscriptionAnnualRegister = ({
                   filters={filters}
                   journeyOptions={journeyOptions}
                   onToggleEdit={toggleItemEditing}
-                  onDelete={handleDeleteAnnualRegister}
+                  onDelete={() => setConfirmDeleteIndex(index)}
                   onCancel={handleCancelEdit}
                   onSave={handleSaveAnnualRegister}
                   onUpdatePaymentField={updatePaymentField}
@@ -668,6 +672,25 @@ export const ReinscriptionAnnualRegister = ({
           </form>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={confirmDeleteIndex !== null}
+        title="Supprimer la scolarité ?"
+        description="Cette action supprimera aussi les paiements et les semestres liés."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        destructive
+        isConfirming={
+          confirmDeleteIndex !== null &&
+          savingIndex === confirmDeleteIndex
+        }
+        onCancel={() => setConfirmDeleteIndex(null)}
+        onConfirm={() => {
+          if (confirmDeleteIndex !== null) {
+            handleDeleteAnnualRegister(confirmDeleteIndex);
+            setConfirmDeleteIndex(null);
+          }
+        }}
+      />
     </div>
   );
 };
