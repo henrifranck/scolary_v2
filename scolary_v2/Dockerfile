@@ -9,32 +9,10 @@ ENV TESTING=0
 # Set the working directory
 WORKDIR /app
 
-# Install system dependencies (DB client, WeasyPrint + Chromium deps, fonts)
+# Install system dependencies (DB client)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     build-essential \
-    libnss3 \
-    libxss1 \
-    libasound2 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libcairo2 \
-    libcups2 \
-    libxrandr2 \
-    libxkbcommon0 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libatspi2.0-0 \
-    libxshmfence1 \
-    libgdk-pixbuf-2.0-0 \
-    fonts-liberation \
-    fonts-noto-color-emoji \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -42,8 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY ./requirements.txt /app/requirements.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt \
-    && python -m playwright install chromium
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy test files and application code
 COPY ./tests /app/tests

@@ -8,7 +8,6 @@ import {
   FileSignature,
   FolderOpen,
   GraduationCap,
-  IdCard,
   HardDrive,
   Layers,
   LayoutDashboard,
@@ -28,7 +27,7 @@ import {
   Waypoints,
   X
 } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Separator } from '../components/ui/separator';
@@ -100,8 +99,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         items: [
           { to: '/admin/mentions', label: 'Mentions', icon: Waypoints, roles: ['admin'] },
           { to: '/admin/journeys', label: 'Journeys', icon: Route, roles: ['admin'] },
-          { to: '/admin/files', label: 'File manager', icon: HardDrive, roles: ['admin'] },
-          { to: '/admin/cards', label: 'Cards & badges', icon: IdCard, roles: ['admin'] }
+          { to: '/admin/files', label: 'File manager', icon: HardDrive, roles: ['admin'] }
         ]
       },
       {
@@ -151,6 +149,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedYear, setSelectedYear] = useState('2024-2025');
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -206,8 +205,30 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return breadcrumbs;
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const storedTheme = window.localStorage.getItem('theme');
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const shouldUseDark = storedTheme ? storedTheme === 'dark' : Boolean(prefersDark);
+
+    setIsDarkMode(shouldUseDark);
+    document.documentElement.classList.toggle('dark', shouldUseDark);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle('dark', next);
+      window.localStorage.setItem('theme', next ? 'dark' : 'light');
+      return next;
+    });
+  }, []);
+
   return (
-    <div className="flex min-h-screen bg-muted/20 text-foreground">
+    <div className="flex h-screen overflow-hidden bg-muted/20 text-foreground">
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
@@ -215,11 +236,12 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 z-50 h-full w-64 border-r bg-background transition-transform md:relative md:translate-x-0",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        "fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r bg-background transition-all duration-200 md:relative",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
+        isSidebarOpen ? "md:w-64 md:translate-x-0" : "md:w-0 md:-translate-x-full md:border-r-0"
       )}>
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2 text-xl font-semibold">
+        <div className="flex h-16 items-center justify-between px-4">
+          <div className={cn("flex items-center gap-2 text-xl font-semibold", !isSidebarOpen && "md:hidden")}>
             <GraduationCap className="h-6 w-6 text-primary" />
             Scolary
           </div>
@@ -233,7 +255,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           </Button>
         </div>
         <Separator />
-        <ScrollArea className="flex-1 px-3 py-4">
+        <ScrollArea className={cn("flex-1 px-3 py-4", !isSidebarOpen && "md:hidden")}>
           <nav className="space-y-2">
             {filteredNavSections.map((section) => {
               const visibleItems = section.items.filter((item) => {
@@ -306,7 +328,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       </aside>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 shadow-sm">
           {/* Left section - Mobile menu button, breadcrumbs, and search */}
@@ -318,6 +340,15 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden md:inline-flex"
+              onClick={() => setIsSidebarOpen((prev) => !prev)}
+              aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {isSidebarOpen ? <Menu className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
             </Button>
 
             {/* Breadcrumbs */}
@@ -392,7 +423,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={toggleTheme}
             >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>

@@ -13,7 +13,6 @@ import { SubjectsPage } from './pages/admin/subjects/subjects-page';
 import { MentionsPage } from './pages/admin/mentions/mentions-page';
 import { JourneysPage } from './pages/admin/journeys/journeys-page';
 import { PermissionsPage } from './pages/admin/permissions/permissions-page';
-import { CardsPage } from './pages/admin/cards/cards-page';
 import { TeachingUnitPage } from './pages/admin/teaching-unit-page';
 import { ConstituentElementsPage } from './pages/admin/constituent-elements-page';
 import { GroupsPage } from './pages/admin/groups-page';
@@ -110,11 +109,6 @@ const permissionsRoute = createRoute({
   component: PermissionsPage
 });
 
-const cardsRoute = createRoute({
-  getParentRoute: () => adminRoute,
-  path: 'cards',
-  component: CardsPage
-});
 
 const filesRoute = createRoute({
   getParentRoute: () => adminRoute,
@@ -205,7 +199,6 @@ const routeTree = rootRoute.addChildren([
     mentionsRoute,
     journeysRoute,
     filesRoute,
-    cardsRoute,
     permissionsRoute,
     teachingUnitRoute,
     constituentElementsRoute,
