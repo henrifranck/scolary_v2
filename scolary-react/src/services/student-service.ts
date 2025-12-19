@@ -144,8 +144,21 @@ export const uploadStudentPicture = async (
   });
 };
 
+export const softDeleteStudent = async (
+  studentId: string | number
+): Promise<StudentProfile> => {
+  if (!studentId) {
+    throw new Error("Missing student identifier for delete.");
+  }
+
+  return apiRequest<StudentProfile>(`/students/${studentId}/soft_delete`, {
+    method: "POST"
+  });
+};
+
 export const studentService = {
   fetchStudentByCardNumber,
   updateStudentProfile,
-  uploadStudentPicture
+  uploadStudentPicture,
+  softDeleteStudent
 };

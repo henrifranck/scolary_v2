@@ -44,29 +44,25 @@ const queryKeys = {
   ]
 } as const;
 
-type ApiStudentYear = {
-  id_year?: number;
-  id_journey?: number;
-  status?: string | null;
-  active_semester?: string | null;
-  another_semester?: string | null;
-  sup_semester?: string | null;
+type ApiRegisterSemester = {
+  semester?: string | null;
+  repeat_status?: string | null;
+  id_journey?: number | string | null;
   journey?: {
     id: number;
-    title?: string;
-    abbreviation?: string;
-    id_mention?: number;
+    name?: string | null;
+    abbreviation?: string | null;
+    id_mention?: number | null;
     mention?: {
       id: number;
-      title?: string;
-      abbreviation?: string;
+      name?: string | null;
+      abbreviation?: string | null;
     };
   };
-  mention?: {
-    id: number;
-    title?: string;
-    abbreviation?: string;
-  };
+};
+
+type ApiAnnualRegister = {
+  register_semester?: ApiRegisterSemester[];
 };
 
 type ApiReinscriptionStudent = {
@@ -77,7 +73,7 @@ type ApiReinscriptionStudent = {
   status?: string | null;
   id_journey?: number | string | null;
   id_mention?: number | string | null;
-  student_year?: ApiStudentYear[];
+  annual_register?: ApiAnnualRegister[];
   photo_url?: string | null;
   photo?: string | null;
   picture?: string | null;
@@ -85,11 +81,8 @@ type ApiReinscriptionStudent = {
   last_update?: string | null;
 };
 
-const pickSemester = (studentYear?: ApiStudentYear) =>
-  studentYear?.active_semester ??
-  studentYear?.another_semester ??
-  studentYear?.sup_semester ??
-  "";
+const pickSemester = (registerSemester?: ApiRegisterSemester) =>
+  registerSemester?.semester ?? "";
 
 const resolveStatus = (raw?: string | null): ReinscriptionStatus => {
   if (!raw) {
@@ -119,22 +112,26 @@ const buildFullName = (student: ApiReinscriptionStudent) => {
 const normalizeStudent = (
   student: ApiReinscriptionStudent
 ): ReinscriptionStudent => {
-  const studentYear = student.student_year?.[0];
-  const journeyId = studentYear?.id_journey ?? student.id_journey ?? "";
+  const annualRegister = student.annual_register?.[0];
+  const registerSemester = annualRegister?.register_semester?.[0];
+  const journeyId =
+    registerSemester?.id_journey ??
+    registerSemester?.journey?.id ??
+    student.id_journey ??
+    "";
   const mentionId =
     student.id_mention ??
-    studentYear?.journey?.id_mention ??
-    studentYear?.journey?.mention?.id ??
-    studentYear?.mention?.id ??
+    registerSemester?.journey?.id_mention ??
+    registerSemester?.journey?.mention?.id ??
     "";
 
   const journeyLabel =
-    studentYear?.journey?.title ??
-    studentYear?.journey?.abbreviation ??
+    registerSemester?.journey?.name ??
+    registerSemester?.journey?.abbreviation ??
     (journeyId ? `Journey ${journeyId}` : "");
   const mentionLabel =
-    studentYear?.journey?.mention?.title ??
-    studentYear?.mention?.title ??
+    registerSemester?.journey?.mention?.name ??
+    registerSemester?.journey?.mention?.abbreviation ??
     (mentionId ? `Mention ${mentionId}` : "");
 
   const firstName = student.first_name ?? "";
@@ -146,12 +143,12 @@ const normalizeStudent = (
     fullName: buildFullName(student),
     firstName,
     lastName,
-    semester: pickSemester(studentYear),
+    semester: pickSemester(registerSemester),
     journeyId: String(journeyId ?? ""),
     journeyLabel,
     mentionId: String(mentionId ?? ""),
     mentionLabel,
-    status: resolveStatus(studentYear?.status ?? student.status),
+    status: resolveStatus(student.status),
     lastUpdate: student.last_update ?? student.updated_at ?? "",
     photoUrl: resolveAssetUrl(
       student.photo_url ?? student.photo ?? student.picture ?? ""
@@ -188,6 +185,11 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
       value: semester
     });
   }
+  where.push({
+    key: "deleted_at",
+    operator: "isNull",
+    value: ""
+  });
 
   const trimmedSearch = (filters.search ?? "").trim();
   if (trimmedSearch) {
@@ -202,7 +204,12 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
     limit: filters.limit,
     offset: filters.offset,
     where: JSON.stringify(where),
-    relations: JSON.stringify(["student_year.journey.mention", "student_year"])
+    relation: JSON.stringify([
+      "annual_register",
+      "annual_register.register_semester",
+      "annual_register.register_semester.journey",
+      "annual_register.register_semester.journey.mention"
+    ])
   };
 };
 

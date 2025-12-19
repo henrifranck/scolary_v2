@@ -1,5 +1,6 @@
 from typing import Any
 from pathlib import Path
+from datetime import datetime
 import shutil
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
@@ -209,3 +210,24 @@ def delete_student(
         raise HTTPException(status_code=404, detail='Student not found')
     student = crud.student.remove(db=db, id=student_id)
     return schemas.Msg(msg='Student deleted successfully')
+
+
+@router.post('/{student_id}/soft_delete', response_model=schemas.Student)
+def soft_delete_student(
+        *,
+        db: Session = Depends(deps.get_db),
+        student_id: int,
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Soft delete a student by setting deleted_at.
+    """
+    student = crud.student.get(db=db, id=student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail='Student not found')
+    student = crud.student.update(
+        db=db,
+        db_obj=student,
+        obj_in={'deleted_at': datetime.utcnow()},
+    )
+    return student

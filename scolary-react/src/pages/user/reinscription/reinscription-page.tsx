@@ -35,11 +35,13 @@ import {
 import {
   updateStudentProfile,
   uploadStudentPicture,
+  softDeleteStudent,
   type StudentUpdatePayload
 } from "../../../services/student-service";
 import { ReinscriptionForm } from "./reinscription-form";
 import { ReinscriptionFormState } from "./reinscription-form-type";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -401,6 +403,10 @@ export const ReinscriptionPage = () => {
   >(() => createEditingSectionsState());
   const [formError, setFormError] = useState<string | null>(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteStudent, setConfirmDeleteStudent] =
+    useState<ReinscriptionStudent | null>(null);
 
   const selectedMentionLabel = useMemo(() => {
     if (!formState.mentionId) {
@@ -589,6 +595,26 @@ export const ReinscriptionPage = () => {
     }
   };
 
+  const handleSoftDelete = useCallback(
+    async (student: ReinscriptionStudent) => {
+      setDeleteError(null);
+      setDeletingId(student.recordId);
+      try {
+        await softDeleteStudent(student.recordId);
+        void reinscriptionQuery.refetch();
+      } catch (error) {
+        setDeleteError(
+          error instanceof Error
+            ? error.message
+            : "Impossible de supprimer l'étudiant."
+        );
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [reinscriptionQuery]
+  );
+
   const handlePageChange = (nextPage: number) => {
     setPage(Math.max(1, nextPage));
   };
@@ -610,29 +636,6 @@ export const ReinscriptionPage = () => {
               {row.original.id}
             </span>
           </div>
-        )
-      },
-      {
-        accessorKey: "journeyLabel",
-        header: "Parcours",
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">
-              {row.original.journeyLabel}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Semester {row.original.semester}
-            </span>
-          </div>
-        )
-      },
-      {
-        accessorKey: "mentionLabel",
-        header: "Mention",
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.mentionLabel}
-          </span>
         )
       },
       {
@@ -663,17 +666,27 @@ export const ReinscriptionPage = () => {
         id: "actions",
         header: "",
         cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleEditStudent(row.original)}
-          >
-            Edit
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleEditStudent(row.original)}
+            >
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setConfirmDeleteStudent(row.original)}
+              disabled={deletingId === row.original.recordId}
+            >
+              Delete
+            </Button>
+          </div>
         )
       }
     ],
-    [handleEditStudent]
+    [handleEditStudent, handleSoftDelete, deletingId]
   );
 
   const renderStudentCard = useCallback(
@@ -822,6 +835,9 @@ export const ReinscriptionPage = () => {
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
         />
+        {deleteError ? (
+          <p className="text-sm text-destructive">{deleteError}</p>
+        ) : null}
       </div>
 
       <Dialog open={searchModalOpen} onOpenChange={setSearchModalOpen}>
@@ -921,6 +937,30 @@ export const ReinscriptionPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(confirmDeleteStudent)}
+        title="Supprimer l'étudiant ?"
+        description={
+          confirmDeleteStudent
+            ? `Cette action masquera ${confirmDeleteStudent.fullName} de la liste.`
+            : undefined
+        }
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        destructive
+        isConfirming={
+          Boolean(confirmDeleteStudent) &&
+          deletingId === confirmDeleteStudent?.recordId
+        }
+        onCancel={() => setConfirmDeleteStudent(null)}
+        onConfirm={() => {
+          if (confirmDeleteStudent) {
+            handleSoftDelete(confirmDeleteStudent);
+            setConfirmDeleteStudent(null);
+          }
+        }}
+      />
     </div>
   );
 };
