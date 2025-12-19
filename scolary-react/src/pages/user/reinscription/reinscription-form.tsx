@@ -21,6 +21,7 @@ import {
 } from "./information-form-data";
 import { ReinscriptionFilters } from "@/services/reinscription-service";
 import { ReinscriptionAnnualRegister } from "./reinscription-payement-form";
+import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 
 type dialogMode = "edit" | "create";
 
@@ -55,6 +56,8 @@ export const ReinscriptionForm = ({
   const [studentLookupError, setStudentLookupError] = useState<string | null>(
     null
   );
+  const [picturePreview, setPicturePreview] = useState<string | null>(null);
+  const pictureInputId = "student-picture-upload";
 
   const [inputContact] = useState<FormItemComponentType>(
     informationDataContact
@@ -127,6 +130,11 @@ export const ReinscriptionForm = ({
         cinIssuePlace: student.place_of_cin ?? previous.cinIssuePlace,
         birthDate: student.date_of_birth ?? previous.birthDate,
         birthPlace: student.place_of_birth ?? previous.birthPlace,
+        picture:
+          student.picture ??
+          student.photo_url ??
+          previous.picture,
+        pictureFile: null,
         mentionId: resolvedMentionId
           ? String(resolvedMentionId)
           : previous.mentionId,
@@ -177,11 +185,17 @@ export const ReinscriptionForm = ({
         const rawAnnual = Array.isArray(student.annual_register)
           ? student.annual_register
           : [];
-        const normalizedAnnual = rawAnnual.map((entry: any) => {
-          const payment =
-            entry?.payment ?? entry?.payement ?? entry?.payments ?? [];
-          return { ...entry, payment };
-        });
+        const normalizedAnnual = rawAnnual
+          .map((entry: any) => {
+            const payment =
+              entry?.payment ?? entry?.payement ?? entry?.payments ?? [];
+            return { ...entry, payment };
+          })
+          .filter(
+            (entry: any) =>
+              Array.isArray(entry?.register_semester) &&
+              entry.register_semester.length > 0
+          );
 
         setAnnualRegister(normalizedAnnual);
         populateStudentFields(student as StudentProfile);
@@ -197,6 +211,32 @@ export const ReinscriptionForm = ({
     },
     [formState.cardNumber, populateStudentFields, filters]
   );
+
+  const handlePictureUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+      setFormState((previous: any) => ({
+        ...previous,
+        pictureFile: file
+      }));
+    },
+    [setFormState]
+  );
+
+  useEffect(() => {
+    if (!formState.pictureFile) {
+      setPicturePreview(null);
+      return;
+    }
+    const previewUrl = URL.createObjectURL(formState.pictureFile);
+    setPicturePreview(previewUrl);
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [formState.pictureFile]);
 
   useEffect(() => {
     if (dialogMode !== "edit") {
@@ -328,6 +368,42 @@ export const ReinscriptionForm = ({
                     <InfoItem label="Email" value={formState.email} />
                   </>
                 )}
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-foreground">
+                    Photo étudiant
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative h-24 w-24">
+                    {picturePreview || formState.picture ? (
+                      <img
+                        src={picturePreview ?? resolveAssetUrl(formState.picture)}
+                        alt="Photo étudiant"
+                        className="h-24 w-24 rounded-full border object-cover"
+                      />
+                    ) : (
+                      <div className="h-24 w-24 rounded-full border bg-muted/20" />
+                    )}
+                    <label
+                      htmlFor={pictureInputId}
+                      className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted/50 cursor-pointer"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </label>
+                    <input
+                      id={pictureInputId}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePictureUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    La photo sera envoyée au moment d'enregistrer.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

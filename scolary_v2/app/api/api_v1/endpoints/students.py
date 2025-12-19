@@ -1,5 +1,8 @@
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from pathlib import Path
+import shutil
+
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from app.api import deps
@@ -8,6 +11,9 @@ import ast
 
 router = APIRouter()
 from app.api import deps
+UPLOAD_DIR = Path("files") / "pictures"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg"}
 
 
 @router.get('/', response_model=schemas.ResponseStudent)
@@ -142,6 +148,50 @@ def read_student(
     if not student:
         raise HTTPException(status_code=404, detail='Student not found')
     return student
+
+
+@router.post('/{student_id}/picture', response_model=schemas.Student)
+async def upload_student_picture(
+        *,
+        db: Session = Depends(deps.get_db),
+        student_id: int,
+        file: UploadFile = File(...),
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Upload and attach a profile picture to a student.
+    """
+    student = crud.student.get(db=db, id=student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail='Student not found')
+
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail='Unsupported file type')
+
+    extension = Path(file.filename).suffix.lower()
+    if extension not in {'.png', '.jpg', '.jpeg'}:
+        extension = '.png' if file.content_type == 'image/png' else '.jpg'
+
+    filename = f"{student.num_carte}{extension}"
+    relative_url = f"/files/pictures/{filename}"
+    if student.picture:
+        old_path = Path(student.picture.lstrip("/"))
+        if old_path.as_posix() != relative_url.lstrip("/") and old_path.parts[:2] == ("files", "pictures"):
+            try:
+                (Path(".") / old_path).unlink(missing_ok=True)
+            except TypeError:
+                if (Path(".") / old_path).exists():
+                    (Path(".") / old_path).unlink()
+
+    file_path = UPLOAD_DIR / filename
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    updated_student = crud.student.update(
+        db=db,
+        db_obj=student,
+        obj_in={'picture': relative_url},
+    )
+    return updated_student
 
 
 @router.delete('/{student_id}', response_model=schemas.Msg)

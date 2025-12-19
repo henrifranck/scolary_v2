@@ -20,6 +20,7 @@ import {
   createPayement,
   createRegisterSemester,
   deleteAnnualRegister,
+  fetchAnnualRegisterByCardNumber,
   updatePayement,
   updateRegisterSemester
 } from "@/services/annual-register-service";
@@ -52,6 +53,7 @@ export const ReinscriptionAnnualRegister = ({
   >([]);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [annualRegisterLoading, setAnnualRegisterLoading] = useState(false);
 
   const emptyJourney = {
     id: 0,
@@ -149,6 +151,59 @@ export const ReinscriptionAnnualRegister = ({
       normalized.map(({ isEditing, isNew, ...rest }) => rest)
     );
   }, [annualRegister]);
+
+  useEffect(() => {
+    if (!dialogOpen) {
+      return;
+    }
+    const trimmed = cardNumber?.trim() ?? "";
+    if (!trimmed) {
+      return;
+    }
+    let isMounted = true;
+    setAnnualRegisterLoading(true);
+    fetchAnnualRegisterByCardNumber(trimmed)
+      .then((response) => {
+        if (!isMounted) {
+          return;
+        }
+        const normalized = (response.data ?? []).map((annual) => ({
+          ...annual,
+          payment:
+            annual.payment && annual.payment.length
+              ? annual.payment
+              : createEmptyAnnualRegister().payment,
+          register_semester:
+            annual.register_semester && annual.register_semester.length
+              ? annual.register_semester
+              : createEmptyAnnualRegister().register_semester,
+          isEditing: false,
+          isNew: false
+        }));
+        setAnnualRegisterDrafts(normalized);
+        setSavedAnnualRegisters(
+          normalized.map(({ isEditing, isNew, ...rest }) => rest)
+        );
+      })
+      .catch((error) => {
+        if (isMounted) {
+          setSaveError(
+            error instanceof Error
+              ? error.message
+              : "Erreur lors du chargement des inscriptions."
+          );
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setAnnualRegisterLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [dialogOpen, cardNumber]);
 
   const handleAddAnnualRegister = () => {
     setSaveError(null);
@@ -367,6 +422,24 @@ export const ReinscriptionAnnualRegister = ({
       if (!semesterEntry.repeat_status) {
         throw new Error("Veuillez sélectionner un statut de redoublement.");
       }
+      if (
+        annualRegisterDrafts.some((annual, annualIndex) => {
+          if (annualIndex === index) {
+            return false;
+          }
+          if (!annual.id || !annualId) {
+            return false;
+          }
+          const otherSemester = annual.register_semester?.[0];
+          const otherJourneyId =
+            otherSemester?.id_journey ?? otherSemester?.journey?.id ?? 0;
+          return annual.id === annualId && otherJourneyId === journeyId;
+        })
+      ) {
+        throw new Error(
+          "Ce parcours est déjà enregistré pour cette fiche annuelle."
+        );
+      }
 
       let savedRegisterSemester: any = semesterEntry;
       if (semesterEntry.id) {
@@ -393,7 +466,7 @@ export const ReinscriptionAnnualRegister = ({
       };
 
       const paymentEntry = draft.payment?.[0];
-      let savedPayment = paymentEntry;
+      let savedPayment: any = paymentEntry;
       const hasPaymentData =
         Boolean(paymentEntry?.num_receipt) ||
         Boolean(paymentEntry?.date_receipt) ||
@@ -562,6 +635,11 @@ export const ReinscriptionAnnualRegister = ({
             </div>
             {saveError ? (
               <p className="px-6 text-sm text-destructive">{saveError}</p>
+            ) : null}
+            {annualRegisterLoading ? (
+              <p className="px-6 text-sm text-muted-foreground">
+                Chargement des inscriptions...
+              </p>
             ) : null}
             <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4 space-y-4">
               {annualRegisterDrafts.map((annual, index) => (

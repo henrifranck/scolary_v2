@@ -21,6 +21,7 @@ export interface StudentUpdatePayload {
   place_of_cin?: string;
   date_of_birth?: string;
   place_of_birth?: string;
+  picture?: string | null;
   id_mention?: string | number;
   id_journey?: string | number;
   active_semester?: string;
@@ -41,6 +42,7 @@ const baseColumn = JSON.stringify([
   "num_carte",
   "id",
   "num_select",
+  "picture",
   "id_mention",
   "date_of_birth",
   "place_of_birth",
@@ -125,7 +127,25 @@ export const updateStudentProfile = async (
   });
 };
 
+export const uploadStudentPicture = async (
+  studentId: string | number,
+  file: File
+): Promise<StudentProfile> => {
+  if (!studentId) {
+    throw new Error("Missing student identifier for picture upload.");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiRequest<StudentProfile>(`/students/${studentId}/picture`, {
+    method: "POST",
+    body: formData
+  });
+};
+
 export const studentService = {
   fetchStudentByCardNumber,
-  updateStudentProfile
+  updateStudentProfile,
+  uploadStudentPicture
 };

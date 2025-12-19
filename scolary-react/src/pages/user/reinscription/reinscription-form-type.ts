@@ -18,6 +18,8 @@ export type ReinscriptionFormState = {
   semester: string;
   status: string;
   notes: string;
+  picture?: string;
+  pictureFile?: File | null;
   annualRegister?: any;
 };
 
@@ -86,6 +88,8 @@ export interface StudentProfile {
   place_of_cin?: string | null;
   date_of_birth?: string | null;
   place_of_birth?: string | null;
+  picture?: string | null;
+  photo_url?: string | null;
   id_mention?: number | string | null;
   id_journey?: number | string | null;
   active_semester?: string | null;

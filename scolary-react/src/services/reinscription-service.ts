@@ -1,6 +1,7 @@
 import { useQuery, type QueryKey } from "@tanstack/react-query";
 
 import { apiRequest } from "./api-client";
+import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ApiListResponse } from "@/pages/user/reinscription/reinscription-form-type";
 import { isListResponse, normalizeList } from "./utils-common";
 
@@ -79,6 +80,7 @@ type ApiReinscriptionStudent = {
   student_year?: ApiStudentYear[];
   photo_url?: string | null;
   photo?: string | null;
+  picture?: string | null;
   updated_at?: string | null;
   last_update?: string | null;
 };
@@ -151,7 +153,9 @@ const normalizeStudent = (
     mentionLabel,
     status: resolveStatus(studentYear?.status ?? student.status),
     lastUpdate: student.last_update ?? student.updated_at ?? "",
-    photoUrl: student.photo_url ?? ""
+    photoUrl: resolveAssetUrl(
+      student.photo_url ?? student.photo ?? student.picture ?? ""
+    )
   };
 };
 

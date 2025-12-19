@@ -46,6 +46,17 @@ def create_register_semester(
     """
     Create new register_semester.
     """
+    duplicate = crud.register_semester.get_multi_where_array(
+      db=db,
+      where=[
+        {"key": "id_annual_register", "operator": "==", "value": register_semester_in.id_annual_register},
+        {"key": "id_journey", "operator": "==", "value": register_semester_in.id_journey},
+        {"key": "semester", "operator": "==", "value": register_semester_in.semester},
+      ],
+      limit=1
+    )
+    if duplicate:
+        raise HTTPException(status_code=409, detail="RegisterSemester already exists for this annual register.")
     register_semester = crud.register_semester.create(db=db, obj_in=register_semester_in)
     return register_semester
 
@@ -64,6 +75,19 @@ def update_register_semester(
     register_semester = crud.register_semester.get(db=db, id=register_semester_id)
     if not register_semester:
         raise HTTPException(status_code=404, detail='RegisterSemester not found')
+    if register_semester_in.id_annual_register and register_semester_in.id_journey and register_semester_in.semester and register_semester_in.repeat_status:
+        duplicate = crud.register_semester.get_multi_where_array(
+          db=db,
+          where=[
+            {"key": "id_annual_register", "operator": "==", "value": register_semester_in.id_annual_register},
+            {"key": "id_journey", "operator": "==", "value": register_semester_in.id_journey},
+            {"key": "semester", "operator": "==", "value": register_semester_in.semester},
+            {"key": "repeat_status", "operator": "==", "value": register_semester_in.repeat_status},
+          ],
+          limit=1
+        )
+        if duplicate and duplicate[0].id != register_semester_id:
+            raise HTTPException(status_code=409, detail="RegisterSemester already exists for this annual register.")
     register_semester = crud.register_semester.update(db=db, db_obj=register_semester, obj_in=register_semester_in)
     return register_semester
 

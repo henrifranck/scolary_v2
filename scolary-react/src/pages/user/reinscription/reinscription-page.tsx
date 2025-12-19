@@ -34,10 +34,12 @@ import {
 } from "../../../services/inscription-service";
 import {
   updateStudentProfile,
+  uploadStudentPicture,
   type StudentUpdatePayload
 } from "../../../services/student-service";
 import { ReinscriptionForm } from "./reinscription-form";
 import { ReinscriptionFormState } from "./reinscription-form-type";
+import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -85,6 +87,8 @@ const createFormState = (
   semester: "",
   status: "",
   notes: "",
+  picture: "",
+  pictureFile: null,
   annualRegister: [],
   ...overrides
 });
@@ -112,6 +116,7 @@ const buildStudentUpdatePayload = (
     place_of_cin: state.cinIssuePlace || undefined,
     date_of_birth: state.birthDate || undefined,
     place_of_birth: state.birthPlace || undefined,
+    picture: state.picture || undefined,
     id_mention: state.mentionId || undefined,
     id_journey: state.journeyId || undefined,
     active_semester: state.semester || undefined,
@@ -560,6 +565,17 @@ export const ReinscriptionPage = () => {
         cardNumber: trimmedCardNumber
       });
       await updateStudentProfile(recordId, payload);
+      if (formState.pictureFile) {
+        const updatedStudent = await uploadStudentPicture(
+          recordId,
+          formState.pictureFile
+        );
+        setFormState((previous: any) => ({
+          ...previous,
+          picture: updatedStudent.picture ?? previous.picture,
+          pictureFile: null
+        }));
+      }
       setDialogOpen(false);
       void reinscriptionQuery.refetch();
     } catch (error) {
@@ -666,7 +682,8 @@ export const ReinscriptionPage = () => {
       const statusStyle =
         statusStyles[student.status as ReinscriptionStatus] ??
         statusStyles.Pending;
-      const avatarUrl = student.photoUrl || getAvatarUrl(student.fullName);
+      const avatarUrl =
+        resolveAssetUrl(student.photoUrl) || getAvatarUrl(student.fullName);
 
       return (
         <div className="flex h-full flex-col gap-4 rounded-lg border bg-background p-5 shadow-sm">

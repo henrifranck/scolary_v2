@@ -109,5 +109,12 @@ def delete_annual_register(
     annual_register = crud.annual_register.get(db=db, id=annual_register_id)
     if not annual_register:
         raise HTTPException(status_code=404, detail='AnnualRegister not found')
+    db.query(models.Payement).filter(
+        models.Payement.id_annual_register == annual_register_id
+    ).delete(synchronize_session=False)
+    db.query(models.RegisterSemester).filter(
+        models.RegisterSemester.id_annual_register == annual_register_id
+    ).delete(synchronize_session=False)
+    db.commit()
     annual_register = crud.annual_register.remove(db=db, id=annual_register_id)
     return schemas.Msg(msg='AnnualRegister deleted successfully')
