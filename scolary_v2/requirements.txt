@@ -15,3 +15,4 @@ sqlalchemy==2.0.30
 pydantic-settings==2.2.1
 python-jose[extras,cryptography]
 pymysql==1.1.0
+qrcode

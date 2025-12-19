@@ -3,7 +3,7 @@ import os
 import random
 import smtplib
 import uuid
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -147,3 +147,28 @@ def pick_random_key_value(data: dict):
     # Pick a random key-value pair
     random_key, random_value = random.choice(list(data.items()))
     return [random_key, random_value]
+
+
+def clear_name(value: str, max_length: Optional[int] = None) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if max_length and len(text) > max_length:
+        return text[: max_length - 1].rstrip() + "."
+    return text
+
+
+def convert_date(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (datetime, date)):
+        return value.strftime("%d/%m/%Y")
+    return str(value)
+
+
+def is_begin_with_vowel(text: str) -> bool:
+    if not text:
+        return False
+    return str(text).strip().lower().startswith(
+        ("a", "e", "i", "o", "u", "y")
+    )

@@ -51,8 +51,16 @@ def create_carte(
         background = (
             background if os.path.exists(background) else f"images/ma_avant.jpg"
         )
-        profile = f"files/photos/{deux_et[i]['photo']}"
-        image = profile if os.path.exists(profile) else f"images/profil.png"
+        photo_value = deux_et[i].get("photo") if isinstance(deux_et[i], dict) else None
+        if photo_value:
+            normalized = str(photo_value).lstrip("/")
+            if normalized.startswith("files/"):
+                profile = normalized
+            else:
+                profile = f"files/photos/{photo_value}"
+        else:
+            profile = ""
+        image = profile if profile and os.path.exists(profile) else f"images/profil.png"
         info = f"Nom: {clear_name(deux_et[i]['last_name'], 23).upper()}\n"
         info += f"Prénom: {clear_name(deux_et[i]['first_name'], 25).title()}\n"
         info += (
@@ -63,7 +71,13 @@ def create_carte(
             info += f"CIN: {deux_et[i]['num_cin']} \n"
             info += f"du {convert_date(deux_et[i]['date_cin'])} à {clear_name(deux_et[i]['place_cin'], 12).capitalize()} \n"
         info_ = f"CE: {num_carte}\n"
-        info_ += f"Parcours: {journey.upper()} | {data['level']}\n"
+        student_level = (
+            deux_et[i].get("level")
+            if isinstance(deux_et[i], dict)
+            else None
+        )
+        resolved_level = student_level or data.get("level", "")
+        info_ += f"Parcours: {journey.upper()} | {resolved_level}\n"
         info_ += f"Mention: {data['mention']}\n"
 
         data_et = [deux_et[i]["num_carte"], data["key"]]

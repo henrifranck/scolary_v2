@@ -2,14 +2,17 @@ import os
 
 from app.pdf.PDFMark import PDFMark as FPDF
 from app.db.session import SessionLocal
-from app import crud
+from app import models
 from app.utils import is_begin_with_vowel
 
 
 def header(pdf: FPDF, orientation: str = "P"):
 
     db = SessionLocal()
-    university = crud.university_info.get_university(db=db)
+    university = db.query(models.University).first()
+    if not university:
+        db.close()
+        return
     file = f"files/image"
     logo_univ = f"{file}/{university.logo_univ}"
     logo_univ = logo_univ if os.path.exists(logo_univ) else "images/no_image.png"
@@ -43,3 +46,4 @@ def header(pdf: FPDF, orientation: str = "P"):
     pdf.set_font("arial", "", 8)
     pdf.cell(0, 5, txt=title6, ln=1, align="C")
     pdf.cell(0, 5, txt=title7, ln=1, align="C")
+    db.close()

@@ -201,6 +201,7 @@ from .nationality import (
 )
 from .card_asset import CardAsset, CardAssetCreate
 from .card import CardPdfRenderRequest
+from .pdf_file import PdfFileResponse
 from .card import (
   Card,
   CardCreate,

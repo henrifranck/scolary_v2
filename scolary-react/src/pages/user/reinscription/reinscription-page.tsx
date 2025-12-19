@@ -42,6 +42,10 @@ import { ReinscriptionForm } from "./reinscription-form";
 import { ReinscriptionFormState } from "./reinscription-form-type";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  printStudentCards,
+  printStudentsList
+} from "@/services/print-service";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -407,6 +411,10 @@ export const ReinscriptionPage = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteStudent, setConfirmDeleteStudent] =
     useState<ReinscriptionStudent | null>(null);
+  const [printError, setPrintError] = useState<string | null>(null);
+  const [printingList, setPrintingList] = useState(false);
+  const [printingCards, setPrintingCards] = useState(false);
+  const [printingCardsBack, setPrintingCardsBack] = useState(false);
 
   const selectedMentionLabel = useMemo(() => {
     if (!formState.mentionId) {
@@ -750,6 +758,104 @@ export const ReinscriptionPage = () => {
     [handleEditStudent]
   );
 
+  const handlePrintList = async () => {
+    setPrintError(null);
+    if (!filters.id_year) {
+      setPrintError("Veuillez sélectionner une année universitaire.");
+      return;
+    }
+    setPrintingList(true);
+    try {
+      const result = await printStudentsList(filters.id_year);
+      const url = resolveAssetUrl(result.url || result.path);
+      if (!url) {
+        throw new Error("Impossible de générer la liste.");
+      }
+      const opened = window.open(url, "_blank");
+      if (!opened) {
+        throw new Error(
+          "Impossible d'ouvrir la fenêtre d'impression. Vérifiez le bloqueur de popups."
+        );
+      }
+    } catch (error) {
+      setPrintError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de générer la liste."
+      );
+    } finally {
+      setPrintingList(false);
+    }
+  };
+
+  const handlePrintCards = async () => {
+    setPrintError(null);
+    if (!filters.id_mention) {
+      setPrintError("Veuillez sélectionner une mention.");
+      return;
+    }
+    setPrintingCards(true);
+    try {
+      const result = await printStudentCards({
+        mentionId: filters.id_mention,
+        academicYearId: filters.id_year || undefined,
+        side: "heads"
+      });
+      const url = resolveAssetUrl(result.url || result.path);
+      if (!url) {
+        throw new Error("Impossible de générer les cartes.");
+      }
+      const opened = window.open(url, "_blank");
+      if (!opened) {
+        throw new Error(
+          "Impossible d'ouvrir la fenêtre d'impression. Vérifiez le bloqueur de popups."
+        );
+      }
+    } catch (error) {
+      setPrintError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de générer les cartes."
+      );
+    } finally {
+      setPrintingCards(false);
+    }
+  };
+
+  const handlePrintCardsBack = async () => {
+    setPrintError(null);
+    if (!filters.id_mention) {
+      setPrintError("Veuillez sélectionner une mention.");
+      return;
+    }
+    setPrintingCardsBack(true);
+    try {
+      const result = await printStudentCards({
+        mentionId: filters.id_mention,
+        academicYearId: filters.id_year || undefined,
+        side: "tails"
+      });
+      const url = resolveAssetUrl(result.url || result.path);
+      if (!url) {
+        throw new Error("Impossible de générer les cartes.");
+      }
+      const opened = window.open(url, "_blank");
+      if (!opened) {
+        throw new Error(
+          "Impossible d'ouvrir la fenêtre d'impression. Vérifiez le bloqueur de popups."
+        );
+      }
+    } catch (error) {
+      setPrintError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de générer les cartes."
+      );
+    } finally {
+      setPrintingCardsBack(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -766,8 +872,29 @@ export const ReinscriptionPage = () => {
           <Button size="sm" onClick={handleCreateStudent}>
             Create student
           </Button>
-          <Button size="sm" variant="secondary">
-            Export report
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handlePrintList}
+            disabled={printingList || !filters.id_year}
+          >
+            {printingList ? "Preparing..." : "Print list"}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handlePrintCards}
+            disabled={printingCards || !filters.id_mention}
+          >
+            {printingCards ? "Preparing..." : "Print cards (front)"}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handlePrintCardsBack}
+            disabled={printingCardsBack || !filters.id_mention}
+          >
+            {printingCardsBack ? "Preparing..." : "Print cards (back)"}
           </Button>
         </div>
       </div>
@@ -837,6 +964,9 @@ export const ReinscriptionPage = () => {
         />
         {deleteError ? (
           <p className="text-sm text-destructive">{deleteError}</p>
+        ) : null}
+        {printError ? (
+          <p className="text-sm text-destructive">{printError}</p>
         ) : null}
       </div>
 
