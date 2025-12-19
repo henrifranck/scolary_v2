@@ -221,3 +221,10 @@ from .payement import (
   PayementUpdate,  
   ResponsePayement
 )
+
+from .file_asset import (
+  FileAsset,
+  ResponseFileAsset,
+  FileAssetUpdate,
+  FileAssetCreate
+)

@@ -13,7 +13,15 @@ class FileAsset(Base):
   id = Column(Integer, primary_key=True, index=True)
   name = Column(String(255), nullable=False)
   path = Column(String(512), nullable=False, unique=True)
-  type = Column(Enum(FileTypeEnum), nullable=False, default=FileTypeEnum.OTHER)
+  type = Column(
+    Enum(
+      FileTypeEnum,
+      values_callable=lambda enum: [entry.value for entry in enum],
+      name="filetypeenum",
+    ),
+    nullable=False,
+    default=FileTypeEnum.OTHER,
+  )
   size_bytes = Column(BigInteger, nullable=True)
   mime_type = Column(String(255), nullable=True)
   uploaded_by_id = Column(Integer, ForeignKey("user.id"), nullable=True)
