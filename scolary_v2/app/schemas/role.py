@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 class RoleBase(BaseModel):
     name: Optional[str] = None
     permission_ids: List[int] = None
+    use_for_card: Optional[bool] = False
 
 
 class RoleCreate(RoleBase):
@@ -29,15 +30,16 @@ class RoleInDBBase(RoleBase):
 
 
 class Role(RoleInDBBase):
-    pass
+    use_for_card: Optional[bool] = False
 
 
 class RoleWithRelation(RoleInDBBase):
     role_permission: Optional[List[Any]] = None
+    use_for_card: Optional[bool] = False
 
 
 class RoleInDB(RoleInDBBase):
-    pass
+    use_for_card: Optional[bool] = False
 
 
 class ResponseRole(BaseModel):

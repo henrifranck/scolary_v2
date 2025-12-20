@@ -1,4 +1,6 @@
 from typing import Any
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -64,6 +66,30 @@ def update_university(
     university = crud.university.get(db=db, id=university_id)
     if not university:
         raise HTTPException(status_code=404, detail='University not found')
+
+    def _delete_file_if_exists(path_value: str):
+        if not path_value:
+            return
+        normalized = path_value.lstrip('/')
+        if normalized.startswith('../'):
+            normalized = normalized.replace('../', '', 1)
+        if normalized.startswith('files/'):
+            normalized = normalized[len('files/'):]
+        candidate = Path('files') / normalized
+        try:
+            if candidate.exists():
+                candidate.unlink()
+        except Exception:
+            # Best-effort cleanup; ignore errors to not block update
+            pass
+
+    if university_in.logo_university and university.logo_university and university.logo_university != university_in.logo_university:
+        _delete_file_if_exists(university.logo_university)
+    if university_in.logo_departement and university.logo_departement and university.logo_departement != university_in.logo_departement:
+        _delete_file_if_exists(university.logo_departement)
+    if university_in.admin_signature and university.admin_signature and university.admin_signature != university_in.admin_signature:
+        _delete_file_if_exists(university.admin_signature)
+
     university = crud.university.update(db=db, db_obj=university, obj_in=university_in)
     return university
 

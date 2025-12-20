@@ -29,15 +29,18 @@ import { usePermissions } from "../../../services/permission-service";
 type RoleFormValues = {
   name: string;
   permissionIds: string[];
+  useForCard: boolean;
 };
 
 const defaultFormValues: RoleFormValues = {
   name: "",
-  permissionIds: []
+  permissionIds: [],
+  useForCard: false
 };
 
 const toFormValues = (role?: Role | null): RoleFormValues => ({
   name: role?.name ?? "",
+  useForCard: Boolean(role?.use_for_card),
   permissionIds: (() => {
     if (!role) {
       return [];
@@ -74,7 +77,8 @@ const toPayload = (values: RoleFormValues): RolePayload => {
 
   return {
     name: values.name.trim(),
-    permission_ids: Array.from(new Set(permissionIds))
+    permission_ids: Array.from(new Set(permissionIds)),
+    use_for_card: values.useForCard
   };
 };
 
@@ -201,6 +205,22 @@ const RoleForm = ({
         {permissionSelectionError ? (
           <p className="text-xs text-destructive">{permissionSelectionError}</p>
         ) : null}
+      </div>
+      <div className="flex items-start gap-3 rounded-md border border-input px-3 py-2">
+        <input
+          id="role-use-for-card"
+          type="checkbox"
+          className="mt-1 h-4 w-4 rounded border border-input text-primary"
+          {...register("useForCard")}
+        />
+        <div className="space-y-1">
+          <label className="text-sm font-medium" htmlFor="role-use-for-card">
+            Use this role as card signer
+          </label>
+          <p className="text-xs text-muted-foreground">
+            First active user with this role will be shown as signer on generated cards.
+          </p>
+        </div>
       </div>
       <div className="flex items-center justify-end gap-2">
         <Button
@@ -402,6 +422,15 @@ export const RolesPage = () => {
         header: "Role",
         cell: ({ row }) => (
           <span className="font-medium">{row.original.name}</span>
+        )
+      },
+      {
+        id: "card-signer",
+        header: "Card signer",
+        cell: ({ row }) => (
+          <span className="text-sm">
+            {row.original.use_for_card ? "Yes" : "No"}
+          </span>
         )
       },
       {

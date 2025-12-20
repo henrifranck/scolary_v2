@@ -154,7 +154,9 @@ from .student import (
   StudentCreate,  
   StudentUpdate,  
   ResponseStudent,
-  StudentWithRelation
+  StudentWithRelation,
+  StudentCard,
+  StudentCardNumber
 )
 from .constituent_element_optional_group import ( 
   ConstituentElementOptionalGroup,  

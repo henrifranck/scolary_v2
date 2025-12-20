@@ -14,6 +14,7 @@ import { SubjectsPage } from './pages/admin/subjects/subjects-page';
 import { MentionsPage } from './pages/admin/mentions/mentions-page';
 import { JourneysPage } from './pages/admin/journeys/journeys-page';
 import { PermissionsPage } from './pages/admin/permissions/permissions-page';
+import { UniversityInfoPage } from './pages/admin/university-info-page';
 import { TeachingUnitPage } from './pages/admin/teaching-unit-page';
 import { ConstituentElementsPage } from './pages/admin/constituent-elements-page';
 import { GroupsPage } from './pages/admin/groups-page';
@@ -116,6 +117,11 @@ const permissionsRoute = createRoute({
   component: PermissionsPage
 });
 
+const universityInfoRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'university-info',
+  component: UniversityInfoPage
+});
 
 const filesRoute = createRoute({
   getParentRoute: () => adminRoute,
@@ -210,7 +216,8 @@ const routeTree = rootRoute.addChildren([
     permissionsRoute,
     teachingUnitRoute,
     constituentElementsRoute,
-    groupsRoute
+    groupsRoute,
+    universityInfoRoute
   ]),
   authRoute.addChildren([loginRoute])
 ]);

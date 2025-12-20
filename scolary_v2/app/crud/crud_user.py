@@ -10,6 +10,7 @@ from app.crud.base import CRUDBase
 from app.models.user import User
 from app.models.user_role import UserRole
 from app.models.user_mention import UserMention
+from app.models.role import Role
 from app.schemas.user import UserCreate, UserUpdate
 
 from app.core.security import get_password_hash, verify_password
@@ -35,6 +36,26 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         if not verify_password(password, user.hashed_password):
             return None
         return user
+
+    def get_card_signer(self, db: Session) -> Optional[User]:
+        """Return the first active user whose role is marked use_for_card."""
+        user = (
+            db.query(User)
+            .join(UserRole, UserRole.id_user == User.id)
+            .join(Role, Role.id == UserRole.id_role)
+            .filter(Role.use_for_card == True, User.is_active == True)  # noqa
+            .order_by(User.id.asc())
+            .first()
+        )
+        if user:
+            return user
+        # Fallback: first superuser if no card role is defined
+        return (
+            db.query(User)
+            .filter(User.is_superuser == True, User.is_active == True)  # noqa
+            .order_by(User.id.asc())
+            .first()
+        )
 
     def _normalize_relation_ids(self, ids: Optional[List[int]]) -> List[int]:
         if not ids:

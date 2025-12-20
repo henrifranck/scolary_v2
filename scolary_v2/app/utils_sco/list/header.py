@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from app.pdf.PDFMark import PDFMark as FPDF
 from app.db.session import SessionLocal
@@ -13,11 +14,20 @@ def header(pdf: FPDF, orientation: str = "P"):
     if not university:
         db.close()
         return
-    file = f"files/image"
-    logo_univ = f"{file}/{university.logo_univ}"
-    logo_univ = logo_univ if os.path.exists(logo_univ) else "images/no_image.png"
-    logo_depart = f"{file}/{university.logo_depart}"
-    logo_depart = logo_depart if os.path.exists(logo_depart) else "images/no_image.png"
+
+    def build_asset_path(raw: str) -> str:
+        if not raw:
+            return "images/no_image.png"
+        cleaned = str(raw).lstrip("/")
+        if cleaned.startswith("../"):
+            cleaned = cleaned.replace("../", "", 1)
+        if cleaned.startswith("files/"):
+            cleaned = cleaned[len("files/"):]
+        candidate = Path("files") / cleaned
+        return candidate.as_posix() if candidate.exists() else "images/no_image.png"
+
+    logo_univ = build_asset_path(university.logo_university)
+    logo_depart = build_asset_path(university.logo_departement)
 
     apostroth = "'"
     titre4 = f"Université d{'e ' if not is_begin_with_vowel(str(university.province)) else apostroth}{str(university.province).capitalize()} \n"

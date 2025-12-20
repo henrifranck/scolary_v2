@@ -118,4 +118,19 @@ class ResponseStudent(BaseModel):
 
 # begin #
 # ---write your code here--- #
+class StudentCard(BaseModel):
+    num_carte: str
+    last_name: str
+    first_name: str
+    date_birth: datetime
+    place_birth: str
+    num_cin: Optional[str] = None
+    date_cin: Optional[datetime] = None
+    place_cin: Optional[str] = None
+    level: str
+    journey: str
+
+
+class StudentCardNumber(BaseModel):
+    num_carte: Optional[List[str]]
 # end #

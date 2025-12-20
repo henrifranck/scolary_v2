@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Any
 
 import qrcode
@@ -17,14 +18,21 @@ def create_carte(
 ):
     center_x = pdf.w / 2
     pdf.add_font("alger", "", "font/Algerian.ttf", uni=True)
-    file = f"files/image"
-    logo_univ = f"{file}/{university.logo_univ}"
-    logo_univ = logo_univ if os.path.exists(logo_univ) else "images/no_image.png"
-    logo_depart = f"{file}/{university.logo_depart}"
-    logo_depart = logo_depart if os.path.exists(logo_depart) else "images/no_image.png"
 
-    signature = f"{file}/signature.png"
-    signature = signature if os.path.exists(signature) else "images/no_image.png"
+    def build_asset_path(raw: str, default: str = "images/no_image.png") -> str:
+        if not raw:
+            return default
+        cleaned = str(raw).lstrip("/")
+        if cleaned.startswith("../"):
+            cleaned = cleaned.replace("../", "", 1)
+        if cleaned.startswith("files/"):
+            cleaned = cleaned[len("files/") :]
+        candidate = Path("files") / cleaned
+        return candidate.as_posix() if candidate.exists() else default
+
+    logo_univ = build_asset_path(getattr(university, "logo_university", getattr(university, "logo_univ", "")))
+    logo_depart = build_asset_path(getattr(university, "logo_departement", getattr(university, "logo_depart", "")))
+    signature = build_asset_path(getattr(university, "admin_signature", ""))
     apostroth = "'"
     titre_1 = f"Université d{'e ' if not is_begin_with_vowel(str(university.province)) else apostroth}{str(university.province).capitalize()} \n"
     titre_1 += f"{university.department_name} \n"
@@ -44,13 +52,16 @@ def create_carte(
     while i < len(deux_et):
         level = get_level_and_journey(deux_et[i]['student_year'])
         num_carte = f"{deux_et[i]['num_carte']}"
-        background = f"files/mention/{deux_et[i]['mention']['background_image']}"
-        background = (
-            background if os.path.exists(background) else f"images/ma_avant.jpg"
-        )
-        profile = f"files/photos/{deux_et[i]['photo']}"
 
-        image = profile if os.path.exists(profile) else f"images/profil.png"
+        raw_background = deux_et[i]['mention']['background_image']
+        background = build_asset_path(raw_background, default="")
+        if background == "" or background == "images/no_image.png":
+            # Try explicit mention folder before falling back
+            candidate = Path("files") / "mention" / str(raw_background).lstrip("/")
+            background = candidate.as_posix() if candidate.exists() else "images/ma_avant.jpg"
+
+        profile = build_asset_path(deux_et[i].get('photo', ''), default="images/profil.png")
+        image = profile if os.path.exists(profile) else "images/profil.png"
         info = f"Nom: {clear_name(deux_et[i]['last_name'], 23).upper()}\n"
         info += f"Prénom: {clear_name(deux_et[i]['first_name'], 25).title()}\n"
         info += (
@@ -65,13 +76,11 @@ def create_carte(
         info_ += f"Mention: {deux_et[i]['mention']['title']}\n"
 
         data_et = [deux_et[i]["num_carte"], data["key"]]
-        #
-        # if {deux_et[i]['num_cin']}:
-        #     info_ += f"CIN {deux_et[i]['num_cin']} "
-        #     info_ += f"du {deux_et[i]['date_cin']} \n "
-        #     info_ += f"à {deux_et[i]['lieu_cin']} \n "
-
+        qr_dir = Path("files/qr_codes")
+        qr_dir.mkdir(parents=True, exist_ok=True)
+        qr_path = qr_dir / f"qr_{deux_et[i]['num_carte']}.png"
         qr = qrcode.make(f"{data_et}")
+        qr.save(qr_path, format="PNG")
 
         pdf.set_font("Times", "", 8.0)
 
@@ -209,8 +218,8 @@ def create_carte(
                 absci + pos_init_x - pas + 2.15 * value,
                 pos_init_y + ordon + 1.85 * value,
             )
-        # pdf.cell(1, 0.15, txt=num_carte, ln=1, align="C")
-        pdf.image(qr.get_image(), w=0.6 * value, h=0.6 * value)
+        if os.path.exists(qr_path):
+            pdf.image(qr_path.as_posix(), w=0.6 * value, h=0.6 * value)
 
         pdf.set_font("Times", "BI", 9)
         if i == 0:

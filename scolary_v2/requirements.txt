@@ -16,3 +16,6 @@ pydantic-settings==2.2.1
 python-jose[extras,cryptography]
 pymysql==1.1.0
 qrcode
+pytz==2024.1
+requests==2.32.3
+httpx==0.24.1

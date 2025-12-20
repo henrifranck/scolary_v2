@@ -39,6 +39,9 @@ from app.api.api_v1.endpoints import teaching_unit_offerings
 from app.api.api_v1.endpoints import universitys
 from app.api.api_v1.endpoints import payements
 from app.api.api_v1.endpoints import files
+from app.api.api_v1.endpoints import pdfs
+from app.api.api_v1.endpoints import liste
+from app.api.api_v1.endpoints import carte
 
 api_router = APIRouter()
 api_router.include_router(classrooms.router, prefix="/classrooms", tags=["classrooms"])
@@ -84,6 +87,9 @@ api_router.include_router(constituent_element_offerings.router, prefix="/constit
 api_router.include_router(teaching_unit_offerings.router, prefix="/teaching_unit_offerings", tags=["teaching_unit_offerings"])
 
 api_router.include_router(students.router, prefix="/students", tags=["students"])
+api_router.include_router(pdfs.router, prefix="/pdf", tags=["pdf"])
+api_router.include_router(liste.router, prefix="/liste", tags=["liste"])
+api_router.include_router(carte.router, prefix="/carte", tags=["carte"])
 
 api_router.include_router(constituent_element_optional_groups.router, prefix="/constituent_element_optional_groups",
                           tags=["constituent_element_optional_groups"])

@@ -1,4 +1,6 @@
 import os
+import tempfile
+from pathlib import Path
 from typing import Any
 
 import qrcode
@@ -17,14 +19,32 @@ def create_carte(
 ):
     center_x = pdf.w / 2
     pdf.add_font("alger", "", "font/Algerian.ttf", uni=True)
-    file = f"files/image"
-    logo_univ = f"{file}/{university.logo_univ}"
-    logo_univ = logo_univ if os.path.exists(logo_univ) else "images/no_image.png"
-    logo_depart = f"{file}/{university.logo_depart}"
-    logo_depart = logo_depart if os.path.exists(logo_depart) else "images/no_image.png"
 
-    signature = f"{file}/signature.png"
-    signature = signature if os.path.exists(signature) else "images/no_image.png"
+    def build_asset_path(raw: str) -> str:
+        if not raw:
+            return "images/no_image.png"
+        cleaned = str(raw).lstrip("/")
+        if cleaned.startswith("../"):
+            cleaned = cleaned.replace("../", "", 1)
+        if cleaned.startswith("files/"):
+            cleaned = cleaned[len("files/"):]
+        candidate = Path("files") / cleaned
+        return candidate.as_posix() if candidate.exists() else "images/no_image.png"
+
+    def build_qr_path(num_carte: str, payload: Any) -> str:
+        """Generate a QR code image on disk and return its path."""
+        qr_dir = Path("files/qr_codes")
+        qr_dir.mkdir(parents=True, exist_ok=True)
+        filename = f"qr_{num_carte}.png"
+        target = qr_dir / filename
+        qr_img = qrcode.make(f"{payload}")
+        qr_img.save(target, format="PNG")
+        return target.as_posix()
+
+    logo_univ = build_asset_path(university.logo_university)
+    logo_depart = build_asset_path(university.logo_departement)
+    signature = build_asset_path(university.admin_signature)
+
     apostroth = "'"
     titre_1 = f"Université d{'e ' if not is_begin_with_vowel(str(university.province)) else apostroth}{str(university.province).capitalize()} \n"
     titre_1 += f"{university.department_name} \n"
@@ -44,23 +64,16 @@ def create_carte(
     i = 0
     while i < len(deux_et):
         journey = (
-            deux_et[i]['title'] if len(deux_et[i]['title']) <= 25 else deux_et[i]['abbreviation']
+            deux_et[i]['name'] if len(deux_et[i]['name']) <= 25 else deux_et[i]['abbreviation']
         )
         num_carte = f"{deux_et[i]['num_carte']}"
-        background = f"files/mention/{data['img_carte']}"
-        background = (
-            background if os.path.exists(background) else f"images/ma_avant.jpg"
-        )
+        background = build_asset_path(data.get('img_carte', ''))
+        if background == "images/no_image.png":
+            background = "images/ma_avant.jpg"
+
         photo_value = deux_et[i].get("photo") if isinstance(deux_et[i], dict) else None
-        if photo_value:
-            normalized = str(photo_value).lstrip("/")
-            if normalized.startswith("files/"):
-                profile = normalized
-            else:
-                profile = f"files/photos/{photo_value}"
-        else:
-            profile = ""
-        image = profile if profile and os.path.exists(profile) else f"images/profil.png"
+        profile = build_asset_path(photo_value) if photo_value else "images/profil.png"
+        image = profile if os.path.exists(profile) else "images/profil.png"
         info = f"Nom: {clear_name(deux_et[i]['last_name'], 23).upper()}\n"
         info += f"Prénom: {clear_name(deux_et[i]['first_name'], 25).title()}\n"
         info += (
@@ -81,7 +94,7 @@ def create_carte(
         info_ += f"Mention: {data['mention']}\n"
 
         data_et = [deux_et[i]["num_carte"], data["key"]]
-        qr = qrcode.make(f"{data_et}")
+        qr_path = build_qr_path(deux_et[i]["num_carte"], data_et)
 
         pdf.set_font("Times", "", 8.0)
 
@@ -159,7 +172,13 @@ def create_carte(
 
         pdf.set_font("Times", "B", 14.0)
         pdf.set_xy(pos_x + absci + 2.15 * value, pos_init_y + ordon + 1.85 * value)
-        pdf.image(qr.get_image(), w=0.6 * value, h=0.6 * value)
+        qr_dir = Path("files/qr_codes")
+        qr_dir.mkdir(parents=True, exist_ok=True)
+        qr_path = qr_dir / f"qr_{deux_et[i]['num_carte']}.png"
+        qr = qrcode.make(f"{data_et}")
+        qr.save(qr_path, format="PNG")
+        if os.path.exists(qr_path):
+            pdf.image(qr_path, w=0.6 * value, h=0.6 * value)
 
         pdf.set_font("Times", "BI", 9)
         pdf.set_xy(pos_x + absci + 1.9 * value, pos_init_y + ordon + 0.36 * value)
@@ -167,7 +186,6 @@ def create_carte(
 
         i = i + 1
 
-        print(f"Card {i}: pos_x = {pos_x}, absci = {absci}, ordon = {ordon}")
 
 
 def boucle_carte(pdf, huit_student: list, data: Any, university):

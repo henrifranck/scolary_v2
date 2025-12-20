@@ -46,6 +46,7 @@ import {
   printStudentCards,
   printStudentsList
 } from "@/services/print-service";
+import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -152,6 +153,15 @@ const InfoItem = ({ label, value }: { label: string; value?: string }) => (
     </p>
   </div>
 );
+
+const semesterToLevel = (semester?: string) => {
+  const num = Number(String(semester ?? "").replace(/\D/g, ""));
+  if (num <= 2) return "L1";
+  if (num <= 4) return "L2";
+  if (num <= 6) return "L3";
+  if (num <= 8) return "M1";
+  return "M2";
+};
 
 export const ReinscriptionPage = () => {
   const defaultSemester = semesters[0] ?? "";
@@ -415,6 +425,11 @@ export const ReinscriptionPage = () => {
   const [printingList, setPrintingList] = useState(false);
   const [printingCards, setPrintingCards] = useState(false);
   const [printingCardsBack, setPrintingCardsBack] = useState(false);
+  const [pdfViewer, setPdfViewer] = useState<{
+    open: boolean;
+    url?: string;
+    title?: string;
+  }>({ open: false });
 
   const selectedMentionLabel = useMemo(() => {
     if (!formState.mentionId) {
@@ -760,23 +775,28 @@ export const ReinscriptionPage = () => {
 
   const handlePrintList = async () => {
     setPrintError(null);
-    if (!filters.id_year) {
-      setPrintError("Veuillez sélectionner une année universitaire.");
+    if (!filters.id_year || !filters.semester || !filters.id_journey) {
+      setPrintError(
+        "Veuillez sélectionner une année universitaire, un semestre et un parcours."
+      );
       return;
     }
     setPrintingList(true);
     try {
-      const result = await printStudentsList(filters.id_year);
+      const result = await printStudentsList({
+        idYear: filters.id_year,
+        semester: filters.semester,
+        journeyId: filters.id_journey
+      });
       const url = resolveAssetUrl(result.url || result.path);
       if (!url) {
         throw new Error("Impossible de générer la liste.");
       }
-      const opened = window.open(url, "_blank");
-      if (!opened) {
-        throw new Error(
-          "Impossible d'ouvrir la fenêtre d'impression. Vérifiez le bloqueur de popups."
-        );
-      }
+      setPdfViewer({
+        open: true,
+        url,
+        title: "Liste des étudiants inscrits"
+      });
     } catch (error) {
       setPrintError(
         error instanceof Error
@@ -790,27 +810,28 @@ export const ReinscriptionPage = () => {
 
   const handlePrintCards = async () => {
     setPrintError(null);
-    if (!filters.id_mention) {
-      setPrintError("Veuillez sélectionner une mention.");
+    if (!filters.id_mention || !filters.id_year) {
+      setPrintError("Veuillez sélectionner une mention et une année.");
       return;
     }
     setPrintingCards(true);
     try {
-      const result = await printStudentCards({
+      const responses = await printStudentCards({
         mentionId: filters.id_mention,
-        academicYearId: filters.id_year || undefined,
-        side: "heads"
+        academicYearId: filters.id_year,
+        journeyId: filters.id_journey || undefined,
+        level: semesterToLevel(filters.semester)
       });
-      const url = resolveAssetUrl(result.url || result.path);
+      const result = Array.isArray(responses) ? responses[0] : undefined;
+      const url = resolveAssetUrl(result?.url || result?.path);
       if (!url) {
         throw new Error("Impossible de générer les cartes.");
       }
-      const opened = window.open(url, "_blank");
-      if (!opened) {
-        throw new Error(
-          "Impossible d'ouvrir la fenêtre d'impression. Vérifiez le bloqueur de popups."
-        );
-      }
+      setPdfViewer({
+        open: true,
+        url,
+        title: "Cartes étudiant - recto"
+      });
     } catch (error) {
       setPrintError(
         error instanceof Error
@@ -824,27 +845,28 @@ export const ReinscriptionPage = () => {
 
   const handlePrintCardsBack = async () => {
     setPrintError(null);
-    if (!filters.id_mention) {
-      setPrintError("Veuillez sélectionner une mention.");
+    if (!filters.id_mention || !filters.id_year) {
+      setPrintError("Veuillez sélectionner une mention et une année.");
       return;
     }
     setPrintingCardsBack(true);
     try {
-      const result = await printStudentCards({
+      const responses = await printStudentCards({
         mentionId: filters.id_mention,
-        academicYearId: filters.id_year || undefined,
-        side: "tails"
+        academicYearId: filters.id_year,
+        journeyId: filters.id_journey || undefined,
+        level: semesterToLevel(filters.semester)
       });
-      const url = resolveAssetUrl(result.url || result.path);
+      const result = Array.isArray(responses) ? responses[1] : undefined;
+      const url = resolveAssetUrl(result?.url || result?.path);
       if (!url) {
         throw new Error("Impossible de générer les cartes.");
       }
-      const opened = window.open(url, "_blank");
-      if (!opened) {
-        throw new Error(
-          "Impossible d'ouvrir la fenêtre d'impression. Vérifiez le bloqueur de popups."
-        );
-      }
+      setPdfViewer({
+        open: true,
+        url,
+        title: "Cartes étudiant - verso"
+      });
     } catch (error) {
       setPrintError(
         error instanceof Error
@@ -969,6 +991,13 @@ export const ReinscriptionPage = () => {
           <p className="text-sm text-destructive">{printError}</p>
         ) : null}
       </div>
+
+      <PdfViewerModal
+        open={pdfViewer.open}
+        url={pdfViewer.url}
+        title={pdfViewer.title}
+        onOpenChange={(open) => setPdfViewer((prev) => ({ ...prev, open }))}
+      />
 
       <Dialog open={searchModalOpen} onOpenChange={setSearchModalOpen}>
         <DialogContent className="sm:max-w-2xl h-[70vh] max-h-[70vh] overflow-hidden p-0 flex flex-col min-h-0">

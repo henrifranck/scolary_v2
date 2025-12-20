@@ -14,8 +14,11 @@ class CRUDUniversity(CRUDBase[University, UniversityCreate, UniversityUpdate]):
     def get_by_field(self, db: Session, *, field: str, value: Any) -> Optional[University]:
         return db.query(University).filter(getattr(University, field) == value).first()
 
-university = CRUDUniversity(University)
+    def get_info(self, db: Session) -> Optional[University]:
+        return db.query(University).first()
 
+
+university = CRUDUniversity(University)
 
 # begin #
 # ---write your code here--- #

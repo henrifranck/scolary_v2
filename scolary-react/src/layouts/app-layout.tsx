@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   FileSignature,
+  Building2,
   FolderOpen,
   GraduationCap,
   HardDrive,
@@ -101,6 +102,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         items: [
           { to: '/admin/mentions', label: 'Mentions', icon: Waypoints, roles: ['admin'] },
           { to: '/admin/journeys', label: 'Journeys', icon: Route, roles: ['admin'] },
+          { to: '/admin/university-info', label: 'University info', icon: Building2, roles: ['admin'] },
           { to: '/admin/files', label: 'File manager', icon: HardDrive, roles: ['admin'] }
         ]
       },

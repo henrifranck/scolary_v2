@@ -19,6 +19,27 @@ class UniversityBase(BaseModel):
     phone_number: Optional[str] = None
     admin_signature: Optional[str] = None
 
+    @staticmethod
+    def _normalize_asset_path(value: Optional[str]) -> Optional[str]:
+        if value is None or value == "":
+            return value
+
+        normalized = str(value).strip()
+        normalized = normalized.lstrip("/")
+
+        if normalized.startswith("../"):
+            return normalized
+
+        if normalized.startswith("files/"):
+            normalized = normalized[len("files/"):]
+
+        return f"../{normalized}"
+
+    @field_validator("logo_university", "logo_departement", "admin_signature", mode="before")
+    @classmethod
+    def normalize_logo_paths(cls, value: Optional[str]) -> Optional[str]:
+        return cls._normalize_asset_path(value)
+
 
 class UniversityCreate(UniversityBase):
     province: str
