@@ -76,6 +76,13 @@ export const studentInformationBaccalaureate: FormItemComponentType = {
       inputType: "text",
       formKey: "baccalaureateCenter",
       placeHolder: "Centre d'examen"
+    },
+    {
+      label: "Téléphone",
+      type: "input",
+      inputType: "text",
+      formKey: "phoneNumber",
+      placeHolder: "Numéro de téléphone"
     }
   ],
   key: "baccalaureate",
@@ -127,10 +134,11 @@ export const studentInformationRegistration: FormItemComponentType = {
       inputType: "text",
       formKey: "enrollmentStatus",
       options: [
-        { value: "En attente", label: "En attente" },
-        { value: "Sélectionné(e)", label: "Sélectionné(e)" },
-        { value: "Inscrit(e)", label: "Inscrit(e)" },
-        { value: "ancien(ne)", label: "Ancien(ne)" }
+        { value: "pending", label: "En attente" },
+        { value: "selected", label: "Sélectionné(e)" },
+        { value: "rejected", label: "Rejeté(e)" },
+        { value: "registered", label: "Inscrit(e)" },
+        { value: "former", label: "Ancien(ne)" }
       ],
       placeHolder: "En attente / Sélectionné(e) / Inscrit(e)"
     }

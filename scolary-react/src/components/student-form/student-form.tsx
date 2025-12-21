@@ -2,7 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { fetchStudentByCardNumber } from "@/services/student-service";
 import { Check, Pencil, Layers } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,6 +35,33 @@ import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { MentionOption } from "@/components/filters/academic-filters";
 
 type dialogMode = "edit" | "create";
+
+const formatMadagascarPhone = (raw: string) => {
+  const digitsOnly = raw.replace(/\D/g, "");
+  let local = digitsOnly;
+  if (local.startsWith("261")) {
+    local = local.slice(3);
+  }
+  if (local.startsWith("0")) {
+    local = local.slice(1);
+  }
+  local = local.slice(0, 9);
+  if (local && local[0] !== "3") {
+    local = `3${local.slice(1)}`;
+  }
+  const groups = [2, 2, 3, 2];
+  const parts: string[] = [];
+  let index = 0;
+  groups.forEach((len) => {
+    if (index >= local.length) {
+      return;
+    }
+    const part = local.slice(index, index + len);
+    parts.push(part);
+    index += len;
+  });
+  return `+261 ${parts.join(" ")}`.trim();
+};
 
 const createEditingSectionsState = (): Record<EditableSection, boolean> => ({
   contact: false,
@@ -64,9 +97,9 @@ export const StudentForm = ({
 }: StudentFormProps) => {
   const lastLookupKeyRef = useRef<string>("");
   const [studentLookupLoading, setStudentLookupLoading] = useState(false);
-  const [annualRegister, setAnnualRegister] = useState<
-    StudentAnnualProps[]
-  >([]);
+  const [annualRegister, setAnnualRegister] = useState<StudentAnnualProps[]>(
+    []
+  );
   const [studentLookupError, setStudentLookupError] = useState<string | null>(
     null
   );
@@ -97,9 +130,11 @@ export const StudentForm = ({
 
   const handleFormChange = useCallback(
     (key: keyof StudentFormState, value: string) => {
+      const nextValue =
+        key === "phoneNumber" ? formatMadagascarPhone(value) : value;
       setFormState((previous: any) => ({
         ...previous,
-        [key]: value
+        [key]: nextValue
       }));
 
       if (key === "cardNumber") {
@@ -139,20 +174,20 @@ export const StudentForm = ({
         lastName: student.last_name ?? previous.lastName,
         email: student.email ?? previous.email,
         address: student.address ?? previous.address,
+        phoneNumber: student.phone_number ?? previous.phoneNumber,
         sex: student.sex ?? previous.sex,
         maritalStatus: student.martial_status ?? previous.maritalStatus,
-        baccalaureateNumber: student.num_of_baccalaureate ?? previous.baccalaureateNumber,
-        baccalaureateCenter: student.center_of_baccalaureate ?? previous.baccalaureateCenter,
+        baccalaureateNumber:
+          student.num_of_baccalaureate ?? previous.baccalaureateNumber,
+        baccalaureateCenter:
+          student.center_of_baccalaureate ?? previous.baccalaureateCenter,
         job: student.job ?? previous.job,
         cinNumber: student.num_of_cin ?? student.num_cin ?? previous.cinNumber,
         cinIssueDate: student.date_of_cin ?? previous.cinIssueDate,
         cinIssuePlace: student.place_of_cin ?? previous.cinIssuePlace,
         birthDate: student.date_of_birth ?? previous.birthDate,
         birthPlace: student.place_of_birth ?? previous.birthPlace,
-        picture:
-          student.picture ??
-          student.photo_url ??
-          previous.picture,
+        picture: student.picture ?? student.photo_url ?? previous.picture,
         pictureFile: null,
         mentionId: resolvedMentionId
           ? String(resolvedMentionId)
@@ -302,7 +337,8 @@ export const StudentForm = ({
                     type="button"
                     onClick={() => handleStudentLookup(true)}
                     disabled={
-                      studentLookupLoading || !formState.cardNumber.trim().length
+                      studentLookupLoading ||
+                      !formState.cardNumber.trim().length
                     }
                   >
                     {studentLookupLoading ? "Recherche..." : "Rechercher"}
@@ -313,7 +349,9 @@ export const StudentForm = ({
                   enregistrées dans la base.
                 </p>
                 {studentLookupError && (
-                  <p className="text-sm text-destructive">{studentLookupError}</p>
+                  <p className="text-sm text-destructive">
+                    {studentLookupError}
+                  </p>
                 )}
               </div>
             )}
@@ -390,7 +428,10 @@ export const StudentForm = ({
                       label="Nom complet"
                       value={`${formState.lastName} ${formState.firstName}`}
                     />
-                    <StudentFormInfoItem label="Email" value={formState.email} />
+                    <StudentFormInfoItem
+                      label="Email"
+                      value={formState.email}
+                    />
                   </>
                 )}
               </div>
@@ -405,7 +446,9 @@ export const StudentForm = ({
                     <div className="relative h-24 w-24">
                       {picturePreview || formState.picture ? (
                         <img
-                          src={picturePreview ?? resolveAssetUrl(formState.picture)}
+                          src={
+                            picturePreview ?? resolveAssetUrl(formState.picture)
+                          }
                           alt="Photo étudiant"
                           className="h-24 w-24 rounded-full border object-cover"
                         />
@@ -437,7 +480,7 @@ export const StudentForm = ({
 
           <div className="grid gap-6 lg:grid-cols-2">
             <StudentFormItem
-              name={"Informations sur le baccalauréat"}
+              name={"Informations sur le baccalauréat et Téléphone"}
               editingSections={editingSections}
               setEditingSections={setEditingSections}
               handleFormChange={handleFormChange}
@@ -476,7 +519,9 @@ export const StudentForm = ({
                 </div>
                 <Select
                   value={formState.mentionId}
-                  onValueChange={(value) => handleFormChange("mentionId", value)}
+                  onValueChange={(value) =>
+                    handleFormChange("mentionId", value)
+                  }
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="Sélectionner la mention" />

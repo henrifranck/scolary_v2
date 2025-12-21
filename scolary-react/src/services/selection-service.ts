@@ -6,7 +6,12 @@ import { ApiListResponse } from "@/pages/user/reinscription/reinscription-form-t
 import { isListResponse, normalizeList } from "./utils-common";
 import { Mention } from "./mention-service";
 
-export type SelectionStatus = "Pending" | "Rejected" | "Selected";
+export type SelectionStatus =
+  | "Pending"
+  | "Rejected"
+  | "Selected"
+  | "Registered"
+  | "Former";
 
 export interface SelectionStudent {
   id: string;
@@ -17,9 +22,10 @@ export interface SelectionStudent {
   lastName: string;
   mentionId: string;
   mentionLabel: string;
-  status: SelectionStatus;
+  enrollment_status: SelectionStatus;
   lastUpdate: string;
   deletedAt?: string;
+  phoneNumber?: string;
   annualRegister?: any;
 }
 
@@ -54,7 +60,7 @@ type ApiSelectionStudent = {
   num_carte?: string;
   first_name?: string | null;
   last_name?: string | null;
-  status?: string | null;
+  enrollment_status?: string | null;
   id_mention?: number | string | null;
   annual_register?: ApiAnnualRegister[];
   photo_url?: string | null;
@@ -64,6 +70,7 @@ type ApiSelectionStudent = {
   updated_at?: string | null;
   last_update?: string | null;
   mention: Mention;
+  phone_number?: string;
 };
 
 const resolveStatus = (raw?: string | null): SelectionStatus => {
@@ -74,9 +81,12 @@ const resolveStatus = (raw?: string | null): SelectionStatus => {
   const normalized = raw.replace(/_/g, " ").toLowerCase();
   if (normalized.includes("selected")) {
     return "Selected";
-  }
-  if (normalized.includes("rejected")) {
+  } else if (normalized.includes("rejected")) {
     return "Rejected";
+  } else if (normalized.includes("registered")) {
+    return "Registered";
+  } else if (normalized.includes("former")) {
+    return "Former";
   }
 
   return "Pending";
@@ -95,16 +105,18 @@ const normalizeStudent = (student: ApiSelectionStudent): SelectionStudent => {
   const firstName = student.first_name ?? "";
   const lastName = student.last_name ?? "";
   const mentionLabel = student.mention?.name;
+  const phoneNumber = student.phone_number;
   return {
     id: student.num_carte ?? String(student.id),
     numSelect: student.num_select ?? String(student.id),
     recordId: String(student.id ?? student.num_carte ?? ""),
     fullName: buildFullName(student),
+    phoneNumber: phoneNumber,
     firstName,
     lastName,
     mentionLabel,
     mentionId: String(student.id_mention ?? ""),
-    status: resolveStatus(student.status),
+    enrollment_status: resolveStatus(student.enrollment_status),
     lastUpdate: student.last_update ?? student.updated_at ?? "",
     deletedAt: student.deleted_at ?? ""
   };

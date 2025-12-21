@@ -55,6 +55,7 @@ const createEmptyFormState = (): StudentFormState => ({
   address: "",
   sex: "",
   maritalStatus: "",
+  phoneNumber: "",
   cinNumber: "",
   cinIssueDate: "",
   cinIssuePlace: "",
@@ -93,6 +94,16 @@ const statusStyles: Record<
     text: "text-emerald-600",
     badge: "bg-emerald-100 text-emerald-700",
     dot: "bg-emerald-500"
+  },
+  Registered: {
+    text: "text-blue-600",
+    badge: "bg-blue-100 text-blue-700",
+    dot: "bg-blue-500"
+  },
+  Former: {
+    text: "text-gray-600",
+    badge: "bg-gray-100 text-gray-700",
+    dot: "bg-gray-500"
   }
 };
 
@@ -208,6 +219,7 @@ export const DossierSelectionPage = () => {
           lastName: profile.last_name ?? "",
           email: profile.email ?? "",
           address: profile.address ?? "",
+          phoneNumber: profile.phone_number ?? "",
           sex: profile.sex ?? "",
           maritalStatus: profile.martial_status ?? "",
           cinNumber: profile.num_of_cin ?? profile.num_cin ?? "",
@@ -256,7 +268,7 @@ export const DossierSelectionPage = () => {
   const renderStudentCard = useCallback(
     (row: Row<SelectionStudent>) => {
       const student = row.original;
-      const statusStyle = statusStyles[student.status];
+      const statusStyle = statusStyles[student.enrollment_status];
 
       return (
         <div className="flex h-full flex-col gap-4 rounded-lg border bg-background p-5 shadow-sm">
@@ -278,7 +290,7 @@ export const DossierSelectionPage = () => {
               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${statusStyle.badge}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
-              {student.status}
+              {student.enrollment_status}
             </span>
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -323,11 +335,11 @@ export const DossierSelectionPage = () => {
         )
       },
       {
-        accessorKey: "mentionLabel",
-        header: "Mention",
+        accessorKey: "phoneNumber",
+        header: "Télephone",
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.mentionLabel}
+            {row.original.phoneNumber}
           </span>
         )
       },
@@ -335,7 +347,7 @@ export const DossierSelectionPage = () => {
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => {
-          const value = row.original.status;
+          const value = row.original.enrollment_status;
           const style = statusStyles[value];
           return (
             <span className={`text-xs font-semibold ${style.text}`}>
@@ -406,6 +418,7 @@ export const DossierSelectionPage = () => {
         place_of_cin: formState.cinIssuePlace || undefined,
         date_of_birth: formState.birthDate || undefined,
         place_of_birth: formState.birthPlace || undefined,
+        phone_number: formState.phoneNumber || undefined,
         num_of_baccalaureate: formState.baccalaureateNumber || undefined,
         center_of_baccalaureate: formState.baccalaureateCenter || undefined,
         job: formState.job || undefined,

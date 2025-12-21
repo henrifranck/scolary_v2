@@ -42,10 +42,7 @@ import { StudentForm } from "@/components/student-form/student-form";
 import { StudentFormState } from "@/components/student-form/student-form-types";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import {
-  printStudentCards,
-  printStudentsList
-} from "@/services/print-service";
+import { printStudentCards, printStudentsList } from "@/services/print-service";
 import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
@@ -81,6 +78,7 @@ const createFormState = (
   studentId: "",
   cardNumber: "",
   firstName: "",
+  phoneNumber: "",
   lastName: "",
   email: "",
   address: "",
@@ -420,7 +418,9 @@ export const ReinscriptionPage = () => {
   );
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<ReinscriptionStudent[]>([]);
+  const [searchResults, setSearchResults] = useState<ReinscriptionStudent[]>(
+    []
+  );
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [editingSections, setEditingSections] = useState<
@@ -510,7 +510,9 @@ export const ReinscriptionPage = () => {
     }
     const handleHeaderSearch = (event: Event) => {
       const detail =
-        event instanceof CustomEvent ? (event.detail as { scope?: string; query?: string }) : {};
+        event instanceof CustomEvent
+          ? (event.detail as { scope?: string; query?: string })
+          : {};
       if (detail.scope !== "student") {
         return;
       }

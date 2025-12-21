@@ -21,6 +21,7 @@ export interface StudentUpdatePayload {
   place_of_cin?: string;
   date_of_birth?: string;
   place_of_birth?: string;
+  phone_number?: string;
   sex?: string;
   martial_status?: string;
   num_of_baccalaureate?: string;
@@ -55,6 +56,7 @@ const baseColumn = JSON.stringify([
   "date_of_birth",
   "place_of_birth",
   "address",
+  "phone_number",
   "email",
   "num_of_cin",
   "date_of_cin",

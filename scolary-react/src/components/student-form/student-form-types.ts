@@ -10,6 +10,7 @@ export type StudentFormState = {
   address: string;
   sex: string;
   maritalStatus: string;
+  phoneNumber: string;
   cinNumber: string;
   cinIssueDate: string;
   cinIssuePlace: string;
@@ -93,6 +94,7 @@ export interface StudentProfile {
   last_name?: string | null;
   email?: string | null;
   address?: string | null;
+  phone_number?: string | null;
   sex?: string | null;
   martial_status?: string | null;
   num_of_cin?: string | null;

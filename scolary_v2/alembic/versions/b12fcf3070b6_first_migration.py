@@ -233,7 +233,7 @@ def upgrade() -> None:
     sa.Column('parent_address', sa.Text(), nullable=True),
     sa.Column('level', sa.Enum('L1', 'L2', 'L3', 'M1', 'M2', name='levelenum'), nullable=True),
     sa.Column('mean', sa.Float(), nullable=True),
-    sa.Column('enrollment_status', sa.Enum('pending', 'selected', 'registered', 'former', name='enrollmentstatusenum'), nullable=False),
+    sa.Column('enrollment_status', sa.Enum('pending', 'selected', 'rejected', 'registered', 'former', name='enrollmentstatusenum'), nullable=False),
     sa.Column('imported_id', sa.String(length=255), nullable=True),
     sa.Column('id_mention', sa.Integer(), nullable=True),
     sa.Column('id_enter_year', sa.Integer(), nullable=True),
