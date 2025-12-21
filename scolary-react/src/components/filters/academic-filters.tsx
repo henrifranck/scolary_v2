@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react";
+import { Layers } from "lucide-react";
 
 import { cn } from "../../lib/utils";
 import {
@@ -39,6 +40,11 @@ export interface JourneyOption {
   semesterList?: string[];
 }
 
+export interface LevelOption {
+  label: string;
+  value: string;
+}
+
 export interface AcademicYearOption {
   id: string;
   label: string;
@@ -49,6 +55,7 @@ export interface AcademicFilterValue {
   id_journey: string;
   semester: string;
   id_year: string;
+  level?: string;
 }
 
 const getJourneyMentionId = (journey: JourneyOption) =>
@@ -59,6 +66,7 @@ interface AcademicFiltersProps {
   onChange: (value: AcademicFilterValue) => void;
   mentionOptions?: MentionOption[];
   journeyOptions?: JourneyOption[];
+  levelOptions?: LevelOption[];
   academicYearOptions?: AcademicYearOption[];
   semesters: string[];
   className?: string;
@@ -70,6 +78,7 @@ interface AcademicFiltersProps {
   onCollapsedChange?: (collapsed: boolean) => void;
   showJourney?: boolean;
   showSemester?: boolean;
+  showLevel?: boolean;
 }
 
 export const AcademicFilters = ({
@@ -77,6 +86,7 @@ export const AcademicFilters = ({
   onChange,
   mentionOptions: mentionOptionsProp = [],
   journeyOptions: journeyOptionsProp = [],
+  levelOptions: levelOptionsProp = [],
   academicYearOptions: academicYearOptionsProp = [],
   semesters,
   className,
@@ -87,7 +97,8 @@ export const AcademicFilters = ({
   collapsed: collapsedProp,
   onCollapsedChange,
   showJourney = true,
-  showSemester: showSemesterProp
+  showSemester: showSemesterProp,
+  showLevel = true
 }: AcademicFiltersProps) => {
   const showSemester = showSemesterProp ?? showJourney;
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -140,6 +151,17 @@ export const AcademicFilters = ({
           })),
     [academicYearOptionsProp, fetchedAcademicYears]
   );
+
+  const resolvedLevelOptions: LevelOption[] =
+    levelOptionsProp.length > 0
+      ? levelOptionsProp
+      : [
+          { value: "L1", label: "L1" },
+          { value: "L2", label: "L2" },
+          { value: "L3", label: "L3" },
+          { value: "M1", label: "M1" },
+          { value: "M2", label: "M2" }
+        ];
 
   const shouldFetchJourneys = journeyOptionsProp.length === 0;
   const {
@@ -238,9 +260,7 @@ export const AcademicFilters = ({
     )
       ? value.id_journey
       : "";
-    const nextJourneyId = showJourney
-      ? resolvedJourneyId
-      : "";
+    const nextJourneyId = showJourney ? resolvedJourneyId : "";
     const nextSelectedJourney = nextJourneys.find(
       (journey) => journey.id === nextJourneyId
     );
@@ -313,7 +333,9 @@ export const AcademicFilters = ({
   };
 
   const getSelectedJourneyLabel = () => {
-    return availableJourneys.find((j) => j.id === value.id_journey)?.label || "";
+    return (
+      availableJourneys.find((j) => j.id === value.id_journey)?.label || ""
+    );
   };
 
   const getSelectedYearLabel = () => {
@@ -396,6 +418,12 @@ export const AcademicFilters = ({
                     {getSelectedJourneyLabel()}
                   </Badge>
                 )}
+              {value.level && (
+                <Badge variant="outline" className="gap-1">
+                  <Layers className="h-3 w-3" />
+                  {value.level}
+                </Badge>
+              )}
               {getSelectedYearLabel() && (
                 <Badge variant="outline" className="gap-1">
                   <Calendar className="h-3 w-3" />
@@ -412,7 +440,7 @@ export const AcademicFilters = ({
           )}
 
           {/* Filter controls */}
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-4">
             {/* Mention Selection */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
@@ -470,6 +498,46 @@ export const AcademicFilters = ({
                       <SelectItem value="__no_journey" disabled>
                         No journey available
                       </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Level Selection */}
+            {showLevel && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-medium">Level</label>
+                </div>
+                <Select
+                  value={value.level ?? ""}
+                  onValueChange={(level) =>
+                    onChange({
+                      ...value,
+                      level
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resolvedLevelOptions.length ? (
+                      resolvedLevelOptions.map((level) => (
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value="L1">L1</SelectItem>
+                        <SelectItem value="L2">L2</SelectItem>
+                        <SelectItem value="L3">L3</SelectItem>
+                        <SelectItem value="M1">M1</SelectItem>
+                        <SelectItem value="M2">M2</SelectItem>
+                      </>
                     )}
                   </SelectContent>
                 </Select>

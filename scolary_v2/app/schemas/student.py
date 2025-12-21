@@ -65,7 +65,6 @@ class StudentBase(BaseModel):
         return value
 
 
-
 class StudentCreate(StudentBase):
     num_carte: str
     last_name: str
@@ -78,6 +77,21 @@ class StudentCreate(StudentBase):
     num_of_baccalaureate: str
     center_of_baccalaureate: str
     job: str
+    enrollment_status: EnrollmentStatusEnum
+
+
+class StudentNewCreate(StudentBase):
+    last_name: str
+    date_of_birth: date
+    place_of_birth: str
+    address: str
+    sex: SexEnum
+    martial_status: MaritalStatusEnum
+    num_of_baccalaureate: str
+    center_of_baccalaureate: str
+    job: str
+    level: str
+    id_mention: int
     enrollment_status: EnrollmentStatusEnum
 
 

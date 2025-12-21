@@ -21,13 +21,21 @@ export interface StudentUpdatePayload {
   place_of_cin?: string;
   date_of_birth?: string;
   place_of_birth?: string;
+  sex?: string;
+  martial_status?: string;
+  num_of_baccalaureate?: string;
+  center_of_baccalaureate?: string;
+  job?: string;
+  level?: string;
   picture?: string | null;
   id_mention?: string | number;
   id_journey?: string | number;
   active_semester?: string;
   enrollment_status?: string;
   notes?: string;
+  id_enter_year?: string | number;
 }
+export type StudentCreatePayload = Omit<StudentUpdatePayload, "id">;
 
 const relations = JSON.stringify([
   "annual_register.register_semester",
@@ -50,7 +58,13 @@ const baseColumn = JSON.stringify([
   "email",
   "num_of_cin",
   "date_of_cin",
-  "place_of_cin"
+  "place_of_cin",
+  "sex",
+  "martial_status",
+  "num_of_baccalaureate",
+  "center_of_baccalaureate",
+  "job",
+  "enrollment_status"
 ]);
 
 const buildWhereClause = (cardNumber: string) =>
@@ -113,6 +127,30 @@ export const fetchStudentByCardNumber = async (
   return student;
 };
 
+export const fetchStudentByNumSelect = async (
+  numSelect: string
+): Promise<StudentProfile> => {
+  const trimmed = numSelect.trim();
+  if (!trimmed) {
+    throw new Error("Le numéro de sélection est requis.");
+  }
+
+  const response = await apiRequest<OneStudentApiResponse>("/students/one_student", {
+    query: {
+      relation: relations,
+      base_column: baseColumn,
+      where: JSON.stringify([{ key: "num_select", operator: "==", value: trimmed }])
+    }
+  });
+
+  const student = extractStudent(response);
+  if (!student || (!student.num_select && !student.id)) {
+    throw new Error("Aucun étudiant trouvé avec ce numéro de sélection.");
+  }
+
+  return student;
+};
+
 export const updateStudentProfile = async (
   studentId: string | number,
   payload: StudentUpdatePayload
@@ -123,6 +161,15 @@ export const updateStudentProfile = async (
 
   return apiRequest<StudentProfile>(`/students/${studentId}`, {
     method: "PUT",
+    json: payload
+  });
+};
+
+export const createStudent = async (
+  payload: StudentCreatePayload
+): Promise<StudentProfile> => {
+  return apiRequest<StudentProfile>("/students/", {
+    method: "POST",
     json: payload
   });
 };
@@ -182,7 +229,9 @@ export const hardDeleteStudent = async (
 
 export const studentService = {
   fetchStudentByCardNumber,
+  fetchStudentByNumSelect,
   updateStudentProfile,
+  createStudent,
   uploadStudentPicture,
   softDeleteStudent,
   restoreStudent,

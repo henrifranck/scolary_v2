@@ -1,7 +1,7 @@
 import {
   ApiListResponse,
-  ReinscriptionAnnualProps
-} from "@/pages/user/reinscription/reinscription-form-type";
+  StudentAnnualProps
+} from "@/components/student-form/student-form-types";
 import { apiRequest } from "./api-client";
 
 const relations = JSON.stringify([
@@ -22,7 +22,7 @@ const buildWhereClause = (cardNumber: string) =>
     }
   ]);
 
-type ApiAnnualRegisterPayload = ApiListResponse<ReinscriptionAnnualProps>;
+type ApiAnnualRegisterPayload = ApiListResponse<StudentAnnualProps>;
 
 export type AnnualRegisterPayload = {
   num_carte: string;
@@ -69,8 +69,8 @@ export const fetchAnnualRegisterByCardNumber = async (
 
 export const createAnnualRegister = async (
   payload: AnnualRegisterPayload
-): Promise<ReinscriptionAnnualProps> =>
-  apiRequest<ReinscriptionAnnualProps>("/annual_registers/", {
+): Promise<StudentAnnualProps> =>
+  apiRequest<StudentAnnualProps>("/annual_registers/", {
     method: "POST",
     json: payload
   });

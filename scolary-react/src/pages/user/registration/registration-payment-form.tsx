@@ -12,11 +12,11 @@ import formatRepeatStatus, {
   RepeatStatusEnum
 } from "@/lib/enum/repeat-status-enum";
 import { Check, Pencil, Trash2 } from "lucide-react";
-import { InfoItem } from "../reinscription/reinscription-form-info-item";
-import { ReinscriptionAnnualProps } from "../reinscription/reinscription-form-type";
+import { StudentFormInfoItem } from "@/components/student-form/student-form-info-item";
+import { StudentAnnualProps } from "@/components/student-form/student-form-types";
 
 interface RegistrationPaymentFormProps {
-  annual: ReinscriptionAnnualProps & { isEditing?: boolean; isNew?: boolean };
+  annual: StudentAnnualProps & { isEditing?: boolean; isNew?: boolean };
   index: number;
   filters?: any;
   journeyOptions: Array<{
@@ -191,16 +191,16 @@ export const RegistrationPaymentForm = ({
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <InfoItem
+                  <StudentFormInfoItem
                     label="Numéro de reçu"
                     value={annual?.payment[0]?.num_receipt || "N/A"}
                   />
-                  <InfoItem
+                  <StudentFormInfoItem
                     label="Date de reçu"
                     value={annual?.payment[0]?.date_receipt || "N/A"}
                   />
                 </div>
-                <InfoItem
+                <StudentFormInfoItem
                   label="Montant payé"
                   value={
                     annual?.payment[0]?.payed
@@ -306,11 +306,11 @@ export const RegistrationPaymentForm = ({
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <InfoItem
+                  <StudentFormInfoItem
                     label="Semestre"
                     value={annual?.register_semester[0]?.semester || "N/A"}
                   />
-                  <InfoItem
+                  <StudentFormInfoItem
                     label="Statut de redoublement"
                     value={
                       formatRepeatStatus(
@@ -319,7 +319,7 @@ export const RegistrationPaymentForm = ({
                     }
                   />
                 </div>
-                <InfoItem
+                <StudentFormInfoItem
                   label="Parcours"
                   value={annual?.register_semester[0]?.journey.name || "N/A"}
                 />

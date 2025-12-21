@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Check, Pencil, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { EditableSection, ReinscriptionAnnualProps } from "./reinscription-form-type";
-import { InfoItem } from "./reinscription-form-info-item";
+import {
+  EditableSection,
+  StudentAnnualProps
+} from "@/components/student-form/student-form-types";
+import { StudentFormInfoItem } from "@/components/student-form/student-form-info-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import formatRepeatStatus from "@/lib/enum/repeat-status-enum";
 import {
@@ -27,7 +30,7 @@ import {
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface ReinscriptionAnnualFormProps {
-  annualRegister: Array<ReinscriptionAnnualProps>;
+  annualRegister: Array<StudentAnnualProps>;
   editingSections: Record<EditableSection, boolean>;
   cardNumber?: string;
   filters?: any;
@@ -44,13 +47,13 @@ export const ReinscriptionAnnualRegister = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [annualRegisterDrafts, setAnnualRegisterDrafts] = useState<
-    Array<ReinscriptionAnnualProps & { isEditing?: boolean; isNew?: boolean }>
+    Array<StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }>
   >([]);
   const [journeyOptions, setJourneyOptions] = useState<
     Array<{ id: string; label: string; semesterList: string[]; mentionId?: string }>
   >([]);
   const [savedAnnualRegisters, setSavedAnnualRegisters] = useState<
-    Array<ReinscriptionAnnualProps>
+    Array<StudentAnnualProps>
   >([]);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
@@ -567,16 +570,16 @@ export const ReinscriptionAnnualRegister = ({
           {annualRegister?.map((annual, index) => (
             <div key={index} className="grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <InfoItem
+                <StudentFormInfoItem
                   label="Numéro de reçu"
                   value={annual?.payment[0]?.num_receipt || "N/A"}
                 />
-                <InfoItem
+                <StudentFormInfoItem
                   label="Date de reçu"
                   value={annual?.payment[0]?.date_receipt || "N/A"}
                 />
               </div>
-              <InfoItem
+              <StudentFormInfoItem
                 label="Montant payé"
                 value={
                   annual?.payment[0]?.payed
@@ -591,11 +594,11 @@ export const ReinscriptionAnnualRegister = ({
           {annualRegister?.map((annual, index) => (
             <div key={index} className="grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <InfoItem
+                <StudentFormInfoItem
                   label="Semestre"
                   value={annual?.register_semester[0]?.semester || "N/A"}
                 />
-                <InfoItem
+                <StudentFormInfoItem
                   label="Statut de redoublement"
                   value={
                     formatRepeatStatus(
@@ -604,7 +607,7 @@ export const ReinscriptionAnnualRegister = ({
                   }
                 />
               </div>
-              <InfoItem
+              <StudentFormInfoItem
                 label="Parcours"
                 value={annual?.register_semester[0]?.journey.name || "N/A"}
               />

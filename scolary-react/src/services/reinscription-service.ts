@@ -35,6 +35,7 @@ export interface ReinscriptionFilters {
   id_journey?: string;
   id_annual_register?: string | number;
   id_year?: string;
+  id_enter_year?: string;
   search?: string;
   deletedOnly?: boolean;
   limit?: number;

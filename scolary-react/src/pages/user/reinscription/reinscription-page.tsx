@@ -38,8 +38,8 @@ import {
   softDeleteStudent,
   type StudentUpdatePayload
 } from "../../../services/student-service";
-import { ReinscriptionForm } from "./reinscription-form";
-import { ReinscriptionFormState } from "./reinscription-form-type";
+import { StudentForm } from "@/components/student-form/student-form";
+import { StudentFormState } from "@/components/student-form/student-form-types";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
@@ -75,8 +75,8 @@ type ReinscriptionFormMode = "create" | "edit";
 type EditableSection = "contact" | "birth" | "identity" | "school";
 
 const createFormState = (
-  overrides: Partial<ReinscriptionFormState> = {}
-): ReinscriptionFormState => ({
+  overrides: Partial<StudentFormState> = {}
+): StudentFormState => ({
   studentRecordId: "",
   studentId: "",
   cardNumber: "",
@@ -84,11 +84,17 @@ const createFormState = (
   lastName: "",
   email: "",
   address: "",
+  sex: "",
+  maritalStatus: "",
   cinNumber: "",
   cinIssueDate: "",
   cinIssuePlace: "",
   birthDate: "",
   birthPlace: "",
+  baccalaureateNumber: "",
+  baccalaureateCenter: "",
+  job: "",
+  enrollmentStatus: "",
   mentionId: "",
   journeyId: "",
   semester: "",
@@ -108,7 +114,7 @@ const createEditingSectionsState = (): Record<EditableSection, boolean> => ({
 });
 
 const buildStudentUpdatePayload = (
-  state: ReinscriptionFormState
+  state: StudentFormState
 ): StudentUpdatePayload => {
   const payload: StudentUpdatePayload = {
     id: state.studentRecordId || undefined,
@@ -118,16 +124,21 @@ const buildStudentUpdatePayload = (
     last_name: state.lastName || undefined,
     email: state.email || undefined,
     address: state.address || undefined,
+    sex: state.sex || undefined,
+    martial_status: state.maritalStatus || undefined,
     num_of_cin: state.cinNumber || undefined,
     date_of_cin: state.cinIssueDate || undefined,
     place_of_cin: state.cinIssuePlace || undefined,
     date_of_birth: state.birthDate || undefined,
     place_of_birth: state.birthPlace || undefined,
+    num_of_baccalaureate: state.baccalaureateNumber || undefined,
+    center_of_baccalaureate: state.baccalaureateCenter || undefined,
+    job: state.job || undefined,
     picture: state.picture || undefined,
     id_mention: state.mentionId || undefined,
     id_journey: state.journeyId || undefined,
     active_semester: state.semester || undefined,
-    enrollment_status: state.status || undefined,
+    enrollment_status: state.enrollmentStatus || state.status || undefined,
     notes: state.notes || undefined
   };
 
@@ -404,7 +415,7 @@ export const ReinscriptionPage = () => {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<ReinscriptionFormMode>("create");
-  const [formState, setFormState] = useState<ReinscriptionFormState>(() =>
+  const [formState, setFormState] = useState<StudentFormState>(() =>
     createFormState({ semester: defaultSemester })
   );
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -1068,12 +1079,13 @@ export const ReinscriptionPage = () => {
                   : "This student already exists in the database. Review the key information before confirming the reinscription."}
               </DialogDescription>
             </DialogHeader>
-            <ReinscriptionForm
+            <StudentForm
               formError={formError}
               formState={formState}
               setFormState={setFormState}
               dialogMode={dialogMode}
               filters={filters}
+              mentionOptions={mentionOptions}
             />
 
             <DialogFooter className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 px-6 py-4 backdrop-blur">

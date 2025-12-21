@@ -16,7 +16,7 @@ from app.enum.enrollment_status import EnrollmentStatusEnum
 class Student(Base):
     __tablename__ = 'student'
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
-    num_carte = Column(String(255), nullable=False, unique=True, index=True)
+    num_carte = Column(String(255), nullable=True, unique=True, index=True)
     email = Column(String(255), unique=True)
     num_select = Column(String(255), unique=True)
     last_name = Column(String(255), nullable=False)

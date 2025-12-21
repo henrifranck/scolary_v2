@@ -10,6 +10,7 @@ export type SelectionStatus = "Pending" | "Rejected" | "Selected";
 
 export interface SelectionStudent {
   id: string;
+  numSelect: string;
   recordId: string;
   fullName: string;
   firstName: string;
@@ -27,6 +28,7 @@ export interface SelectionFilters {
   academicYearId?: string;
   id_enter_year?: string;
   id_mention?: string;
+  level?: string;
   search?: string;
   deletedOnly?: boolean;
   limit?: number;
@@ -48,6 +50,7 @@ type ApiAnnualRegister = {
 
 type ApiSelectionStudent = {
   id: number | string;
+  num_select?: string;
   num_carte?: string;
   first_name?: string | null;
   last_name?: string | null;
@@ -94,6 +97,7 @@ const normalizeStudent = (student: ApiSelectionStudent): SelectionStudent => {
   const mentionLabel = student.mention?.name;
   return {
     id: student.num_carte ?? String(student.id),
+    numSelect: student.num_select ?? String(student.id),
     recordId: String(student.id ?? student.num_carte ?? ""),
     fullName: buildFullName(student),
     firstName,
@@ -110,6 +114,7 @@ const buildQueryParams = (filters: SelectionFilters) => {
   const where: Array<Record<string, unknown>> = [];
   const mentionId = filters.mentionId ?? filters.id_mention;
   const academicYear = filters.academicYearId ?? filters.id_enter_year;
+  const level = filters.level;
   if (mentionId) {
     where.push({
       key: "id_mention",
@@ -123,6 +128,13 @@ const buildQueryParams = (filters: SelectionFilters) => {
       key: "id_enter_year",
       operator: "==",
       value: academicYear
+    });
+  }
+  if (level) {
+    where.push({
+      key: "level",
+      operator: "==",
+      value: level
     });
   }
   if (filters.deletedOnly) {

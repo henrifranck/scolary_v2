@@ -9,12 +9,33 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app import crud, models, schemas
 import ast
+from datetime import date
+import re
 
 router = APIRouter()
 from app.api import deps
 UPLOAD_DIR = Path("files") / "pictures"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg"}
+
+
+def generate_num_select(db: Session) -> str:
+    today = date.today()
+    prefix = f"{today.year}{today.strftime('%m%d')}"
+    latest = (
+        db.query(models.Student.num_select)
+        .filter(models.Student.num_select.like(f"{prefix}%"))
+        .order_by(models.Student.num_select.desc())
+        .first()
+    )
+    if latest and latest[0]:
+        match = re.search(r"(\d+)$", latest[0])
+        last_num = int(match.group(1)) if match else 0
+    else:
+        last_num = 0
+
+    next_num = last_num + 1
+    return f"{prefix}-{next_num:04d}"
 
 
 @router.get('/', response_model=schemas.ResponseStudent)
@@ -109,13 +130,17 @@ def read_one_student(
 def create_student(
         *,
         db: Session = Depends(deps.get_db),
-        student_in: schemas.StudentCreate,
+        student_in: schemas.StudentNewCreate,
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Create new student.
     """
-    student = crud.student.create(db=db, obj_in=student_in)
+    data = student_in.model_dump()
+    if not data.get("num_select"):
+        data["num_select"] = generate_num_select(db)
+
+    student = crud.student.create(db=db, obj_in=schemas.StudentNewCreate(**data))
     return student
 
 

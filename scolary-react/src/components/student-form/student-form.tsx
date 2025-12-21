@@ -2,26 +2,31 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchStudentByCardNumber } from "@/services/student-service";
-import { Check, Pencil } from "lucide-react";
+import { Check, Pencil, Layers } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   EditableSection,
   FormItemComponentType,
-  ReinscriptionAnnualProps,
-  ReinscriptionFormState,
+  StudentAnnualProps,
+  StudentFormState,
   StudentProfile
-} from "./reinscription-form-type";
-import { ReinscriptionFormItem } from "./reinscription-form-item";
-import { InfoItem } from "./reinscription-form-info-item";
+} from "./student-form-types";
+import { StudentFormItem } from "./student-form-item";
+import { StudentFormInfoItem } from "./student-form-info-item";
 import {
-  informationDataBirth,
-  informationDataContact,
-  informationDataIdentity
-} from "./information-form-data";
+  studentInformationBirth,
+  studentInformationContact,
+  studentInformationIdentity,
+  studentInformationBaccalaureate,
+  studentInformationSocial,
+  studentInformationRegistration
+} from "./student-form-data";
 import { ReinscriptionFilters } from "@/services/reinscription-service";
-import { ReinscriptionAnnualRegister } from "./reinscription-payement-form";
+import { ReinscriptionAnnualRegister } from "@/pages/user/reinscription/reinscription-payement-form";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
+import { MentionOption } from "@/components/filters/academic-filters";
 
 type dialogMode = "edit" | "create";
 
@@ -30,28 +35,37 @@ const createEditingSectionsState = (): Record<EditableSection, boolean> => ({
   birth: false,
   identity: false,
   school: false,
-  personal: false
+  personal: false,
+  baccalaureate: false,
+  social: false,
+  registration: false
 });
 
-interface ReinscriptionFormProps {
+interface StudentFormProps {
   formError: string | null;
-  formState: ReinscriptionFormState;
+  formState: StudentFormState;
   setFormState: (value: any) => any;
   dialogMode: dialogMode;
   filters: ReinscriptionFilters;
+  enableLookup?: boolean;
+  enablePicture?: boolean;
+  mentionOptions?: MentionOption[];
 }
 
-export const ReinscriptionForm = ({
+export const StudentForm = ({
   formError,
   formState,
   setFormState,
   dialogMode,
-  filters
-}: ReinscriptionFormProps) => {
+  filters,
+  enableLookup = true,
+  enablePicture = true,
+  mentionOptions = []
+}: StudentFormProps) => {
   const lastLookupKeyRef = useRef<string>("");
   const [studentLookupLoading, setStudentLookupLoading] = useState(false);
   const [annualRegister, setAnnualRegister] = useState<
-    ReinscriptionAnnualProps[]
+    StudentAnnualProps[]
   >([]);
   const [studentLookupError, setStudentLookupError] = useState<string | null>(
     null
@@ -60,11 +74,11 @@ export const ReinscriptionForm = ({
   const pictureInputId = "student-picture-upload";
 
   const [inputContact] = useState<FormItemComponentType>(
-    informationDataContact
+    studentInformationContact
   );
-  const [inputBirth] = useState<FormItemComponentType>(informationDataBirth);
+  const [inputBirth] = useState<FormItemComponentType>(studentInformationBirth);
   const [inputIdentity] = useState<FormItemComponentType>(
-    informationDataIdentity
+    studentInformationIdentity
   );
   useEffect(() => {
     console.log("STATE annualRegister =", annualRegister);
@@ -82,7 +96,7 @@ export const ReinscriptionForm = ({
   >(() => createEditingSectionsState());
 
   const handleFormChange = useCallback(
-    (key: keyof ReinscriptionFormState, value: string) => {
+    (key: keyof StudentFormState, value: string) => {
       setFormState((previous: any) => ({
         ...previous,
         [key]: value
@@ -125,6 +139,11 @@ export const ReinscriptionForm = ({
         lastName: student.last_name ?? previous.lastName,
         email: student.email ?? previous.email,
         address: student.address ?? previous.address,
+        sex: student.sex ?? previous.sex,
+        maritalStatus: student.martial_status ?? previous.maritalStatus,
+        baccalaureateNumber: student.num_of_baccalaureate ?? previous.baccalaureateNumber,
+        baccalaureateCenter: student.center_of_baccalaureate ?? previous.baccalaureateCenter,
+        job: student.job ?? previous.job,
         cinNumber: student.num_of_cin ?? student.num_cin ?? previous.cinNumber,
         cinIssueDate: student.date_of_cin ?? previous.cinIssueDate,
         cinIssuePlace: student.place_of_cin ?? previous.cinIssuePlace,
@@ -142,7 +161,9 @@ export const ReinscriptionForm = ({
           ? String(resolvedJourneyId)
           : previous.journeyId,
         semester: resolvedSemester || previous.semester,
-        status: student.enrollment_status ?? previous.status
+        status: student.enrollment_status ?? previous.status,
+        level: student.level ?? previous.level,
+        enrollmentStatus: student.enrollment_status ?? previous.enrollmentStatus
       }));
       setStudentLookupError(null);
     },
@@ -227,7 +248,7 @@ export const ReinscriptionForm = ({
   );
 
   useEffect(() => {
-    if (!formState.pictureFile) {
+    if (!enablePicture || !formState.pictureFile) {
       setPicturePreview(null);
       return;
     }
@@ -236,7 +257,7 @@ export const ReinscriptionForm = ({
     return () => {
       URL.revokeObjectURL(previewUrl);
     };
-  }, [formState.pictureFile]);
+  }, [enablePicture, formState.pictureFile]);
 
   useEffect(() => {
     if (dialogMode !== "edit") {
@@ -249,8 +270,10 @@ export const ReinscriptionForm = ({
       return;
     }
 
-    void handleStudentLookup(false);
-  }, [dialogMode, formState.cardNumber, handleStudentLookup]);
+    if (enableLookup) {
+      void handleStudentLookup(false);
+    }
+  }, [dialogMode, enableLookup, formState.cardNumber, handleStudentLookup]);
 
   return (
     <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
@@ -262,36 +285,38 @@ export const ReinscriptionForm = ({
         )}
         <div className="space-y-6">
           <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Numéro de carte étudiant
-              </label>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Input
-                  value={formState.cardNumber}
-                  onChange={(event) =>
-                    handleFormChange("cardNumber", event.target.value)
-                  }
-                  placeholder="Ex: SCT-000123"
-                />
-                <Button
-                  type="button"
-                  onClick={() => handleStudentLookup(true)}
-                  disabled={
-                    studentLookupLoading || !formState.cardNumber.trim().length
-                  }
-                >
-                  {studentLookupLoading ? "Recherche..." : "Rechercher"}
-                </Button>
+            {enableLookup && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Numéro de carte étudiant
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={formState.cardNumber}
+                    onChange={(event) =>
+                      handleFormChange("cardNumber", event.target.value)
+                    }
+                    placeholder="Ex: SCT-000123"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => handleStudentLookup(true)}
+                    disabled={
+                      studentLookupLoading || !formState.cardNumber.trim().length
+                    }
+                  >
+                    {studentLookupLoading ? "Recherche..." : "Rechercher"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Entrez le numéro pour charger automatiquement les informations
+                  enregistrées dans la base.
+                </p>
+                {studentLookupError && (
+                  <p className="text-sm text-destructive">{studentLookupError}</p>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Entrez le numéro pour charger automatiquement les informations
-                enregistrées dans la base.
-              </p>
-              {studentLookupError && (
-                <p className="text-sm text-destructive">{studentLookupError}</p>
-              )}
-            </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
               <div className="grid gap-4 lg:grid-cols-1">
                 <div className="flex items-center justify-between gap-2">
@@ -361,55 +386,115 @@ export const ReinscriptionForm = ({
                   </>
                 ) : (
                   <>
-                    <InfoItem
+                    <StudentFormInfoItem
                       label="Nom complet"
                       value={`${formState.lastName} ${formState.firstName}`}
                     />
-                    <InfoItem label="Email" value={formState.email} />
+                    <StudentFormInfoItem label="Email" value={formState.email} />
                   </>
                 )}
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-foreground">
-                    Photo étudiant
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="relative h-24 w-24">
-                    {picturePreview || formState.picture ? (
-                      <img
-                        src={picturePreview ?? resolveAssetUrl(formState.picture)}
-                        alt="Photo étudiant"
-                        className="h-24 w-24 rounded-full border object-cover"
-                      />
-                    ) : (
-                      <div className="h-24 w-24 rounded-full border bg-muted/20" />
-                    )}
-                    <label
-                      htmlFor={pictureInputId}
-                      className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted/50 cursor-pointer"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </label>
-                    <input
-                      id={pictureInputId}
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePictureUpload}
-                      className="hidden"
-                    />
+              {enablePicture && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-foreground">
+                      Photo étudiant
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    La photo sera envoyée au moment d'enregistrer.
-                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-24 w-24">
+                      {picturePreview || formState.picture ? (
+                        <img
+                          src={picturePreview ?? resolveAssetUrl(formState.picture)}
+                          alt="Photo étudiant"
+                          className="h-24 w-24 rounded-full border object-cover"
+                        />
+                      ) : (
+                        <div className="h-24 w-24 rounded-full border bg-muted/20" />
+                      )}
+                      <label
+                        htmlFor={pictureInputId}
+                        className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted/50 cursor-pointer"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </label>
+                      <input
+                        id={pictureInputId}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePictureUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      La photo sera envoyée au moment d'enregistrer.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <ReinscriptionFormItem
+            <StudentFormItem
+              name={"Informations sur le baccalauréat"}
+              editingSections={editingSections}
+              setEditingSections={setEditingSections}
+              handleFormChange={handleFormChange}
+              formState={formState}
+              inputComponent={studentInformationBaccalaureate}
+              classnNames="grid gap-4 sm:grid-cols-2"
+            />
+
+            <StudentFormItem
+              name={"Statut social"}
+              editingSections={editingSections}
+              setEditingSections={setEditingSections}
+              handleFormChange={handleFormChange}
+              formState={formState}
+              inputComponent={studentInformationSocial}
+              classnNames="grid gap-4 sm:grid-cols-2"
+            />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <StudentFormItem
+              name={"Statut d'inscription"}
+              editingSections={editingSections}
+              setEditingSections={setEditingSections}
+              handleFormChange={handleFormChange}
+              formState={formState}
+              inputComponent={studentInformationRegistration}
+              classnNames="grid gap-4"
+            />
+
+            {mentionOptions.length > 0 && (
+              <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-medium">Mention</label>
+                </div>
+                <Select
+                  value={formState.mentionId}
+                  onValueChange={(value) => handleFormChange("mentionId", value)}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sélectionner la mention" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mentionOptions.map((mention) => (
+                      <SelectItem key={mention.id} value={mention.id}>
+                        {mention.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <StudentFormItem
               name={"Coordonnées"}
               editingSections={editingSections}
               setEditingSections={setEditingSections}
@@ -419,7 +504,7 @@ export const ReinscriptionForm = ({
               classnNames="grid gap-4"
             />
 
-            <ReinscriptionFormItem
+            <StudentFormItem
               name={"Informations sur la naissance"}
               editingSections={editingSections}
               setEditingSections={setEditingSections}
@@ -481,23 +566,23 @@ export const ReinscriptionForm = ({
                     />
                   </div>
                 </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <InfoItem
-                    label="Date de naissance"
-                    value={formState.birthDate}
-                  />
-                  <InfoItem
-                    label="Lieu de naissance"
-                    value={formState.birthPlace}
-                  />
-                </div>
-              )}
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <StudentFormInfoItem
+                label="Date de naissance"
+                value={formState.birthDate}
+              />
+              <StudentFormInfoItem
+                label="Lieu de naissance"
+                value={formState.birthPlace}
+              />
+            </div>
+          )}
             </div> */}
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <ReinscriptionFormItem
+            <StudentFormItem
               name={"Carte d'identité"}
               editingSections={editingSections}
               setEditingSections={setEditingSections}
