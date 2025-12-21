@@ -41,7 +41,7 @@ class AnnualRegister(AnnualRegisterInDBBase):
 
 class AnnualRegisterWithRelation(AnnualRegisterInDBBase):
     student: Optional[Student] = None
-    year: Optional[AcademicYear] = None
+    academic_year: Optional[AcademicYear] = None
     enrollment_fee: Optional[EnrollmentFee] = None
     register_semester: Optional[Any] = None
     payment: Optional[Any] = None

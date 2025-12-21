@@ -50,7 +50,12 @@ export const ReinscriptionAnnualRegister = ({
     Array<StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }>
   >([]);
   const [journeyOptions, setJourneyOptions] = useState<
-    Array<{ id: string; label: string; semesterList: string[]; mentionId?: string }>
+    Array<{
+      id: string;
+      label: string;
+      semesterList: string[];
+      mentionId?: string;
+    }>
   >([]);
   const [savedAnnualRegisters, setSavedAnnualRegisters] = useState<
     Array<StudentAnnualProps>
@@ -110,16 +115,21 @@ export const ReinscriptionAnnualRegister = ({
           const semesterList = Array.isArray(journey.semester_list)
             ? journey.semester_list
                 .map((semester) =>
-                  typeof semester === "string" ? semester : semester?.semester ?? ""
+                  typeof semester === "string"
+                    ? semester
+                    : (semester?.semester ?? "")
                 )
                 .filter((semester): semester is string => Boolean(semester))
             : [];
 
           return {
             id: String(journey.id),
-            label: journey.name ?? journey.abbreviation ?? `Journey ${journey.id}`,
+            label:
+              journey.name ?? journey.abbreviation ?? `Journey ${journey.id}`,
             semesterList,
-            mentionId: journey.id_mention ? String(journey.id_mention) : undefined
+            mentionId: journey.id_mention
+              ? String(journey.id_mention)
+              : undefined
           };
         });
 
@@ -167,9 +177,14 @@ export const ReinscriptionAnnualRegister = ({
     if (!trimmed) {
       return;
     }
+    const academicYearId =
+      filters?.academicYearId ??
+      filters?.id_year ??
+      filters?.id_enter_year ??
+      filters?.id_academic_year;
     let isMounted = true;
     setAnnualRegisterLoading(true);
-    fetchAnnualRegisterByCardNumber(trimmed)
+    fetchAnnualRegisterByCardNumber(trimmed, academicYearId ?? undefined)
       .then((response) => {
         if (!isMounted) {
           return;
@@ -316,9 +331,9 @@ export const ReinscriptionAnnualRegister = ({
                 name: selectedJourney?.label ?? "",
                 id_mention: selectedJourney?.mentionId
                   ? Number(selectedJourney.mentionId)
-                  : currentSemester.journey?.id_mention ?? 0
+                  : (currentSemester.journey?.id_mention ?? 0)
               }
-            : currentSemester.journey ?? emptyJourney;
+            : (currentSemester.journey ?? emptyJourney);
         const nextSemester =
           field === "semester"
             ? value
@@ -398,7 +413,9 @@ export const ReinscriptionAnnualRegister = ({
     try {
       let annualId = draft.id;
       const cardValue = cardNumber?.trim() ?? "";
-      const academicYearId = Number(filters?.id_year ?? filters?.academicYearId);
+      const academicYearId = Number(
+        filters?.id_year ?? filters?.academicYearId
+      );
       if (!annualId) {
         if (!cardValue) {
           throw new Error("Le numéro de carte est requis pour enregistrer.");
@@ -450,15 +467,12 @@ export const ReinscriptionAnnualRegister = ({
 
       let savedRegisterSemester: any = semesterEntry;
       if (semesterEntry.id) {
-        savedRegisterSemester = await updateRegisterSemester(
-          semesterEntry.id,
-          {
-            id_annual_register: annualId,
-            semester: semesterEntry.semester,
-            repeat_status: semesterEntry.repeat_status,
-            id_journey: journeyId
-          }
-        );
+        savedRegisterSemester = await updateRegisterSemester(semesterEntry.id, {
+          id_annual_register: annualId,
+          semester: semesterEntry.semester,
+          repeat_status: semesterEntry.repeat_status,
+          id_journey: journeyId
+        });
       } else {
         savedRegisterSemester = await createRegisterSemester({
           id_annual_register: annualId,
@@ -473,31 +487,36 @@ export const ReinscriptionAnnualRegister = ({
       };
 
       const paymentEntry = draft.payment?.[0];
+      if (!paymentEntry) {
+        throw new Error("Les informations de paiement sont requises.");
+      }
+      const payedValue = Number(paymentEntry?.payed ?? 0);
+      if (
+        !paymentEntry?.num_receipt ||
+        !paymentEntry?.date_receipt ||
+        Number.isNaN(payedValue) ||
+        payedValue <= 0
+      ) {
+        throw new Error(
+          "Numéro de reçu, date de reçu et montant payé sont requis."
+        );
+      }
+
       let savedPayment: any = paymentEntry;
-      const hasPaymentData =
-        Boolean(paymentEntry?.num_receipt) ||
-        Boolean(paymentEntry?.date_receipt) ||
-        Boolean(paymentEntry?.payed);
-      if (hasPaymentData) {
-        if (!paymentEntry?.num_receipt || !paymentEntry?.date_receipt) {
-          throw new Error("Veuillez renseigner le reçu et sa date.");
-        }
-        const payedValue = Number(paymentEntry?.payed ?? 0);
-        if (paymentEntry?.id) {
-          savedPayment = await updatePayement(paymentEntry.id, {
-            id_annual_register: annualId,
-            num_receipt: paymentEntry.num_receipt,
-            date_receipt: paymentEntry.date_receipt,
-            payed: payedValue
-          });
-        } else {
-          savedPayment = await createPayement({
-            id_annual_register: annualId,
-            num_receipt: paymentEntry.num_receipt,
-            date_receipt: paymentEntry.date_receipt,
-            payed: payedValue
-          });
-        }
+      if (paymentEntry?.id) {
+        savedPayment = await updatePayement(paymentEntry.id, {
+          id_annual_register: annualId,
+          num_receipt: paymentEntry.num_receipt,
+          date_receipt: paymentEntry.date_receipt,
+          payed: payedValue
+        });
+      } else {
+        savedPayment = await createPayement({
+          id_annual_register: annualId,
+          num_receipt: paymentEntry.num_receipt,
+          date_receipt: paymentEntry.date_receipt,
+          payed: payedValue
+        });
       }
 
       const updatedAnnual = {
@@ -527,9 +546,7 @@ export const ReinscriptionAnnualRegister = ({
       });
     } catch (error) {
       setSaveError(
-        error instanceof Error
-          ? error.message
-          : "Impossible d'enregistrer."
+        error instanceof Error ? error.message : "Impossible d'enregistrer."
       );
     } finally {
       setSavingIndex((current) => (current === index ? null : current));
@@ -683,8 +700,7 @@ export const ReinscriptionAnnualRegister = ({
         cancelLabel="Annuler"
         destructive
         isConfirming={
-          confirmDeleteIndex !== null &&
-          savingIndex === confirmDeleteIndex
+          confirmDeleteIndex !== null && savingIndex === confirmDeleteIndex
         }
         onCancel={() => setConfirmDeleteIndex(null)}
         onConfirm={() => {

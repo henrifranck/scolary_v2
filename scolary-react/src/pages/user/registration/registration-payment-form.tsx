@@ -65,6 +65,7 @@ export const RegistrationPaymentForm = ({
   );
   const semesterOptions = selectedJourney?.semesterList ?? [];
   const selectedSemesterValue = annual?.register_semester?.[0]?.semester || "";
+  const academicYearName = annual?.academic_year?.name || "";
   const semesterValue = semesterOptions.includes(selectedSemesterValue)
     ? selectedSemesterValue
     : "";
@@ -73,7 +74,7 @@ export const RegistrationPaymentForm = ({
     <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-foreground">
-          {filters?.id_year}
+          {academicYearName}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -143,6 +144,7 @@ export const RegistrationPaymentForm = ({
                     </label>
                     <Input
                       value={annual?.payment[0]?.num_receipt || ""}
+                      required
                       onChange={(event) =>
                         onUpdatePaymentField(
                           index,
@@ -160,6 +162,7 @@ export const RegistrationPaymentForm = ({
                     <Input
                       type="date"
                       value={annual?.payment[0]?.date_receipt || ""}
+                      required
                       onChange={(event) =>
                         onUpdatePaymentField(
                           index,
@@ -176,6 +179,8 @@ export const RegistrationPaymentForm = ({
                   </label>
                   <Input
                     type="number"
+                    min={1}
+                    required
                     value={annual?.payment[0]?.payed ?? 0}
                     onChange={(event) =>
                       onUpdatePaymentField(
@@ -223,6 +228,8 @@ export const RegistrationPaymentForm = ({
                     </label>
                     <Select
                       value={semesterValue}
+                      required
+                      aria-required="true"
                       onValueChange={(value) =>
                         onUpdateRegistrationField(index, "semester", value)
                       }
@@ -257,6 +264,8 @@ export const RegistrationPaymentForm = ({
                     </label>
                     <Select
                       value={annual?.register_semester[0]?.repeat_status || ""}
+                      required
+                      aria-required="true"
                       onValueChange={(value) =>
                         onUpdateRegistrationField(index, "repeat_status", value)
                       }
@@ -280,6 +289,8 @@ export const RegistrationPaymentForm = ({
                   </label>
                   <Select
                     value={selectedJourneyId}
+                    required
+                    aria-required="true"
                     onValueChange={(value) =>
                       onUpdateRegistrationField(index, "journey", value)
                     }

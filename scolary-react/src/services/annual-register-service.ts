@@ -6,6 +6,7 @@ import { apiRequest } from "./api-client";
 
 const relations = JSON.stringify([
   "register_semester",
+  "academic_year{id,name}",
   "register_semester{id,id_annual_register,id_journey,semester,repeat_status}",
   "register_semester.journey{id_mention,name}",
   "register_semester.journey.mention{name}",
@@ -13,13 +14,25 @@ const relations = JSON.stringify([
 ]);
 const baseColumn = JSON.stringify(["last_name", "first_name"]);
 
-const buildWhereClause = (cardNumber: string) =>
+const buildWhereClause = (
+  cardNumber: string,
+  academicYearId?: string | number
+) =>
   JSON.stringify([
     {
       key: "num_carte",
       operator: "==",
       value: cardNumber
-    }
+    },
+    ...(academicYearId
+      ? [
+          {
+            key: "id_academic_year",
+            operator: "==",
+            value: academicYearId
+          }
+        ]
+      : [])
   ]);
 
 type ApiAnnualRegisterPayload = ApiListResponse<StudentAnnualProps>;
@@ -46,7 +59,8 @@ export type PayementPayload = {
 };
 
 export const fetchAnnualRegisterByCardNumber = async (
-  cardNumber: string
+  cardNumber: string,
+  academicYearId?: string | number
 ): Promise<ApiAnnualRegisterPayload> => {
   const trimmed = cardNumber.trim();
   if (!trimmed) {
@@ -59,7 +73,7 @@ export const fetchAnnualRegisterByCardNumber = async (
       query: {
         relation: relations,
         base_column: baseColumn,
-        where: buildWhereClause(trimmed)
+        where: buildWhereClause(trimmed, academicYearId)
       }
     }
   );
@@ -75,7 +89,9 @@ export const createAnnualRegister = async (
     json: payload
   });
 
-export const deleteAnnualRegister = async (id: number): Promise<{ msg: string }> =>
+export const deleteAnnualRegister = async (
+  id: number
+): Promise<{ msg: string }> =>
   apiRequest<{ msg: string }>(`/annual_registers/${id}`, {
     method: "DELETE"
   });

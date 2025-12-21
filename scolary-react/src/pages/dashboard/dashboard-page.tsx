@@ -6,12 +6,9 @@ import {
   GraduationCap,
   FileText,
   Clock,
-  TrendingUp,
   Award
 } from 'lucide-react';
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -39,80 +36,81 @@ interface DashboardSummary {
   total_mentions: number;
   total_journeys: number;
   total_users: number;
+  mention_counts: Array<{ id: number; name: string; count: number }>;
+  academic_year_counts: Array<{ id: number; name: string; count: number }>;
+  mention_enrollments: Array<{
+    academic_year_id: number;
+    academic_year_name: string;
+    mention_id: number;
+    mention_name: string;
+    count: number;
+  }>;
 }
 
 interface ChartData {
   name: string;
-  value: number;
+  value?: number;
   color?: string;
+  yearId?: number;
   [key: string]: any;
-}
-
-interface TimeSeriesData {
-  month: string;
-  inscriptions: number;
-  graduations: number;
 }
 
 const fetchDashboardMetrics = async (): Promise<DashboardSummary> =>
   apiRequest<DashboardSummary>('/dashboard/');
 
-const fetchEnrollmentData = async (): Promise<TimeSeriesData[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return [
-    { month: 'Jan', inscriptions: 45, graduations: 38 },
-    { month: 'Feb', inscriptions: 52, graduations: 42 },
-    { month: 'Mar', inscriptions: 48, graduations: 45 },
-    { month: 'Apr', inscriptions: 61, graduations: 39 },
-    { month: 'May', inscriptions: 55, graduations: 52 },
-    { month: 'Jun', inscriptions: 67, graduations: 48 }
-  ];
+const buildMentionChartData = (mentions: DashboardSummary['mention_counts']): ChartData[] =>
+  mentions.map((mention, index) => ({
+    name: mention.name || `Mention ${mention.id}`,
+    value: mention.count,
+    fill: `hsl(var(--chart-${(index % 5) + 1}))`
+  }));
+
+const buildMentionTrendData = (
+  enrollments: DashboardSummary['mention_enrollments']
+): { data: ChartData[]; config: ChartConfig } => {
+  const mentionNames = Array.from(
+    new Set(
+      enrollments.map(
+        (enrollment) => enrollment.mention_name || `Mention ${enrollment.mention_id}`
+      )
+    )
+  );
+
+  const yearMap = new Map<number, ChartData>();
+
+  enrollments.forEach((enrollment) => {
+    const yearLabel = enrollment.academic_year_name || `Année ${enrollment.academic_year_id}`;
+    const mentionLabel = enrollment.mention_name || `Mention ${enrollment.mention_id}`;
+    const existing = yearMap.get(enrollment.academic_year_id) ?? {
+      name: yearLabel,
+      yearId: enrollment.academic_year_id
+    };
+
+    existing[mentionLabel] = enrollment.count;
+    yearMap.set(enrollment.academic_year_id, existing);
+  });
+
+  const data = Array.from(yearMap.values())
+    .sort((a, b) => (a.name as string).localeCompare(b.name as string))
+    .map((row) => {
+      mentionNames.forEach((mentionName) => {
+        if (row[mentionName] === undefined) {
+          row[mentionName] = 0;
+        }
+      });
+      return row;
+    });
+
+  const config: ChartConfig = {};
+  mentionNames.forEach((mentionName, index) => {
+    config[mentionName] = {
+      label: mentionName,
+      color: `hsl(var(--chart-${(index % 5) + 1}))`
+    };
+  });
+
+  return { data, config };
 };
-
-const fetchProgramDistribution = async (): Promise<ChartData[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  return [
-    { name: 'Web Development', value: 120, fill: 'hsl(var(--chart-1))' },
-    { name: 'Cloud & DevOps', value: 85, fill: 'hsl(var(--chart-2))' },
-    { name: 'Embedded Systems', value: 65, fill: 'hsl(var(--chart-3))' },
-    { name: 'Robotics', value: 45, fill: 'hsl(var(--chart-4))' },
-    { name: 'Digital Marketing', value: 35, fill: 'hsl(var(--chart-5))' }
-  ];
-};
-
-const enrollmentChartConfig = {
-  inscriptions: {
-    label: "Inscriptions",
-    color: "hsl(var(--chart-1))",
-  },
-  graduations: {
-    label: "Graduations",
-    color: "hsl(var(--chart-2))",
-  },
-} satisfies ChartConfig;
-
-const programChartConfig = {
-  "Web Development": {
-    label: "Web Development",
-    color: "hsl(var(--chart-1))",
-  },
-  "Cloud & DevOps": {
-    label: "Cloud & DevOps",
-    color: "hsl(var(--chart-2))",
-  },
-  "Embedded Systems": {
-    label: "Embedded Systems",
-    color: "hsl(var(--chart-3))",
-  },
-  "Robotics": {
-    label: "Robotics",
-    color: "hsl(var(--chart-4))",
-  },
-  "Digital Marketing": {
-    label: "Digital Marketing",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig;
 
 export const DashboardPage = () => {
   const { data: summary, isPending } = useQuery({
@@ -121,17 +119,10 @@ export const DashboardPage = () => {
     staleTime: 60_000
   });
 
-  const { data: enrollmentData, isPending: enrollmentLoading } = useQuery({
-    queryKey: ['dashboard', 'enrollment'],
-    queryFn: fetchEnrollmentData,
-    staleTime: 60_000
-  });
-
-  const { data: programData, isPending: programLoading } = useQuery({
-    queryKey: ['dashboard', 'programs'],
-    queryFn: fetchProgramDistribution,
-    staleTime: 60_000
-  });
+  const mentionChartData = summary?.mention_counts ? buildMentionChartData(summary.mention_counts) : [];
+  const { data: mentionTrendData, config: mentionTrendConfig } = summary?.mention_enrollments
+    ? buildMentionTrendData(summary.mention_enrollments)
+    : { data: [] as ChartData[], config: {} as ChartConfig };
 
   return (
     <div className="space-y-6">
@@ -186,13 +177,6 @@ export const DashboardPage = () => {
           value="—"
         />
         <MetricCard
-          icon={TrendingUp}
-          label="Completion rate"
-          loading
-          value="—"
-          trend="+0%"
-        />
-        <MetricCard
           icon={CalendarDays}
           label="Next event"
           loading
@@ -202,45 +186,44 @@ export const DashboardPage = () => {
 
       {/* Charts Section */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Enrollment Trends */}
+        {/* Progression par mention (5 dernières années) */}
         <div className="rounded-lg border bg-background p-6 shadow-sm">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Enrollment Trends</h3>
+            <h3 className="text-lg font-semibold">Progression par mention (5 dernières années)</h3>
             <p className="text-sm text-muted-foreground">
-              Monthly inscriptions vs graduations
+              Nombre d&apos;étudiants inscrits par mention et année universitaire (données en direct)
             </p>
           </div>
           <div className="h-80">
-            {enrollmentLoading ? (
+            {isPending ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">Loading chart...</div>
               </div>
-            ) : !enrollmentData || enrollmentData.length === 0 ? (
+            ) : !mentionTrendData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">No data available</div>
               </div>
             ) : (
-              <ChartContainer config={enrollmentChartConfig} className="h-full">
+              <ChartContainer config={mentionTrendConfig} className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={enrollmentData}>
+                  <LineChart data={mentionTrendData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
+                    <XAxis dataKey="name" />
                     <YAxis />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line
-                      type="monotone"
-                      dataKey="inscriptions"
-                      stroke="hsl(var(--chart-1))"
-                      strokeWidth={2}
-                      name="Inscriptions"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="graduations"
-                      stroke="hsl(var(--chart-2))"
-                      strokeWidth={2}
-                      name="Graduations"
-                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    {Object.keys(mentionTrendConfig).map((mentionKey) => (
+                      <Line
+                        key={mentionKey}
+                        dataKey={mentionKey}
+                        name={mentionTrendConfig[mentionKey as keyof typeof mentionTrendConfig].label}
+                        fill={mentionTrendConfig[mentionKey as keyof typeof mentionTrendConfig].color}
+                        stroke={mentionTrendConfig[mentionKey as keyof typeof mentionTrendConfig].color}
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                        isAnimationActive={false}
+                      />
+                    ))}
                   </LineChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -248,29 +231,37 @@ export const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Program Distribution */}
+        {/* Students by Mention */}
         <div className="rounded-lg border bg-background p-6 shadow-sm">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Program Distribution</h3>
+            <h3 className="text-lg font-semibold">Répartition par mention</h3>
             <p className="text-sm text-muted-foreground">
-              Students by program
+              Nombre d'étudiants par mention (données en direct)
             </p>
           </div>
           <div className="h-80">
-            {programLoading ? (
+            {!summary ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">Loading chart...</div>
               </div>
-            ) : !programData || programData.length === 0 ? (
+            ) : !mentionChartData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">No data available</div>
               </div>
             ) : (
-              <ChartContainer config={programChartConfig} className="h-full">
+              <ChartContainer
+                config={
+                  mentionChartData.reduce((acc, item) => {
+                    acc[item.name] = { label: item.name, color: item.fill as string };
+                    return acc;
+                  }, {} as ChartConfig)
+                }
+                className="h-full"
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={programData}
+                      data={mentionChartData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -279,7 +270,7 @@ export const DashboardPage = () => {
                       fill="hsl(var(--chart-1))"
                       dataKey="value"
                     >
-                      {programData?.map((entry, index) => (
+                      {mentionChartData?.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
                     </Pie>

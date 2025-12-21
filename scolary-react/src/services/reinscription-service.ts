@@ -165,39 +165,59 @@ const normalizeStudent = (
 
 const buildQueryParams = (filters: ReinscriptionFilters) => {
   const where: Array<Record<string, unknown>> = [];
+  const whereRelation: Array<Record<string, unknown>> = [];
   const academicYear = filters.id_year ?? filters.academicYearId;
   const journeyId = filters.id_journey ?? filters.journeyId;
-  const annualRegisterId = filters.id_annual_register ?? filters.annualRegisterId;
+  const annualRegisterId =
+    filters.id_annual_register ?? filters.annualRegisterId;
   const semester = filters.semester;
 
+  // Build nested filter: annual_register.[id_academic_year,register_semester.[id_journey,semester]]
+  const nestedKeys: string[] = [];
+  const nestedOperators: string[] = [];
+  const nestedValues: Array<string | number> = [];
+
   if (academicYear) {
-    where.push({
-      key: "annual_register.id_academic_year",
-      operator: "==",
-      value: academicYear
-    });
+    nestedKeys.push("id_academic_year");
+    nestedOperators.push("==");
+    nestedValues.push(Number(academicYear));
   }
 
+  const registerParts: string[] = [];
+  const registerOperators: string[] = [];
+  const registerValues: Array<string | number> = [];
+
   if (journeyId) {
-    where.push({
-      key: "annual_register.register_semester.id_journey",
-      operator: "==",
-      value: journeyId
-    });
+    registerParts.push("id_journey");
+    registerOperators.push("==");
+    registerValues.push(Number(journeyId));
   }
 
   if (semester) {
+    registerParts.push("semester");
+    registerOperators.push("==");
+    registerValues.push(semester);
+  }
+
+  if (registerParts.length) {
+    nestedKeys.push(`register_semester.[${registerParts.join(",")}]`);
+    nestedOperators.push(registerOperators.join(","));
+    nestedValues.push(registerValues.join(","));
+  }
+
+  if (nestedKeys.length) {
     where.push({
-      key: "annual_register.register_semester.semester",
-      operator: "==",
-      value: semester
+      key: `annual_register.[${nestedKeys.join(",")}]`,
+      operator: nestedOperators.join(","),
+      value: nestedValues.join(",")
     });
   }
+
   if (annualRegisterId) {
-    where.push({
+    whereRelation.push({
       key: "annual_register.id",
       operator: "==",
-      value: annualRegisterId
+      value: Number(annualRegisterId)
     });
   }
   if (filters.deletedOnly) {
@@ -228,6 +248,7 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
     offset: filters.offset,
     include_deleted: filters.deletedOnly ? true : false,
     where: JSON.stringify(where),
+    where_relation: JSON.stringify(whereRelation),
     relation: JSON.stringify([
       "annual_register",
       "annual_register.register_semester",

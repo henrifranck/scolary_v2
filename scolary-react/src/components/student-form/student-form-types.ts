@@ -1,3 +1,4 @@
+import { AcademicYear } from "@/services/academic-year-service";
 import { Journey } from "@/services/journey-service";
 
 export type StudentFormState = {
@@ -65,6 +66,7 @@ export type FormItemComponentType = {
 
 export type StudentAnnualProps = {
   id?: number;
+  academic_year?: AcademicYear;
   payment: Array<StudentPaymentState>;
   register_semester: Array<StudentSemesterState>;
 };

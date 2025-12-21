@@ -23,7 +23,7 @@ class AnnualRegister(Base):
 
     # Relations
     student = relationship('Student', foreign_keys=[num_carte], back_populates="annual_register")
-    year = relationship('AcademicYear', foreign_keys=[id_academic_year])
+    academic_year = relationship('AcademicYear', foreign_keys=[id_academic_year])
     enrollment_fee = relationship('EnrollmentFee', foreign_keys=[id_enrollment_fee])
     register_semester = relationship('RegisterSemester')
     payment = relationship('Payement')

@@ -212,7 +212,7 @@ from .card import (
     ResponseCard,
     CardRenderRequest
 )
-from .dashboard import DashboardStats
+from .dashboard import DashboardStats, MentionCount, AcademicYearCount, MentionEnrollment
 from .enrollment_fee import (
     EnrollmentFee,
     EnrollmentFeeCreate,
