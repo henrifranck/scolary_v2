@@ -272,8 +272,7 @@ export async function fetchReinscriptions(
 export function useReinscriptions(filters: ReinscriptionFilters) {
   const hasRequiredFilters = Boolean(
     (filters.id_mention ?? filters.mentionId) &&
-      (filters.id_year ?? filters.academicYearId) &&
-      (filters.id_journey ?? filters.journeyId)
+      (filters.id_year ?? filters.academicYearId)
   );
 
   return useQuery({

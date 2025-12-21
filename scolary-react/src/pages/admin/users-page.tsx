@@ -169,9 +169,6 @@ const toPayload = (values: UserFormValues): UserPayload => {
   const mentionIds = (values.mentionIds ?? [])
     .map((mentionId) => Number(mentionId))
     .filter((mentionId) => Number.isFinite(mentionId) && mentionId > 0);
-  if (mentionIds.length === 0) {
-    throw new Error("Select at least one mention");
-  }
 
   const payload: UserPayload = {
     email: values.email.trim(),
@@ -244,16 +241,10 @@ const UserForm = ({
   const roleSelectionError = (
     errors.roleIds as { message?: string } | undefined
   )?.message;
-  const mentionSelectionError = (
-    errors.mentionIds as { message?: string } | undefined
-  )?.message;
 
   useEffect(() => {
     register("roleIds", {
       validate: (value) => (value?.length ? true : "Select at least one role")
-    });
-    register("mentionIds", {
-      validate: (value) => (value?.length ? true : "Select at least one mention")
     });
   }, [register]);
 
@@ -550,9 +541,9 @@ const UserForm = ({
               </p>
             )}
           </div>
-          {mentionSelectionError ? (
-            <p className="text-xs text-destructive">{mentionSelectionError}</p>
-          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Mention selection is optional. Leave empty to keep current assignment.
+          </p>
         </TabsContent>
       </Tabs>
       <div className="space-y-2">

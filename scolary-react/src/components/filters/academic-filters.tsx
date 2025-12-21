@@ -68,6 +68,8 @@ interface AcademicFiltersProps {
   journeysLoading?: boolean;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  showJourney?: boolean;
+  showSemester?: boolean;
 }
 
 export const AcademicFilters = ({
@@ -83,8 +85,11 @@ export const AcademicFilters = ({
   showActiveFilters = true,
   journeysLoading: journeysLoadingProp = false,
   collapsed: collapsedProp,
-  onCollapsedChange
+  onCollapsedChange,
+  showJourney = true,
+  showSemester: showSemesterProp
 }: AcademicFiltersProps) => {
+  const showSemester = showSemesterProp ?? showJourney;
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const isCollapsedControlled = collapsedProp !== undefined;
   const collapsed = isCollapsedControlled ? collapsedProp : internalCollapsed;
@@ -197,9 +202,13 @@ export const AcademicFilters = ({
   );
   const allowedSemesters = selectedJourney?.semesterList?.length
     ? selectedJourney.semesterList
-    : [];
+    : semesters;
 
   useEffect(() => {
+    if (!showJourney) {
+      return;
+    }
+
     const hasJourney = availableJourneys.some(
       (journey) => journey.id === value.id_journey
     );
@@ -218,7 +227,7 @@ export const AcademicFilters = ({
         id_journey: ""
       });
     }
-  }, [availableJourneys, onChange, value]);
+  }, [availableJourneys, onChange, showJourney, value.id_journey]);
 
   const handleMentionChange = (id_mention: string) => {
     const nextJourneys = resolvedJourneyOptions.filter(
@@ -229,8 +238,11 @@ export const AcademicFilters = ({
     )
       ? value.id_journey
       : "";
+    const nextJourneyId = showJourney
+      ? resolvedJourneyId
+      : "";
     const nextSelectedJourney = nextJourneys.find(
-      (journey) => journey.id === resolvedJourneyId
+      (journey) => journey.id === nextJourneyId
     );
     const journeySemesters =
       nextSelectedJourney?.semesterList?.length && semesters.length
@@ -243,12 +255,16 @@ export const AcademicFilters = ({
     onChange({
       ...value,
       id_mention,
-      id_journey: resolvedJourneyId,
+      id_journey: nextJourneyId,
       semester: resolvedSemester
     });
   };
 
   const handleJourneyChange = (id_journey: string) => {
+    if (!showJourney) {
+      return;
+    }
+
     const nextJourney = availableJourneys.find(
       (journey) => journey.id === id_journey
     );
@@ -284,8 +300,8 @@ export const AcademicFilters = ({
   const getActiveFiltersCount = () => {
     let count = 0;
     if (value.id_mention) count++;
-    if (value.id_journey) count++;
-    if (value.semester) count++;
+    if (showJourney && value.id_journey) count++;
+    if (showSemester && value.semester) count++;
     if (value.id_year) count++;
     return count;
   };
@@ -297,9 +313,7 @@ export const AcademicFilters = ({
   };
 
   const getSelectedJourneyLabel = () => {
-    return (
-      availableJourneys.find((j) => j.id === value.id_journey)?.label || ""
-    );
+    return availableJourneys.find((j) => j.id === value.id_journey)?.label || "";
   };
 
   const getSelectedYearLabel = () => {
@@ -375,19 +389,20 @@ export const AcademicFilters = ({
                   {getSelectedMentionLabel()}
                 </Badge>
               )}
-              {getSelectedJourneyLabel() && (
-                <Badge variant="outline" className="gap-1">
-                  <BookOpen className="h-3 w-3" />
-                  {getSelectedJourneyLabel()}
-                </Badge>
-              )}
+              {showJourney &&
+                getSelectedJourneyLabel() && (
+                  <Badge variant="outline" className="gap-1">
+                    <BookOpen className="h-3 w-3" />
+                    {getSelectedJourneyLabel()}
+                  </Badge>
+                )}
               {getSelectedYearLabel() && (
                 <Badge variant="outline" className="gap-1">
                   <Calendar className="h-3 w-3" />
                   {getSelectedYearLabel()}
                 </Badge>
               )}
-              {value.semester && (
+              {showSemester && value.semester && (
                 <Badge variant="outline" className="gap-1">
                   <BookOpen className="h-3 w-3" />
                   {value.semester}
@@ -425,37 +440,41 @@ export const AcademicFilters = ({
             </div>
 
             {/* Journey Selection */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Journey</label>
-              </div>
-              <Select
-                value={value.id_journey}
-                onValueChange={handleJourneyChange}
-                disabled={!availableJourneys.length || resolvedJourneysLoading}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder={journeyPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableJourneys.length ? (
-                    availableJourneys.map((journey) => (
-                      <SelectItem key={journey.id} value={journey.id}>
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="h-4 w-4 text-muted-foreground" />
-                          {journey.label}
-                        </div>
+            {showJourney && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-medium">Journey</label>
+                </div>
+                <Select
+                  value={value.id_journey}
+                  onValueChange={handleJourneyChange}
+                  disabled={
+                    !availableJourneys.length || resolvedJourneysLoading
+                  }
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={journeyPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableJourneys.length ? (
+                      availableJourneys.map((journey) => (
+                        <SelectItem key={journey.id} value={journey.id}>
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-muted-foreground" />
+                            {journey.label}
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="__no_journey" disabled>
+                        No journey available
                       </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="__no_journey" disabled>
-                      No journey available
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Academic Year Selection */}
             <div className="space-y-3">
@@ -498,34 +517,36 @@ export const AcademicFilters = ({
           </div>
 
           {/* Semester Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-              <label className="text-sm font-medium">Semester</label>
+          {showSemester && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <label className="text-sm font-medium">Semester</label>
+              </div>
+              <Tabs
+                value={value.semester}
+                onValueChange={handleSemesterChange}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 bg-muted p-1">
+                  {semesters.map((semester) => (
+                    <TabsTrigger
+                      key={semester}
+                      value={semester}
+                      className={cn(
+                        "text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm",
+                        !allowedSemesters.includes(semester) &&
+                          "opacity-50 pointer-events-none cursor-not-allowed"
+                      )}
+                      disabled={!allowedSemesters.includes(semester)}
+                    >
+                      {semester}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
             </div>
-            <Tabs
-              value={value.semester}
-              onValueChange={handleSemesterChange}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 bg-muted p-1">
-                {semesters.map((semester) => (
-                  <TabsTrigger
-                    key={semester}
-                    value={semester}
-                    className={cn(
-                      "text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm",
-                      !allowedSemesters.includes(semester) &&
-                        "opacity-50 pointer-events-none cursor-not-allowed"
-                    )}
-                    disabled={!allowedSemesters.includes(semester)}
-                  >
-                    {semester}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
+          )}
 
           {/* Summary Slot */}
           {summarySlot && <div className="pt-4 border-t">{summarySlot}</div>}

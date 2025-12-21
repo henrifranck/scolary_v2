@@ -219,7 +219,7 @@ def create_carte(
                 pos_init_y + ordon + 1.85 * value,
             )
         if os.path.exists(qr_path):
-            pdf.image(qr_path.as_posix(), w=0.6 * value, h=0.6 * value)
+            pdf.image(qr_path, w=0.6 * value, h=0.6 * value)
 
         pdf.set_font("Times", "BI", 9)
         if i == 0:

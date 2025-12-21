@@ -81,10 +81,10 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         title: 'Student',
         roles: ['admin'],
         items: [
+          { to: '/user/dossier-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['admin'] },
           { to: '/user/inscription', label: 'Inscription', icon: FileSignature, roles: ['admin'] },
           { to: '/user/re-inscription', label: 'Re-inscription', icon: RefreshCcw, roles: ['admin'] },
-          { to: '/user/re-inscription-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] },
-          { to: '/user/dossier-selection', label: 'Dossier', icon: FolderOpen, roles: ['admin'] }
+          { to: '/user/re-inscription-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] }
         ]
       },
       {
@@ -126,10 +126,10 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
       roles: ['student'],
       items: [
         { to: '/user/notes', label: 'Notes', icon: NotepadText, roles: ['student'] },
+        { to: '/user/dossier-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['student'] },
         { to: '/user/inscription', label: 'Inscription', icon: FileSignature, roles: ['student'] },
         { to: '/user/re-inscription', label: 'Re-inscription', icon: RefreshCcw, roles: ['student'] },
         { to: '/user/re-inscription-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] },
-        { to: '/user/dossier-selection', label: 'Dossier', icon: FolderOpen, roles: ['student'] },
         { to: '/user/concours', label: 'Concours', icon: Trophy, roles: ['student'], badge: 'New' }
       ]
     }
