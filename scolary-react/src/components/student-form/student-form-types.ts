@@ -77,6 +77,7 @@ export type StudentPaymentState = {
   num_receipt: string;
   date_receipt: string;
   payed: number;
+  description?: string;
 };
 
 export type StudentSemesterState = {

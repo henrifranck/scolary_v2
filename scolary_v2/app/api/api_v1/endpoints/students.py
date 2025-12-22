@@ -329,8 +329,8 @@ def hard_delete_student(
                 models.RegisterSemester.id.in_(register_ids)
             ).delete(synchronize_session=False)
 
-        db.query(models.Payement).filter(
-            models.Payement.id_annual_register.in_(annual_ids)
+        db.query(models.Payment).filter(
+            models.Payment.id_annual_register.in_(annual_ids)
         ).delete(synchronize_session=False)
         db.query(models.StudentSubscription).filter(
             models.StudentSubscription.id_annual_register.in_(annual_ids)

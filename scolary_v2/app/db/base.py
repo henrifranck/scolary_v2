@@ -36,5 +36,5 @@ from app.models.note import Note # noqa
 from app.models.result_teaching_unit import ResultTeachingUnit # noqa
 from app.models.constituent_element_offering import ConstituentElementOffering # noqa
 from app.models.teaching_unit_offering import TeachingUnitOffering # noqa
-from app.models.payement import Payement # noqa
+from app.models.payment import Payment # noqa
 from app.models.file_asset import FileAsset # noqa

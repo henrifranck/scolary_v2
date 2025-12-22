@@ -9,8 +9,8 @@ import random
 from app.core import security
 
 
-def test_create_payement_api(client, db):
-    """Create Payement via API."""
+def test_create_payment_api(client, db):
+    """Create Payment via API."""
     # Auth setup
     user_data = {
         'email': 'OHoOI@vszcf.com',
@@ -116,25 +116,25 @@ def test_create_payement_api(client, db):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    payement_data = {
+    payment_data = {
         'id_annual_register': annual_register.id,
         'payed': 4.989034798739679,
         'num_receipt': 'OMnpt',
         'date_receipt': '2025-11-15',
     }
 
-    resp = client.post('/api/v1/payements/', json=payement_data, headers={"Authorization": f"Bearer {token}"})
+    resp = client.post('/api/v1/payments/', json=payment_data, headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == status.HTTP_200_OK, resp.text
     created = resp.json()
     assert created['id'] is not None
-    assert created['id_annual_register'] == payement_data['id_annual_register']
-    assert created['payed'] == payement_data['payed']
-    assert created['num_receipt'] == payement_data['num_receipt']
-    assert created['date_receipt'] == payement_data['date_receipt']
+    assert created['id_annual_register'] == payment_data['id_annual_register']
+    assert created['payed'] == payment_data['payed']
+    assert created['num_receipt'] == payment_data['num_receipt']
+    assert created['date_receipt'] == payment_data['date_receipt']
 
 
-def test_update_payement_api(client, db):
-    """Update Payement via API."""
+def test_update_payment_api(client, db):
+    """Update Payment via API."""
     # Auth setup
     user_data = {
         'email': 'SuNHO@f1yjd.com',
@@ -240,7 +240,7 @@ def test_update_payement_api(client, db):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    payement_data = {
+    payment_data = {
         'id_annual_register': annual_register.id,
         'payed': 4.690342045177832,
         'num_receipt': '4BWeF',
@@ -297,7 +297,7 @@ def test_update_payement_api(client, db):
         # fallback -> prefix 'updated_'
         return f'updated_{v}'
 
-    resp_c = client.post('/api/v1/payements/', json=payement_data, headers={"Authorization": f"Bearer {token}"})
+    resp_c = client.post('/api/v1/payments/', json=payment_data, headers={"Authorization": f"Bearer {token}"})
     assert resp_c.status_code == status.HTTP_200_OK
     created = resp_c.json()
     fk_fields = ['id_annual_register']
@@ -305,11 +305,11 @@ def test_update_payement_api(client, db):
     # Build update_data for API
     update_data = {
         k: _updated_value(k, v)
-        for k, v in payement_data.items()
+        for k, v in payment_data.items()
         if k not in ('id', 'hashed_password') and k not in fk_fields and not isinstance(v, dict)
     }
 
-    resp_u = client.put(f'/api/v1/payements/{created["id"]}', json=update_data, headers={"Authorization": f"Bearer {token}"})
+    resp_u = client.put(f'/api/v1/payments/{created["id"]}', json=update_data, headers={"Authorization": f"Bearer {token}"})
     assert resp_u.status_code == status.HTTP_200_OK, resp_u.json()
     updated = resp_u.json()
     assert updated['id'] == created['id']
@@ -318,8 +318,8 @@ def test_update_payement_api(client, db):
     assert updated['date_receipt'] == update_data['date_receipt']
 
 
-def test_get_payement_api(client, db):
-    """Get Payement via API."""
+def test_get_payment_api(client, db):
+    """Get Payment via API."""
     # Auth setup
     user_data = {
         'email': 'FtTeO@1os4y.com',
@@ -425,22 +425,22 @@ def test_get_payement_api(client, db):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    payement_data = {
+    payment_data = {
         'id_annual_register': annual_register.id,
         'payed': 5.4994656817158525,
         'num_receipt': 'yyNE4',
         'date_receipt': '2025-11-15',
     }
 
-    client.post('/api/v1/payements/', json=payement_data, headers={"Authorization": f"Bearer {token}"})
-    resp_g = client.get('/api/v1/payements/', headers={"Authorization": f"Bearer {token}"})
+    client.post('/api/v1/payments/', json=payment_data, headers={"Authorization": f"Bearer {token}"})
+    resp_g = client.get('/api/v1/payments/', headers={"Authorization": f"Bearer {token}"})
     assert resp_g.status_code == status.HTTP_200_OK
     items = resp_g.json()['data']
     assert any(item.get('id') for item in items)
 
 
-def test_get_by_id_payement_api(client, db):
-    """Get_by_id Payement via API."""
+def test_get_by_id_payment_api(client, db):
+    """Get_by_id Payment via API."""
     # Auth setup
     user_data = {
         'email': 'h5QzT@0gqrx.com',
@@ -546,23 +546,23 @@ def test_get_by_id_payement_api(client, db):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    payement_data = {
+    payment_data = {
         'id_annual_register': annual_register.id,
         'payed': 5.279006029755937,
         'num_receipt': 'Uksyo',
         'date_receipt': '2025-11-15',
     }
 
-    resp_c = client.post('/api/v1/payements/', json=payement_data, headers={"Authorization": f"Bearer {token}"})
+    resp_c = client.post('/api/v1/payments/', json=payment_data, headers={"Authorization": f"Bearer {token}"})
     created = resp_c.json()
-    resp_g = client.get(f'/api/v1/payements/{created["id"]}', headers={"Authorization": f"Bearer {token}"})
+    resp_g = client.get(f'/api/v1/payments/{created["id"]}', headers={"Authorization": f"Bearer {token}"})
     assert resp_g.status_code == status.HTTP_200_OK
     retrieved = resp_g.json()
     assert retrieved['id'] == created['id']
 
 
-def test_delete_payement_api(client, db):
-    """Delete Payement via API."""
+def test_delete_payment_api(client, db):
+    """Delete Payment via API."""
     # Auth setup
     user_data = {
         'email': 'YabRf@s1n8j.com',
@@ -668,20 +668,20 @@ def test_delete_payement_api(client, db):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    payement_data = {
+    payment_data = {
         'id_annual_register': annual_register.id,
         'payed': 4.745963441959802,
         'num_receipt': '5YWtV',
         'date_receipt': '2025-11-15',
     }
 
-    resp_c = client.post('/api/v1/payements/', json=payement_data, headers={"Authorization": f"Bearer {token}"})
+    resp_c = client.post('/api/v1/payments/', json=payment_data, headers={"Authorization": f"Bearer {token}"})
     created = resp_c.json()
-    resp_d = client.delete(f'/api/v1/payements/{created["id"]}', headers={"Authorization": f"Bearer {token}"})
+    resp_d = client.delete(f'/api/v1/payments/{created["id"]}', headers={"Authorization": f"Bearer {token}"})
     assert resp_d.status_code == status.HTTP_200_OK
     deleted = resp_d.json()
-    assert deleted['msg'] == 'Payement deleted successfully'
-    resp_chk = client.get(f'/api/v1/payements/{created["id"]}', headers={"Authorization": f"Bearer {token}"})
+    assert deleted['msg'] == 'Payment deleted successfully'
+    resp_chk = client.get(f'/api/v1/payments/{created["id"]}', headers={"Authorization": f"Bearer {token}"})
     assert resp_chk.status_code == status.HTTP_404_NOT_FOUND
 
 # begin #

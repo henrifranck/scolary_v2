@@ -10,7 +10,7 @@ const relations = JSON.stringify([
   "register_semester{id,id_annual_register,id_journey,semester,repeat_status}",
   "register_semester.journey{id_mention,name}",
   "register_semester.journey.mention{name}",
-  "payment{id,payed,num_receipt,date_receipt}"
+  "payment{id,payed,num_receipt,date_receipt,description}"
 ]);
 const baseColumn = JSON.stringify(["last_name", "first_name"]);
 
@@ -51,11 +51,12 @@ export type RegisterSemesterPayload = {
   id_journey: number;
 };
 
-export type PayementPayload = {
+export type PaymentPayload = {
   id_annual_register: number;
   payed: number;
   num_receipt: string;
   date_receipt: string;
+  description?: string;
 };
 
 export const fetchAnnualRegisterByCardNumber = async (
@@ -96,6 +97,13 @@ export const deleteAnnualRegister = async (
     method: "DELETE"
   });
 
+export const deleteRegisterSemester = async (
+  id: number
+): Promise<{ msg: string }> =>
+  apiRequest<{ msg: string }>(`/register_semesters/${id}`, {
+    method: "DELETE"
+  });
+
 export const createRegisterSemester = async (
   payload: RegisterSemesterPayload
 ) =>
@@ -113,17 +121,24 @@ export const updateRegisterSemester = async (
     json: payload
   });
 
-export const createPayement = async (payload: PayementPayload) =>
-  apiRequest("/payements/", {
+export const createPayment = async (payload: PaymentPayload) =>
+  apiRequest("/payments/", {
     method: "POST",
     json: payload
   });
 
-export const updatePayement = async (
+export const deletePayment = async (
+  id: number
+): Promise<{ msg: string }> =>
+  apiRequest<{ msg: string }>(`/payments/${id}`, {
+    method: "DELETE"
+  });
+
+export const updatePayment = async (
   id: number,
-  payload: Partial<PayementPayload>
+  payload: Partial<PaymentPayload>
 ) =>
-  apiRequest(`/payements/${id}`, {
+  apiRequest(`/payments/${id}`, {
     method: "PUT",
     json: payload
   });

@@ -25,7 +25,7 @@ from .crud_constituent_element import constituent_element
 from .crud_constituent_element_optional_group import constituent_element_optional_group
 from .crud_feature import feature
 from .crud_role_permission import role_permission
-from .crud_payement import payement
+from .crud_payment import payment
 from .crud_user import user
 from .crud_group import group
 from .crud_classroom import classroom

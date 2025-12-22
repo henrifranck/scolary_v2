@@ -219,11 +219,11 @@ from .enrollment_fee import (
     EnrollmentFeeUpdate,
     ResponseEnrollmentFee
 )
-from .payement import (
-    Payement,
-    PayementCreate,
-    PayementUpdate,
-    ResponsePayement
+from .payment import (
+    Payment,
+    PaymentCreate,
+    PaymentUpdate,
+    ResponsePayment
 )
 
 from .file_asset import (

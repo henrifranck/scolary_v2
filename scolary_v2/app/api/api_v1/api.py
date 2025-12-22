@@ -37,7 +37,7 @@ from app.api.api_v1.endpoints import students
 from app.api.api_v1.endpoints import constituent_element_offerings
 from app.api.api_v1.endpoints import teaching_unit_offerings
 from app.api.api_v1.endpoints import universitys
-from app.api.api_v1.endpoints import payements
+from app.api.api_v1.endpoints import payments
 from app.api.api_v1.endpoints import files
 from app.api.api_v1.endpoints import pdfs
 from app.api.api_v1.endpoints import liste
@@ -69,7 +69,7 @@ api_router.include_router(subscription_features.router, prefix="/subscription_fe
 api_router.include_router(student_subscriptions.router, prefix="/student_subscriptions", tags=["student_subscriptions"])
 
 api_router.include_router(journey_semesters.router, prefix="/journey_semesters", tags=["journey_semesters"])
-api_router.include_router(payements.router, prefix="/payements", tags=["payements"])
+api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(annual_registers.router, prefix="/annual_registers", tags=["annual_registers"])
 api_router.include_router(register_semesters.router, prefix="/register_semesters", tags=["register_semesters"])
 

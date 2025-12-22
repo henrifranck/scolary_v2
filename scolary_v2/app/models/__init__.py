@@ -32,7 +32,7 @@ from .constituent_element_offering import ConstituentElementOffering
 from .note import Note
 from .nationality import Nationality
 from .enrollment_fee import EnrollmentFee
-from .payement import Payement
+from .payment import Payment
 from .card import Card
 from .card_asset import CardAsset
 from .file_asset import FileAsset

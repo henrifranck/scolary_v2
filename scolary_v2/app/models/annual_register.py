@@ -5,11 +5,15 @@
 from app.db.base_class import Base
 from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_
 from sqlalchemy.orm import relationship, column_property, aliased
-from sqlalchemy import String, Integer
+from sqlalchemy import String, Integer, UniqueConstraint
 
 
 class AnnualRegister(Base):
     __tablename__ = 'annual_register'
+    __table_args__ = (
+        UniqueConstraint('num_carte', 'id_academic_year', 
+                         name='uq_annual_register_student_year'),
+    )
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     num_carte = Column(String(255), ForeignKey('student.num_carte'))
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
@@ -26,7 +30,7 @@ class AnnualRegister(Base):
     academic_year = relationship('AcademicYear', foreign_keys=[id_academic_year])
     enrollment_fee = relationship('EnrollmentFee', foreign_keys=[id_enrollment_fee])
     register_semester = relationship('RegisterSemester')
-    payment = relationship('Payement')
+    payment = relationship('Payment')
 
 # begin #
 # ---write your code here--- #

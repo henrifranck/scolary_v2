@@ -384,12 +384,13 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_teaching_unit_optional_group_id'), 'teaching_unit_optional_group', ['id'], unique=True)
-    op.create_table('payement',
+    op.create_table('payment',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('id_annual_register', sa.Integer(), nullable=True),
     sa.Column('payed', sa.Float(), nullable=False),
     sa.Column('num_receipt', sa.String(length=255), nullable=False),
     sa.Column('date_receipt', sa.Date(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
@@ -397,7 +398,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('num_receipt')
     )
-    op.create_index(op.f('ix_payement_id'), 'payement', ['id'], unique=True)
+    op.create_index(op.f('ix_payment_id'), 'payment', ['id'], unique=True)
     op.create_table('register_semester',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('id_annual_register', sa.Integer(), nullable=True),
@@ -539,8 +540,8 @@ def downgrade() -> None:
     op.drop_table('student_subscription')
     op.drop_index(op.f('ix_register_semester_id'), table_name='register_semester')
     op.drop_table('register_semester')
-    op.drop_index(op.f('ix_payement_id'), table_name='payement')
-    op.drop_table('payement')
+    op.drop_index(op.f('ix_payment_id'), table_name='payment')
+    op.drop_table('payment')
     op.drop_index(op.f('ix_teaching_unit_optional_group_id'), table_name='teaching_unit_optional_group')
     op.drop_table('teaching_unit_optional_group')
     op.drop_index(op.f('ix_teaching_unit_id'), table_name='teaching_unit')

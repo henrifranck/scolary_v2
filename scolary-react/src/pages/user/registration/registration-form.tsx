@@ -15,87 +15,88 @@ import { Check, Pencil, Trash2 } from "lucide-react";
 import { StudentFormInfoItem } from "@/components/student-form/student-form-info-item";
 import { StudentAnnualProps } from "@/components/student-form/student-form-types";
 
-interface RegistrationPaymentFormProps {
+interface RegistrationFormProps {
   annual: StudentAnnualProps & { isEditing?: boolean; isNew?: boolean };
   index: number;
+  registrationIndex: number;
+  isEditing: boolean;
   filters?: any;
   journeyOptions: Array<{
     id: string;
     label: string;
     semesterList: string[];
   }>;
-  onToggleEdit: (index: number) => void;
-  onCancel: (index: number) => void;
-  onSave: (index: number) => void;
-  onDelete: (index: number) => void;
-  onUpdatePaymentField: (
+  onToggleEdit: (index: number, registrationIndex: number) => void;
+  onCancel: (index: number, registrationIndex: number) => void;
+  onSave: (
     index: number,
-    field: "num_receipt" | "date_receipt" | "payed",
-    value: string | number
+    mode: "registration" | "payment",
+    itemIndex: number
   ) => void;
+  onDelete: (index: number, registrationIndex: number) => void;
   onUpdateRegistrationField: (
     index: number,
+    registrationIndex: number,
     field: "semester" | "repeat_status" | "journey",
     value: string
   ) => void;
   isSaving?: boolean;
 }
 
-export const RegistrationPaymentForm = ({
+export const RegistrationForm = ({
   annual,
   index,
+  registrationIndex,
+  isEditing,
   filters,
   journeyOptions,
   onToggleEdit,
   onCancel,
   onSave,
   onDelete,
-  onUpdatePaymentField,
   onUpdateRegistrationField,
   isSaving
-}: RegistrationPaymentFormProps) => {
+}: RegistrationFormProps) => {
   const repeatStatusOptions = Object.values(RepeatStatusEnum);
-  const selectedJourneyId = annual?.register_semester?.[0]?.id_journey
-    ? String(annual.register_semester[0].id_journey)
-    : annual?.register_semester?.[0]?.journey?.id
-      ? String(annual.register_semester[0].journey.id)
+  const registrationEntry = annual?.register_semester?.[registrationIndex];
+  const selectedJourneyId = registrationEntry?.id_journey
+    ? String(registrationEntry.id_journey)
+    : registrationEntry?.journey?.id
+      ? String(registrationEntry.journey.id)
       : "";
   const selectedJourney = journeyOptions.find(
     (journey) => journey.id === selectedJourneyId
   );
   const semesterOptions = selectedJourney?.semesterList ?? [];
-  const selectedSemesterValue = annual?.register_semester?.[0]?.semester || "";
+  const selectedSemesterValue = registrationEntry?.semester || "";
   const academicYearName = annual?.academic_year?.name || "";
   const semesterValue = semesterOptions.includes(selectedSemesterValue)
     ? selectedSemesterValue
     : "";
 
   return (
-    <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-foreground">
-          {academicYearName}
-        </p>
+    <div className="space-y-4 rounded-xl border bg-muted/20 p-4 max-h-[350px] overflow-y-auto">
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             className="h-8 gap-2 px-3 text-destructive hover:text-destructive"
-            onClick={() => onDelete(index)}
+            onClick={() => onDelete(index, registrationIndex)}
             disabled={isSaving}
           >
             <Trash2 className="h-4 w-4" />
             Supprimer
           </Button>
-          {annual.isEditing ? (
+          {isEditing ? (
             <>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="h-8 gap-2 px-3"
-                onClick={() => onCancel(index)}
+                onClick={() => onCancel(index, registrationIndex)}
                 disabled={isSaving}
               >
                 Annuler
@@ -105,7 +106,9 @@ export const RegistrationPaymentForm = ({
                 variant="ghost"
                 size="sm"
                 className="h-8 gap-2 px-3"
-                onClick={() => onSave(index)}
+                onClick={() =>
+                  onSave(index, "registration", registrationIndex)
+                }
                 disabled={isSaving}
               >
                 <Check className="h-4 w-4" />
@@ -118,7 +121,7 @@ export const RegistrationPaymentForm = ({
               variant="ghost"
               size="sm"
               className="h-8 gap-2 px-3"
-              onClick={() => onToggleEdit(index)}
+              onClick={() => onToggleEdit(index, registrationIndex)}
               disabled={isSaving}
             >
               <Pencil className="h-4 w-4" />
@@ -127,99 +130,9 @@ export const RegistrationPaymentForm = ({
           )}
         </div>
       </div>
-      <Tabs defaultValue="registration" className="space-y-3">
-        <TabsList className="grid w-full grid-cols-2 md:w-auto">
-          <TabsTrigger value="registration">Registration</TabsTrigger>
-          <TabsTrigger value="payment">Payment</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="payment" className="space-y-2">
+        <div  className="space-y-2">
           <div className="grid gap-4">
-            {annual.isEditing ? (
-              <>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Numéro de reçu
-                    </label>
-                    <Input
-                      value={annual?.payment[0]?.num_receipt || ""}
-                      required
-                      onChange={(event) =>
-                        onUpdatePaymentField(
-                          index,
-                          "num_receipt",
-                          event.target.value
-                        )
-                      }
-                      placeholder="Saisir le numéro de reçu"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Date de reçu
-                    </label>
-                    <Input
-                      type="date"
-                      value={annual?.payment[0]?.date_receipt || ""}
-                      required
-                      onChange={(event) =>
-                        onUpdatePaymentField(
-                          index,
-                          "date_receipt",
-                          event.target.value
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Montant payé
-                  </label>
-                  <Input
-                    type="number"
-                    min={1}
-                    required
-                    value={annual?.payment[0]?.payed ?? 0}
-                    onChange={(event) =>
-                      onUpdatePaymentField(
-                        index,
-                        "payed",
-                        Number(event.target.value)
-                      )
-                    }
-                    placeholder="Saisir le montant"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <StudentFormInfoItem
-                    label="Numéro de reçu"
-                    value={annual?.payment[0]?.num_receipt || "N/A"}
-                  />
-                  <StudentFormInfoItem
-                    label="Date de reçu"
-                    value={annual?.payment[0]?.date_receipt || "N/A"}
-                  />
-                </div>
-                <StudentFormInfoItem
-                  label="Montant payé"
-                  value={
-                    annual?.payment[0]?.payed
-                      ? `${annual.payment[0].payed} Ar`
-                      : "N/A"
-                  }
-                />
-              </>
-            )}
-          </div>
-        </TabsContent>
-        <TabsContent value="registration" className="space-y-2">
-          <div className="grid gap-4">
-            {annual.isEditing ? (
+            {isEditing ? (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
@@ -231,7 +144,12 @@ export const RegistrationPaymentForm = ({
                       required
                       aria-required="true"
                       onValueChange={(value) =>
-                        onUpdateRegistrationField(index, "semester", value)
+                        onUpdateRegistrationField(
+                          index,
+                          registrationIndex,
+                          "semester",
+                          value
+                        )
                       }
                     >
                       <SelectTrigger>
@@ -263,11 +181,16 @@ export const RegistrationPaymentForm = ({
                       Statut de redoublement
                     </label>
                     <Select
-                      value={annual?.register_semester[0]?.repeat_status || ""}
+                      value={registrationEntry?.repeat_status || ""}
                       required
                       aria-required="true"
                       onValueChange={(value) =>
-                        onUpdateRegistrationField(index, "repeat_status", value)
+                        onUpdateRegistrationField(
+                          index,
+                          registrationIndex,
+                          "repeat_status",
+                          value
+                        )
                       }
                     >
                       <SelectTrigger>
@@ -292,7 +215,12 @@ export const RegistrationPaymentForm = ({
                     required
                     aria-required="true"
                     onValueChange={(value) =>
-                      onUpdateRegistrationField(index, "journey", value)
+                      onUpdateRegistrationField(
+                        index,
+                        registrationIndex,
+                        "journey",
+                        value
+                      )
                     }
                   >
                     <SelectTrigger>
@@ -319,26 +247,24 @@ export const RegistrationPaymentForm = ({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <StudentFormInfoItem
                     label="Semestre"
-                    value={annual?.register_semester[0]?.semester || "N/A"}
+                    value={registrationEntry?.semester || "N/A"}
                   />
                   <StudentFormInfoItem
                     label="Statut de redoublement"
                     value={
-                      formatRepeatStatus(
-                        annual?.register_semester[0]?.repeat_status
-                      ) || "N/A"
+                      formatRepeatStatus(registrationEntry?.repeat_status) ||
+                      "N/A"
                     }
                   />
                 </div>
                 <StudentFormInfoItem
                   label="Parcours"
-                  value={annual?.register_semester[0]?.journey.name || "N/A"}
+                  value={registrationEntry?.journey?.name || "N/A"}
                 />
               </>
             )}
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
     </div>
   );
 };

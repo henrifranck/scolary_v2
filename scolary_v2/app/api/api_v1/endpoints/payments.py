@@ -8,8 +8,9 @@ import ast
 
 router = APIRouter()
 from app.api import deps
-@router.get('/', response_model=schemas.ResponsePayement)
-def read_payements(
+
+@router.get('/', response_model=schemas.ResponsePayment)
+def read_payments(
         *,
         offset: int = 0,
         limit: int = 20,
@@ -19,7 +20,7 @@ def read_payements(
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Retrieve payements.
+    Retrieve payments.
     """
     relations = []
     if relation is not None and relation != "" and relation != []:
@@ -29,56 +30,56 @@ def read_payements(
     if where is not None and where != "" and where != []:
        wheres += ast.literal_eval(where)
 
-    payements = crud.payement.get_multi_where_array(
+    payments = crud.payment.get_multi_where_array(
       db=db, relations=relations, skip=offset, limit=limit, where=wheres)
-    count = crud.payement.get_count_where_array(db=db, where=wheres)
-    response = schemas.ResponsePayement(**{'count': count, 'data': jsonable_encoder(payements)})
+    count = crud.payment.get_count_where_array(db=db, where=wheres)
+    response = schemas.ResponsePayment(**{'count': count, 'data': jsonable_encoder(payments)})
     return response
 
 
-@router.post('/', response_model=schemas.Payement)
-def create_payement(
+@router.post('/', response_model=schemas.Payment)
+def create_payment(
         *,
         db: Session = Depends(deps.get_db),
-        payement_in: schemas.PayementCreate,
+        payment_in: schemas.PaymentCreate,
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Create new payement.
+    Create new payment.
     """
-    payement = crud.payement.create(db=db, obj_in=payement_in)
-    return payement
+    payment = crud.payment.create(db=db, obj_in=payment_in)
+    return payment
 
 
-@router.put('/{payement_id}', response_model=schemas.Payement)
-def update_payement(
+@router.put('/{payment_id}', response_model=schemas.Payment)
+def update_payment(
         *,
         db: Session = Depends(deps.get_db),
-        payement_id: int,
-        payement_in: schemas.PayementUpdate,
+        payment_id: int,
+        payment_in: schemas.PaymentUpdate,
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Update an payement.
+    Update an payment.
     """
-    payement = crud.payement.get(db=db, id=payement_id)
-    if not payement:
-        raise HTTPException(status_code=404, detail='Payement not found')
-    payement = crud.payement.update(db=db, db_obj=payement, obj_in=payement_in)
-    return payement
+    payment = crud.payment.get(db=db, id=payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail='Payment not found')
+    payment = crud.payment.update(db=db, db_obj=payment, obj_in=payment_in)
+    return payment
 
 
-@router.get('/{payement_id}', response_model=schemas.Payement)
-def read_payement(
+@router.get('/{payment_id}', response_model=schemas.Payment)
+def read_payment(
         *,
         relation: str = "[]",
         where: str = "[]",
         db: Session = Depends(deps.get_db),
-        payement_id: int,
+        payment_id: int,
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Get payement by ID.
+    Get payment by ID.
     """
     relations = []
     if relation is not None and relation != "" and relation != [] and relation != "[]":
@@ -88,24 +89,24 @@ def read_payement(
     if where is not None and where != "" and where != []:
        wheres += ast.literal_eval(where)
 
-    payement = crud.payement.get(db=db, id=payement_id, relations=relations, where=wheres)
-    if not payement:
-        raise HTTPException(status_code=404, detail='Payement not found')
-    return payement
+    payment = crud.payment.get(db=db, id=payment_id, relations=relations, where=wheres)
+    if not payment:
+        raise HTTPException(status_code=404, detail='Payment not found')
+    return payment
 
 
-@router.delete('/{payement_id}', response_model=schemas.Msg)
-def delete_payement(
+@router.delete('/{payment_id}', response_model=schemas.Msg)
+def delete_payment(
         *,
         db: Session = Depends(deps.get_db),
-        payement_id: int,
+        payment_id: int,
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Delete an payement.
+    Delete a payment.
     """
-    payement = crud.payement.get(db=db, id=payement_id)
-    if not payement:
-        raise HTTPException(status_code=404, detail='Payement not found')
-    payement = crud.payement.remove(db=db, id=payement_id)
-    return schemas.Msg(msg='Payement deleted successfully')
+    payment = crud.payment.get(db=db, id=payment_id)
+    if not payment:
+        raise HTTPException(status_code=404, detail='Payment not found')
+    payment = crud.payment.remove(db=db, id=payment_id)
+    return schemas.Msg(msg='Payment deleted successfully')

@@ -30,7 +30,7 @@ import {
   studentInformationRegistration
 } from "./student-form-data";
 import { ReinscriptionFilters } from "@/services/reinscription-service";
-import { ReinscriptionAnnualRegister } from "@/pages/user/reinscription/reinscription-payement-form";
+import { ReinscriptionAnnualRegister } from "@/pages/user/reinscription/reinscription-payment-form";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { MentionOption } from "@/components/filters/academic-filters";
 
@@ -244,7 +244,7 @@ export const StudentForm = ({
         const normalizedAnnual = rawAnnual
           .map((entry: any) => {
             const payment =
-              entry?.payment ?? entry?.payement ?? entry?.payments ?? [];
+              entry?.payment ?? entry?.payments ?? [];
             return { ...entry, payment };
           })
           .filter(

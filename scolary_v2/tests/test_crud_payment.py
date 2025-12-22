@@ -10,11 +10,11 @@ import pytest
 from datetime import datetime, date, time, timedelta
 import uuid
 import random
-"""Tests for CRUD operations on Payement model."""
+"""Tests for CRUD operations on Payment model."""
 
 
-def test_create_payement(db: Session):
-    """Test create operation for Payement."""
+def test_create_payment(db: Session):
+    """Test create operation for Payment."""
     # Test data for Mention
     mention_data = schemas.MentionCreate(
         name='y86eK',
@@ -108,26 +108,26 @@ def test_create_payement(db: Session):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    # Test data for Payement
-    payement_data = schemas.PayementCreate(
+    # Test data for Payment
+    payment_data = schemas.PaymentCreate(
         id_annual_register=annual_register.id,
         payed=4.697861906051045,
         num_receipt='vstJl',
         date_receipt='2025-11-15',
     )
 
-    payement = crud.payement.create(db=db, obj_in=payement_data)
+    payment = crud.payment.create(db=db, obj_in=payment_data)
 
     # Assertions
-    assert payement.id is not None
-    assert payement.id_annual_register == payement_data.id_annual_register
-    assert payement.payed == payement_data.payed
-    assert payement.num_receipt == payement_data.num_receipt
-    assert payement.date_receipt == payement_data.date_receipt
+    assert payment.id is not None
+    assert payment.id_annual_register == payment_data.id_annual_register
+    assert payment.payed == payment_data.payed
+    assert payment.num_receipt == payment_data.num_receipt
+    assert payment.date_receipt == payment_data.date_receipt
 
 
-def test_update_payement(db: Session):
-    """Test update operation for Payement."""
+def test_update_payment(db: Session):
+    """Test update operation for Payment."""
     # Test data for Mention
     mention_data = schemas.MentionCreate(
         name='slwKN',
@@ -221,15 +221,15 @@ def test_update_payement(db: Session):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    # Test data for Payement
-    payement_data = schemas.PayementCreate(
+    # Test data for Payment
+    payment_data = schemas.PaymentCreate(
         id_annual_register=annual_register.id,
         payed=4.492715566555516,
         num_receipt='Y08WS',
         date_receipt='2025-11-15',
     )
 
-    payement = crud.payement.create(db=db, obj_in=payement_data)
+    payment = crud.payment.create(db=db, obj_in=payment_data)
 
     # Precompute enum values for update
     enum_values_map = {}
@@ -282,27 +282,27 @@ def test_update_payement(db: Session):
         return f'updated_{v}'
 
     # Update data
-    payed_value = payement.payed
-    num_receipt_value = payement.num_receipt
-    date_receipt_value = payement.date_receipt
-    update_data = schemas.PayementUpdate(**{
+    payed_value = payment.payed
+    num_receipt_value = payment.num_receipt
+    date_receipt_value = payment.date_receipt
+    update_data = schemas.PaymentUpdate(**{
         k: _updated_value(k, v)
-        for k, v in payement_data.dict().items()
+        for k, v in payment_data.dict().items()
         if k not in ('id', 'hashed_password') and not isinstance(v, dict)
     })
-    updated_payement = crud.payement.update(
-        db=db, db_obj=payement, obj_in=update_data
+    updated_payment = crud.payment.update(
+        db=db, db_obj=payment, obj_in=update_data
     )
 
     # Assertions
-    assert updated_payement.id == payement.id
-    assert updated_payement.payed != payed_value
-    assert updated_payement.num_receipt != num_receipt_value
-    assert updated_payement.date_receipt != date_receipt_value
+    assert updated_payment.id == payment.id
+    assert updated_payment.payed != payed_value
+    assert updated_payment.num_receipt != num_receipt_value
+    assert updated_payment.date_receipt != date_receipt_value
 
 
-def test_get_payement(db: Session):
-    """Test get operation for Payement."""
+def test_get_payment(db: Session):
+    """Test get operation for Payment."""
     # Test data for Mention
     mention_data = schemas.MentionCreate(
         name='6vnN3',
@@ -396,26 +396,26 @@ def test_get_payement(db: Session):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    # Test data for Payement
-    payement_data = schemas.PayementCreate(
+    # Test data for Payment
+    payment_data = schemas.PaymentCreate(
         id_annual_register=annual_register.id,
         payed=5.05657272628336,
         num_receipt='rBEqI',
         date_receipt='2025-11-15',
     )
 
-    payement = crud.payement.create(db=db, obj_in=payement_data)
+    payment = crud.payment.create(db=db, obj_in=payment_data)
 
     # Get all records
-    records = crud.payement.get_multi_where_array(db=db)
+    records = crud.payment.get_multi_where_array(db=db)
 
     # Assertions
     assert len(records) > 0
-    assert any(r.id == payement.id for r in records)
+    assert any(r.id == payment.id for r in records)
 
 
-def test_get_by_id_payement(db: Session):
-    """Test get_by_id operation for Payement."""
+def test_get_by_id_payment(db: Session):
+    """Test get_by_id operation for Payment."""
     # Test data for Mention
     mention_data = schemas.MentionCreate(
         name='lSthv',
@@ -509,30 +509,30 @@ def test_get_by_id_payement(db: Session):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    # Test data for Payement
-    payement_data = schemas.PayementCreate(
+    # Test data for Payment
+    payment_data = schemas.PaymentCreate(
         id_annual_register=annual_register.id,
         payed=5.162805190433684,
         num_receipt='4iIWx',
         date_receipt='2025-11-15',
     )
 
-    payement = crud.payement.create(db=db, obj_in=payement_data)
+    payment = crud.payment.create(db=db, obj_in=payment_data)
 
     # Get by ID
-    retrieved_payement = crud.payement.get(db=db, id=payement.id)
+    retrieved_payment = crud.payment.get(db=db, id=payment.id)
 
     # Assertions
-    assert retrieved_payement is not None
-    assert retrieved_payement.id == payement.id
-    assert retrieved_payement.id_annual_register == payement.id_annual_register
-    assert retrieved_payement.payed == payement.payed
-    assert retrieved_payement.num_receipt == payement.num_receipt
-    assert retrieved_payement.date_receipt == payement.date_receipt
+    assert retrieved_payment is not None
+    assert retrieved_payment.id == payment.id
+    assert retrieved_payment.id_annual_register == payment.id_annual_register
+    assert retrieved_payment.payed == payment.payed
+    assert retrieved_payment.num_receipt == payment.num_receipt
+    assert retrieved_payment.date_receipt == payment.date_receipt
 
 
-def test_delete_payement(db: Session):
-    """Test delete operation for Payement."""
+def test_delete_payment(db: Session):
+    """Test delete operation for Payment."""
     # Test data for Mention
     mention_data = schemas.MentionCreate(
         name='Ai1mg',
@@ -626,25 +626,25 @@ def test_delete_payement(db: Session):
 
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_data)
 
-    # Test data for Payement
-    payement_data = schemas.PayementCreate(
+    # Test data for Payment
+    payment_data = schemas.PaymentCreate(
         id_annual_register=annual_register.id,
         payed=1.8322540877824212,
         num_receipt='AUbvZ',
         date_receipt='2025-11-15',
     )
 
-    payement = crud.payement.create(db=db, obj_in=payement_data)
+    payment = crud.payment.create(db=db, obj_in=payment_data)
 
     # Delete record
-    deleted_payement = crud.payement.remove(db=db, id=payement.id)
+    deleted_payment = crud.payment.remove(db=db, id=payment.id)
 
     # Assertions
-    assert deleted_payement is not None
-    assert deleted_payement.id == payement.id
+    assert deleted_payment is not None
+    assert deleted_payment.id == payment.id
 
     # Verify deletion
-    assert crud.payement.get(db=db, id=payement.id) is None
+    assert crud.payment.get(db=db, id=payment.id) is None
 
 # begin #
 # ---write your code here--- #

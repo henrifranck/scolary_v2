@@ -29,12 +29,12 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `academic_year` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `code` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `academic_year`
@@ -54,8 +54,8 @@ INSERT INTO `academic_year` (`id`, `name`, `code`, `created_at`, `updated_at`, `
 --
 
 CREATE TABLE `alembic_version` (
-  `version_num` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `version_num` varchar(32) COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `alembic_version`
@@ -72,14 +72,14 @@ INSERT INTO `alembic_version` (`version_num`) VALUES
 
 CREATE TABLE `annual_register` (
   `id` int NOT NULL,
-  `num_carte` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `num_carte` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_academic_year` int DEFAULT NULL,
   `semester_count` int NOT NULL,
   `id_enrollment_fee` int DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -89,12 +89,12 @@ CREATE TABLE `annual_register` (
 
 CREATE TABLE `baccalaureate_serie` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `value` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `baccalaureate_serie`
@@ -119,17 +119,17 @@ INSERT INTO `baccalaureate_serie` (`id`, `name`, `value`, `created_at`, `updated
 
 CREATE TABLE `card` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `card_type` enum('STUDENT_CARD','USER_BADGE') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `html_template` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `css_styles` text COLLATE utf8mb4_unicode_ci,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `card_type` enum('STUDENT_CARD','USER_BADGE') COLLATE utf8mb4_general_ci NOT NULL,
+  `html_template` text COLLATE utf8mb4_general_ci NOT NULL,
+  `css_styles` text COLLATE utf8mb4_general_ci,
   `id_mention` int DEFAULT NULL,
   `id_journey` int DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `card`
@@ -148,11 +148,11 @@ INSERT INTO `card` (`id`, `name`, `description`, `card_type`, `html_template`, `
 
 CREATE TABLE `card_asset` (
   `id` int NOT NULL,
-  `filename` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `path` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `filename` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `path` varchar(512) COLLATE utf8mb4_general_ci NOT NULL,
   `uploaded_by_id` int DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `card_asset`
@@ -170,12 +170,12 @@ INSERT INTO `card_asset` (`id`, `filename`, `path`, `uploaded_by_id`, `created_a
 
 CREATE TABLE `classroom` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `capacity` int NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -185,14 +185,14 @@ CREATE TABLE `classroom` (
 
 CREATE TABLE `constituent_element` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `semester` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `semester` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_journey` int DEFAULT NULL,
-  `color` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `color` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -210,7 +210,7 @@ CREATE TABLE `constituent_element_offering` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -221,11 +221,11 @@ CREATE TABLE `constituent_element_offering` (
 CREATE TABLE `constituent_element_optional_group` (
   `id` int NOT NULL,
   `id_teaching_unit_offering` int DEFAULT NULL,
-  `selection_regle` text COLLATE utf8mb4_unicode_ci,
+  `selection_regle` text COLLATE utf8mb4_general_ci,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -235,14 +235,14 @@ CREATE TABLE `constituent_element_optional_group` (
 
 CREATE TABLE `enrollment_fee` (
   `id` int NOT NULL,
-  `level` enum('PASSING','REPEATING','TRIPLING') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `level` enum('PASSING','REPEATING','TRIPLING') COLLATE utf8mb4_general_ci NOT NULL,
   `price` float NOT NULL,
   `id_mention` int DEFAULT NULL,
   `id_academic_year` int DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -255,11 +255,11 @@ CREATE TABLE `exam_date` (
   `id_academic_year` int DEFAULT NULL,
   `date_from` date NOT NULL,
   `date_to` date NOT NULL,
-  `session` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `session` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -271,15 +271,15 @@ CREATE TABLE `exam_group` (
   `id` int NOT NULL,
   `id_classroom` int DEFAULT NULL,
   `id_journey` int DEFAULT NULL,
-  `semester` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `semester` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `num_from` int NOT NULL,
   `num_to` int NOT NULL,
-  `session` enum('SN','SR') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `session` enum('SN','SR') COLLATE utf8mb4_general_ci NOT NULL,
   `id_accademic_year` int DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -289,12 +289,12 @@ CREATE TABLE `exam_group` (
 
 CREATE TABLE `feature` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -304,16 +304,16 @@ CREATE TABLE `feature` (
 
 CREATE TABLE `file_asset` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `path` varchar(512) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` enum('image','video','audio','document','other') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'other',
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `path` varchar(512) COLLATE utf8mb4_general_ci NOT NULL,
+  `type` enum('image','video','audio','document','other') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'other',
   `size_bytes` bigint DEFAULT NULL,
-  `mime_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `mime_type` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `uploaded_by_id` int DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `file_asset`
@@ -342,13 +342,13 @@ INSERT INTO `file_asset` (`id`, `name`, `path`, `type`, `size_bytes`, `mime_type
 CREATE TABLE `group` (
   `id` int NOT NULL,
   `id_journey` int DEFAULT NULL,
-  `semester` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `semester` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `group_number` int NOT NULL,
   `student_count` int NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -358,13 +358,13 @@ CREATE TABLE `group` (
 
 CREATE TABLE `journey` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `abbreviation` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `abbreviation` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `id_mention` int DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `journey`
@@ -406,11 +406,11 @@ INSERT INTO `journey` (`id`, `name`, `abbreviation`, `id_mention`, `created_at`,
 CREATE TABLE `journey_semester` (
   `id` int NOT NULL,
   `id_journey` int DEFAULT NULL,
-  `semester` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `semester` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `journey_semester`
@@ -439,15 +439,15 @@ INSERT INTO `journey_semester` (`id`, `id_journey`, `semester`, `created_at`, `u
 
 CREATE TABLE `mention` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `abbreviation` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `plugged` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `background` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `slug` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `abbreviation` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `plugged` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `background` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `mention`
@@ -469,11 +469,11 @@ INSERT INTO `mention` (`id`, `name`, `slug`, `abbreviation`, `plugged`, `backgro
 
 CREATE TABLE `nationality` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `nationality`
@@ -494,14 +494,14 @@ CREATE TABLE `note` (
   `id` int NOT NULL,
   `id_register_semester` int DEFAULT NULL,
   `id_constituent_element_offering` int DEFAULT NULL,
-  `session` enum('SN','SR') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `session` enum('SN','SR') COLLATE utf8mb4_general_ci NOT NULL,
   `note` float DEFAULT NULL,
   `id_user` int DEFAULT NULL,
-  `comment` text COLLATE utf8mb4_unicode_ci,
+  `comment` text COLLATE utf8mb4_general_ci,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -513,12 +513,12 @@ CREATE TABLE `payement` (
   `id` int NOT NULL,
   `id_annual_register` int DEFAULT NULL,
   `payed` float NOT NULL,
-  `num_receipt` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `num_receipt` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `date_receipt` date NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -528,13 +528,13 @@ CREATE TABLE `payement` (
 
 CREATE TABLE `permission` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `method` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `model_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `method` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `model_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `permission`
@@ -553,15 +553,15 @@ INSERT INTO `permission` (`id`, `name`, `method`, `model_name`, `created_at`, `u
 CREATE TABLE `register_semester` (
   `id` int NOT NULL,
   `id_annual_register` int DEFAULT NULL,
-  `semester` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `repeat_status` enum('PASSING','REPEATING','TRIPLING') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `semester` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `repeat_status` enum('PASSING','REPEATING','TRIPLING') COLLATE utf8mb4_general_ci NOT NULL,
   `id_journey` int DEFAULT NULL,
-  `imported_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `imported_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `is_valid` tinyint(1) DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -575,11 +575,11 @@ CREATE TABLE `result_teaching_unit` (
   `note` float NOT NULL,
   `is_valid` tinyint(1) DEFAULT NULL,
   `date_validation` datetime NOT NULL,
-  `comment` text COLLATE utf8mb4_unicode_ci,
+  `comment` text COLLATE utf8mb4_general_ci,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -589,12 +589,12 @@ CREATE TABLE `result_teaching_unit` (
 
 CREATE TABLE `role` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `use_for_card` tinyint(1) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `role`
@@ -619,7 +619,7 @@ CREATE TABLE `role_permission` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `role_permission`
@@ -643,35 +643,35 @@ INSERT INTO `role_permission` (`id`, `id_role`, `id_permission`, `created_at`, `
 
 CREATE TABLE `student` (
   `id` int NOT NULL,
-  `num_carte` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `num_select` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `last_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `first_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `num_carte` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `num_select` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `first_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `date_of_birth` date NOT NULL,
-  `place_of_birth` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `address` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sex` enum('MALE','FEMALE') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `martial_status` enum('SINGLE','MARRIED','DIVORCED','WIDOWED') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `num_of_cin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `place_of_birth` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `address` text COLLATE utf8mb4_general_ci NOT NULL,
+  `sex` enum('MALE','FEMALE') COLLATE utf8mb4_general_ci NOT NULL,
+  `martial_status` enum('SINGLE','MARRIED','DIVORCED','WIDOWED') COLLATE utf8mb4_general_ci NOT NULL,
+  `phone_number` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `num_of_cin` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `date_of_cin` date DEFAULT NULL,
-  `place_of_cin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `repeat_status` enum('PASSING','REPEATING','TRIPLING') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `picture` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `num_of_baccalaureate` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `center_of_baccalaureate` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `place_of_cin` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `repeat_status` enum('PASSING','REPEATING','TRIPLING') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `picture` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `num_of_baccalaureate` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `center_of_baccalaureate` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `year_of_baccalaureate` date DEFAULT NULL,
-  `job` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `father_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `father_job` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mother_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `mother_job` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `parent_address` text COLLATE utf8mb4_unicode_ci,
-  `level` enum('L1','L2','L3','M1','M2') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `job` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `father_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `father_job` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `mother_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `mother_job` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `parent_address` text COLLATE utf8mb4_general_ci,
+  `level` enum('L1','L2','L3','M1','M2') COLLATE utf8mb4_general_ci DEFAULT NULL,
   `mean` float DEFAULT NULL,
-  `enrollment_status` enum('pending','selected','rejected','registered','former') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `imported_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `enrollment_status` enum('pending','selected','rejected','registered','former') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `imported_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_mention` int DEFAULT NULL,
   `id_enter_year` int DEFAULT NULL,
   `id_nationality` int DEFAULT NULL,
@@ -679,7 +679,7 @@ CREATE TABLE `student` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `student`
@@ -4388,7 +4388,7 @@ CREATE TABLE `student_subscription` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -4398,11 +4398,11 @@ CREATE TABLE `student_subscription` (
 
 CREATE TABLE `subscription` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -4417,7 +4417,7 @@ CREATE TABLE `subscription_feature` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -4427,13 +4427,13 @@ CREATE TABLE `subscription_feature` (
 
 CREATE TABLE `teaching_unit` (
   `id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `semester` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `semester` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `id_journey` int DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -4450,7 +4450,7 @@ CREATE TABLE `teaching_unit_offering` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -4461,12 +4461,12 @@ CREATE TABLE `teaching_unit_offering` (
 CREATE TABLE `teaching_unit_optional_group` (
   `id` int NOT NULL,
   `id_journey` int DEFAULT NULL,
-  `semester` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `selection_regle` text COLLATE utf8mb4_unicode_ci,
+  `semester` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `selection_regle` text COLLATE utf8mb4_general_ci,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -4476,19 +4476,19 @@ CREATE TABLE `teaching_unit_optional_group` (
 
 CREATE TABLE `university` (
   `id` int NOT NULL,
-  `province` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `department_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `department_other_information` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `department_address` text COLLATE utf8mb4_unicode_ci,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `logo_university` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `logo_departement` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `phone_number` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `admin_signature` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `province` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `department_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `department_other_information` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `department_address` text COLLATE utf8mb4_general_ci,
+  `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `logo_university` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `logo_departement` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `phone_number` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `admin_signature` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `university`
@@ -4505,17 +4505,17 @@ INSERT INTO `university` (`id`, `province`, `department_name`, `department_other
 
 CREATE TABLE `user` (
   `id` int NOT NULL,
-  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `first_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `last_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `hashed_password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `first_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `hashed_password` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `is_superuser` tinyint(1) DEFAULT NULL,
-  `picture` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `picture` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `user`
@@ -4539,7 +4539,7 @@ CREATE TABLE `user_mention` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `user_mention`
@@ -4568,7 +4568,7 @@ CREATE TABLE `user_role` (
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `user_role`
@@ -4589,17 +4589,17 @@ INSERT INTO `user_role` (`id`, `id_user`, `id_role`, `created_at`, `updated_at`,
 CREATE TABLE `working_time` (
   `id` int NOT NULL,
   `id_constituent_element` int DEFAULT NULL,
-  `working_time_type` enum('COURSE','TP','TD','EXAM') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `day` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `working_time_type` enum('COURSE','TP','TD','EXAM') COLLATE utf8mb4_general_ci NOT NULL,
+  `day` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `start` time DEFAULT NULL,
   `end` time DEFAULT NULL,
   `id_group` int DEFAULT NULL,
   `date` datetime DEFAULT NULL,
-  `session` enum('SN','SR') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `session` enum('SN','SR') COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Index pour les tables déchargées
