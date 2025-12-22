@@ -30,7 +30,11 @@ import {
   updateRegisterSemester
 } from "@/services/annual-register-service";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { uploadDocument } from "@/services/document-service";
+import {
+  deleteDocument,
+  updateDocument,
+  uploadDocument
+} from "@/services/document-service";
 import {
   DocumentEditor,
   DocumentSummary
@@ -932,6 +936,69 @@ export const ReinscriptionAnnualRegister = ({
     }
   };
 
+  const handleUpdateDocument = async (
+    annualIndex: number,
+    documentId: number,
+    payload: { name?: string; description?: string }
+  ) => {
+    const target = annualRegisterDrafts[annualIndex];
+    if (!target) {
+      return;
+    }
+    const targetKey = getAnnualKey(target, annualIndex);
+    setDocumentUploadError(null);
+    try {
+      const updated = await updateDocument(documentId, payload);
+      setDocumentDrafts((previous) => ({
+        ...previous,
+        [targetKey]: (previous[targetKey] ?? []).map((doc) =>
+          doc.id === documentId ? updated : doc
+        )
+      }));
+      setSavedDocumentDrafts((previous) => ({
+        ...previous,
+        [targetKey]: (previous[targetKey] ?? []).map((doc) =>
+          doc.id === documentId ? updated : doc
+        )
+      }));
+    } catch (error) {
+      setDocumentUploadError(
+        error instanceof Error ? error.message : "Impossible de modifier."
+      );
+    }
+  };
+
+  const handleDeleteDocument = async (
+    annualIndex: number,
+    documentId: number
+  ) => {
+    const target = annualRegisterDrafts[annualIndex];
+    if (!target) {
+      return;
+    }
+    const targetKey = getAnnualKey(target, annualIndex);
+    setDocumentUploadError(null);
+    try {
+      await deleteDocument(documentId);
+      setDocumentDrafts((previous) => ({
+        ...previous,
+        [targetKey]: (previous[targetKey] ?? []).filter(
+          (doc) => doc.id !== documentId
+        )
+      }));
+      setSavedDocumentDrafts((previous) => ({
+        ...previous,
+        [targetKey]: (previous[targetKey] ?? []).filter(
+          (doc) => doc.id !== documentId
+        )
+      }));
+    } catch (error) {
+      setDocumentUploadError(
+        error instanceof Error ? error.message : "Impossible de supprimer."
+      );
+    }
+  };
+
   const handleSaveAnnualRegister = async (
     index: number,
     mode: "registration" | "payment",
@@ -1296,6 +1363,8 @@ export const ReinscriptionAnnualRegister = ({
                     documentUploadingIndex={documentUploadingIndex}
                     getAnnualKey={getAnnualKey}
                     handleUploadDocument={handleUploadDocument}
+                    onDeleteDocument={handleDeleteDocument}
+                    onUpdateDocument={handleUpdateDocument}
                     setDocumentDescriptions={setDocumentDescriptions}
                   />
                 </TabsContent>

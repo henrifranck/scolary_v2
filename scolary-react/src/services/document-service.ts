@@ -14,6 +14,11 @@ export type DocumentPayload = {
   description?: string;
 };
 
+export type DocumentUpdatePayload = {
+  name?: string;
+  description?: string;
+};
+
 export type UploadDocumentInput = {
   file: File;
   payload: DocumentPayload;
@@ -35,6 +40,22 @@ export const uploadDocument = ({
   });
 };
 
+export const updateDocument = (
+  id: number,
+  payload: DocumentUpdatePayload
+): Promise<DocumentAsset> =>
+  apiRequest<DocumentAsset>(`/documents/${id}`, {
+    method: "PUT",
+    json: payload
+  });
+
+export const deleteDocument = (id: number): Promise<void> =>
+  apiRequest<void>(`/documents/${id}`, {
+    method: "DELETE"
+  });
+
 export const documentService = {
-  uploadDocument
+  uploadDocument,
+  updateDocument,
+  deleteDocument
 };
