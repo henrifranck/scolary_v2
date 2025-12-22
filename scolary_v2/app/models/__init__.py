@@ -36,3 +36,6 @@ from .payment import Payment
 from .document import Document
 from .card_asset import CardAsset
 from .file_asset import FileAsset
+from .required_document import RequiredDocument
+from .available_service import AvailableService
+from .service_required_document import AvailableServiceRequiredDocument

@@ -38,3 +38,6 @@ from app.models.constituent_element_offering import ConstituentElementOffering #
 from app.models.teaching_unit_offering import TeachingUnitOffering # noqa
 from app.models.payment import Payment # noqa
 from app.models.file_asset import FileAsset # noqa
+from app.models.required_document import RequiredDocument # noqa
+from app.models.available_service import AvailableService # noqa
+from app.models.service_required_document import AvailableServiceRequiredDocument # noqa

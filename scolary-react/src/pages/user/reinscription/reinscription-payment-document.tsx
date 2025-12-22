@@ -22,7 +22,9 @@ type DocumentSummaryProps = {
 };
 
 type DocumentEditorProps = {
-  annualRegisterDrafts: Array<StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }>;
+  annualRegisterDrafts: Array<
+    StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }
+  >;
   documentDrafts: Record<string, StudentDocumentState[]>;
   documentDescriptions: Record<string, string>;
   documentUploadError: string | null;
@@ -38,9 +40,7 @@ type DocumentEditorProps = {
     documentId: number,
     payload: { name?: string; description?: string }
   ) => void;
-  setDocumentDescriptions: Dispatch<
-    SetStateAction<Record<string, string>>
-  >;
+  setDocumentDescriptions: Dispatch<SetStateAction<Record<string, string>>>;
 };
 
 export const DocumentSummary = ({
@@ -149,26 +149,10 @@ export const DocumentEditor = ({
               className="space-y-3 rounded-xl border bg-muted/20 p-4"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium">
-                  {annual.academic_year?.name || "Année académique"}
-                </p>
-              </div>
-              <div className="space-y-2">
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Description
+                  Ajouter les document obligatoires pour l'année{" "}
+                  {annual.academic_year?.name || "Année académique"}
                 </label>
-                <input
-                  type="text"
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={documentDescriptions[annualKey] ?? ""}
-                  onChange={(event) =>
-                    setDocumentDescriptions((previous) => ({
-                      ...previous,
-                      [annualKey]: event.target.value
-                    }))
-                  }
-                  placeholder="Ajouter une description"
-                />
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {docs.map((doc, docIndex) => (
@@ -240,7 +224,9 @@ export const DocumentEditor = ({
           );
         })
       ) : (
-        <p className="text-sm text-muted-foreground">Aucun document à afficher.</p>
+        <p className="text-sm text-muted-foreground">
+          Aucun document à afficher.
+        </p>
       )}
       <Dialog open={Boolean(editingDoc)} onOpenChange={closeEdit}>
         <DialogContent className="sm:max-w-md">
