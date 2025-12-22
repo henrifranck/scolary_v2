@@ -4,7 +4,7 @@ from app.api.api_v1.endpoints import subscription_features
 from app.api.api_v1.endpoints import dashboard
 from app.api.api_v1.endpoints import academic_years
 from app.api.api_v1.endpoints import users
-from app.api.api_v1.endpoints import cards
+from app.api.api_v1.endpoints import documents
 from app.api.api_v1.endpoints import roles
 from app.api.api_v1.endpoints import journey_semesters
 from app.api.api_v1.endpoints import annual_registers
@@ -56,7 +56,7 @@ api_router.include_router(journeys.router, prefix="/journey", tags=["journey"])
 api_router.include_router(login.router, prefix="/login", tags=["login"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
-api_router.include_router(cards.router, prefix="/cards", tags=["cards"])
+api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
 api_router.include_router(user_roles.router, prefix="/user_roles", tags=["user_roles"])
 api_router.include_router(roles.router, prefix="/roles", tags=["roles"])
 api_router.include_router(permissions.router, prefix="/permissions", tags=["permissions"])

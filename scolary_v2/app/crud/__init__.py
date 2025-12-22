@@ -19,7 +19,7 @@ from .crud_nationality import nationality
 from .crud_constituent_element_offering import constituent_element_offering
 from .crud_journey import journey
 from .crud_result_teaching_unit import result_teaching_unit
-from .crud_card import card
+from .crud_document import document
 from .crud_user_role import user_role
 from .crud_constituent_element import constituent_element
 from .crud_constituent_element_optional_group import constituent_element_optional_group

@@ -203,14 +203,12 @@ from .nationality import (
     ResponseNationality
 )
 from .card_asset import CardAsset, CardAssetCreate
-from .card import CardPdfRenderRequest
 from .pdf_file import PdfFileResponse
-from .card import (
-    Card,
-    CardCreate,
-    CardUpdate,
-    ResponseCard,
-    CardRenderRequest
+from .document import (
+    Document,
+    DocumentCreate,
+    DocumentUpdate,
+    ResponseDocument,
 )
 from .dashboard import DashboardStats, MentionCount, AcademicYearCount, MentionEnrollment
 from .enrollment_fee import (

@@ -33,6 +33,6 @@ from .note import Note
 from .nationality import Nationality
 from .enrollment_fee import EnrollmentFee
 from .payment import Payment
-from .card import Card
+from .document import Document
 from .card_asset import CardAsset
 from .file_asset import FileAsset

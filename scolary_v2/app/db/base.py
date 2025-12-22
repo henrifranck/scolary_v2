@@ -4,7 +4,7 @@ from app.db.base_class import Base # noqa
 from app.models.student import Student # noqa
 from app.models.mention import Mention # noqa
 from app.models.journey import Journey # noqa
-from app.models.card import Card # noqa
+from app.models.document import Document # noqa
 from app.models.academic_year import AcademicYear # noqa
 from app.models.register_semester import RegisterSemester # noqa
 from app.models.annual_register import AnnualRegister # noqa
