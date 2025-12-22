@@ -19,6 +19,8 @@ class AnnualRegister(Base):
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
     semester_count = Column(Integer, nullable=False)
     id_enrollment_fee = Column(Integer, ForeignKey('enrollment_fee.id'))
+    verified_by = Column(Integer, ForeignKey('user.id'))
+    verified_at = Column(DateTime)
 
     # default column
     created_at = Column(DateTime, nullable=False, default=func.now())
@@ -31,6 +33,8 @@ class AnnualRegister(Base):
     enrollment_fee = relationship('EnrollmentFee', foreign_keys=[id_enrollment_fee])
     register_semester = relationship('RegisterSemester')
     payment = relationship('Payment')
+    document = relationship('Document')
+    user = relationship('User')
 
 # begin #
 # ---write your code here--- #

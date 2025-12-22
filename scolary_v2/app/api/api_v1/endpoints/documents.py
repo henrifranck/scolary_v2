@@ -1,10 +1,10 @@
 import ast
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,16 @@ from app.api import deps
 from app import crud, models, schemas
 
 router = APIRouter()
+FILES_ROOT = Path("files")
+UPLOAD_DIR = FILES_ROOT / "documents"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _build_public_url(relative_path: str) -> str:
+    normalized = str(relative_path or "").lstrip("/")
+    if normalized.startswith("files/"):
+        return f"/{normalized}"
+    return f"/files/{normalized}"
 
 
 @router.get('/', response_model=schemas.ResponseDocument)
@@ -54,6 +64,44 @@ def create_document(
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     return crud.document.create(db=db, obj_in=document_in)
+
+
+@router.post('/upload/', response_model=schemas.Document)
+def upload_document(
+        *,
+        db: Session = Depends(deps.get_db),
+        file: UploadFile = File(...),
+        id_annual_register: int = Form(...),
+        name: Optional[str] = Form(None),
+        description: Optional[str] = Form(None),
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    original_name = name or Path(file.filename).name
+    extension = Path(file.filename).suffix
+    safe_extension = extension if extension else ""
+    filename = f"{uuid4().hex}{safe_extension}"
+
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    destination = UPLOAD_DIR / filename
+    with destination.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    relative_path = destination.relative_to(FILES_ROOT)
+    url = _build_public_url(str(relative_path).replace("\\", "/"))
+
+    document = crud.document.create(
+        db=db,
+        obj_in=schemas.DocumentCreate(
+            name=original_name,
+            description=description,
+            id_annual_register=id_annual_register,
+            url=url,
+        ),
+    )
+    return document
 
 
 @router.put('/{document_id}', response_model=schemas.Document)

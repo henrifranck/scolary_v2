@@ -69,6 +69,7 @@ export type StudentAnnualProps = {
   academic_year?: AcademicYear;
   payment: Array<StudentPaymentState>;
   register_semester: Array<StudentSemesterState>;
+  document?: Array<StudentDocumentState>;
 };
 
 export type StudentPaymentState = {
@@ -78,6 +79,14 @@ export type StudentPaymentState = {
   date_receipt: string;
   payed: number;
   description?: string;
+};
+
+export type StudentDocumentState = {
+  id?: number;
+  id_annual_register?: number;
+  name: string;
+  description?: string | null;
+  url: string;
 };
 
 export type StudentSemesterState = {

@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import {
   EditableSection,
   StudentAnnualProps,
+  StudentDocumentState,
   StudentPaymentState,
   StudentSemesterState
 } from "@/components/student-form/student-form-types";
-import { StudentFormInfoItem } from "@/components/student-form/student-form-info-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import formatRepeatStatus from "@/lib/enum/repeat-status-enum";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { RegistrationForm } from "../registration/registration-form";
 import { fetchJourneys } from "@/services/inscription-service";
 import {
   createAnnualRegister,
@@ -32,7 +30,16 @@ import {
   updateRegisterSemester
 } from "@/services/annual-register-service";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { PaymentForm } from "../payment/payment-form";
+import { uploadDocument } from "@/services/document-service";
+import {
+  DocumentEditor,
+  DocumentSummary
+} from "./reinscription-payment-document";
+import {
+  RegistrationEditor,
+  RegistrationSummary
+} from "./reinscription-payment-registration";
+import { PaymentEditor, PaymentSummary } from "./reinscription-payment-payment";
 
 interface ReinscriptionAnnualFormProps {
   annualRegister: Array<StudentAnnualProps>;
@@ -60,6 +67,9 @@ export const ReinscriptionAnnualRegister = ({
   const [registrationDrafts, setRegistrationDrafts] = useState<
     Record<string, StudentSemesterState[]>
   >({});
+  const [documentDrafts, setDocumentDrafts] = useState<
+    Record<string, StudentDocumentState[]>
+  >({});
   const [editingPaymentIndexByAnnual, setEditingPaymentIndexByAnnual] =
     useState<Record<string, number | null>>({});
   const [editingRegistrationIndexByAnnual, setEditingRegistrationIndexByAnnual] =
@@ -81,9 +91,21 @@ export const ReinscriptionAnnualRegister = ({
   const [savedRegistrationDrafts, setSavedRegistrationDrafts] = useState<
     Record<string, StudentSemesterState[]>
   >({});
+  const [savedDocumentDrafts, setSavedDocumentDrafts] = useState<
+    Record<string, StudentDocumentState[]>
+  >({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [annualRegisterLoading, setAnnualRegisterLoading] = useState(false);
+  const [documentUploadError, setDocumentUploadError] = useState<string | null>(
+    null
+  );
+  const [documentUploadingIndex, setDocumentUploadingIndex] = useState<
+    number | null
+  >(null);
+  const [documentDescriptions, setDocumentDescriptions] = useState<
+    Record<string, string>
+  >({});
   const [confirmDeleteTarget, setConfirmDeleteTarget] = useState<{
     type: "annual" | "payment" | "registration";
     index: number;
@@ -141,7 +163,8 @@ export const ReinscriptionAnnualRegister = ({
     return {
       ...annual,
       payment: paymentDrafts[key] ?? [],
-      register_semester: registrationDrafts[key] ?? []
+      register_semester: registrationDrafts[key] ?? [],
+      document: documentDrafts[key] ?? []
     };
   };
 
@@ -218,6 +241,7 @@ export const ReinscriptionAnnualRegister = ({
     );
     const initialPaymentDrafts: Record<string, StudentPaymentState[]> = {};
     const initialRegistrationDrafts: Record<string, StudentSemesterState[]> = {};
+    const initialDocumentDrafts: Record<string, StudentDocumentState[]> = {};
     normalized.forEach((annual, index) => {
       const key = getAnnualKey(annual, index);
       initialPaymentDrafts[key] =
@@ -226,11 +250,15 @@ export const ReinscriptionAnnualRegister = ({
         annual.register_semester && annual.register_semester.length
           ? annual.register_semester
           : [];
+      initialDocumentDrafts[key] =
+        annual.document && annual.document.length ? annual.document : [];
     });
     setPaymentDrafts(initialPaymentDrafts);
     setRegistrationDrafts(initialRegistrationDrafts);
+    setDocumentDrafts(initialDocumentDrafts);
     setSavedPaymentDrafts(initialPaymentDrafts);
     setSavedRegistrationDrafts(initialRegistrationDrafts);
+    setSavedDocumentDrafts(initialDocumentDrafts);
     const initialEditingPayments: Record<string, number | null> = {};
     const initialEditingRegistrations: Record<string, number | null> = {};
     Object.keys(initialPaymentDrafts).forEach((key) => {
@@ -241,6 +269,7 @@ export const ReinscriptionAnnualRegister = ({
     });
     setEditingPaymentIndexByAnnual(initialEditingPayments);
     setEditingRegistrationIndexByAnnual(initialEditingRegistrations);
+    setDocumentDescriptions({});
   }, [annualRegister]);
 
   useEffect(() => {
@@ -277,6 +306,7 @@ export const ReinscriptionAnnualRegister = ({
           string,
           StudentSemesterState[]
         > = {};
+        const initialDocumentDrafts: Record<string, StudentDocumentState[]> = {};
         normalized.forEach((annual, index) => {
           const key = getAnnualKey(annual, index);
           initialPaymentDrafts[key] =
@@ -285,11 +315,15 @@ export const ReinscriptionAnnualRegister = ({
             annual.register_semester && annual.register_semester.length
               ? annual.register_semester
               : [];
+          initialDocumentDrafts[key] =
+            annual.document && annual.document.length ? annual.document : [];
         });
         setPaymentDrafts(initialPaymentDrafts);
         setRegistrationDrafts(initialRegistrationDrafts);
+        setDocumentDrafts(initialDocumentDrafts);
         setSavedPaymentDrafts(initialPaymentDrafts);
         setSavedRegistrationDrafts(initialRegistrationDrafts);
+        setSavedDocumentDrafts(initialDocumentDrafts);
         const initialEditingPayments: Record<string, number | null> = {};
         const initialEditingRegistrations: Record<string, number | null> = {};
         Object.keys(initialPaymentDrafts).forEach((key) => {
@@ -300,6 +334,7 @@ export const ReinscriptionAnnualRegister = ({
         });
         setEditingPaymentIndexByAnnual(initialEditingPayments);
         setEditingRegistrationIndexByAnnual(initialEditingRegistrations);
+        setDocumentDescriptions({});
       })
       .catch((error) => {
         if (isMounted) {
@@ -365,11 +400,19 @@ export const ReinscriptionAnnualRegister = ({
         ...previous,
         [newKey]: []
       }));
+      setDocumentDrafts((previous) => ({
+        ...previous,
+        [newKey]: []
+      }));
       setSavedPaymentDrafts((previous) => ({
         ...previous,
         [newKey]: []
       }));
       setSavedRegistrationDrafts((previous) => ({
+        ...previous,
+        [newKey]: []
+      }));
+      setSavedDocumentDrafts((previous) => ({
         ...previous,
         [newKey]: []
       }));
@@ -418,12 +461,22 @@ export const ReinscriptionAnnualRegister = ({
           delete next[targetKey];
           return next;
         });
+        setDocumentDrafts((previous) => {
+          const next = { ...previous };
+          delete next[targetKey];
+          return next;
+        });
         setSavedPaymentDrafts((previous) => {
           const next = { ...previous };
           delete next[targetKey];
           return next;
         });
         setSavedRegistrationDrafts((previous) => {
+          const next = { ...previous };
+          delete next[targetKey];
+          return next;
+        });
+        setSavedDocumentDrafts((previous) => {
           const next = { ...previous };
           delete next[targetKey];
           return next;
@@ -827,6 +880,58 @@ export const ReinscriptionAnnualRegister = ({
     }));
   };
 
+  const handleUploadDocument = async (
+    annualIndex: number,
+    file: File | null
+  ) => {
+    if (!file) {
+      return;
+    }
+    const target = annualRegisterDrafts[annualIndex];
+    if (!target?.id) {
+      setDocumentUploadError(
+        "Veuillez enregistrer la fiche annuelle avant d'ajouter un document."
+      );
+      return;
+    }
+    const targetKey = getAnnualKey(target, annualIndex);
+    setDocumentUploadError(null);
+    setDocumentUploadingIndex(annualIndex);
+    try {
+      const description = documentDescriptions[targetKey] || undefined;
+      const created = await uploadDocument({
+        file,
+        payload: {
+          id_annual_register: target.id,
+          name: file.name,
+          description
+        }
+      });
+      setDocumentDrafts((previous) => ({
+        ...previous,
+        [targetKey]: [...(previous[targetKey] ?? []), created]
+      }));
+      setSavedDocumentDrafts((previous) => ({
+        ...previous,
+        [targetKey]: [...(previous[targetKey] ?? []), created]
+      }));
+      setDocumentDescriptions((previous) => ({
+        ...previous,
+        [targetKey]: ""
+      }));
+    } catch (error) {
+      setDocumentUploadError(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'ajouter le document."
+      );
+    } finally {
+      setDocumentUploadingIndex((current) =>
+        current === annualIndex ? null : current
+      );
+    }
+  };
+
   const handleSaveAnnualRegister = async (
     index: number,
     mode: "registration" | "payment",
@@ -1038,78 +1143,20 @@ export const ReinscriptionAnnualRegister = ({
         </Button>
       </div>
       <Tabs defaultValue="registration" className="space-y-3">
-        <TabsList className="grid w-full grid-cols-2 md:w-auto">
+        <TabsList className="grid w-full grid-cols-3 md:w-auto">
           <TabsTrigger value="registration">Registration</TabsTrigger>
           <TabsTrigger value="payment">Payment</TabsTrigger>
+          <TabsTrigger value="document">Document</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="payment" className="space-y-2">
-          {displayAnnualRegisters?.map((annual, index) => (
-            <div key={index} className="grid gap-4">
-              {annual?.payment?.length ? (
-                annual.payment.map((payment, paymentIndex) => (
-                  <div
-                    key={`${index}-payment-${paymentIndex}`}
-                    className="grid gap-4 rounded-lg border border-dashed bg-background/60 p-3"
-                  >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <StudentFormInfoItem
-                        label="Numéro de reçu"
-                        value={payment?.num_receipt || "N/A"}
-                      />
-                      <StudentFormInfoItem
-                        label="Date de reçu"
-                        value={payment?.date_receipt || "N/A"}
-                      />
-                    </div>
-                    <StudentFormInfoItem
-                      label="Montant payé"
-                      value={payment?.payed ? `${payment.payed} Ar` : "N/A"}
-                    />
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aucun paiement enregistré.
-                </p>
-              )}
-            </div>
-          ))}
+        <TabsContent value="payment" className="space-y-2 max-h-[260px] overflow-y-auto">
+          <PaymentSummary displayAnnualRegisters={displayAnnualRegisters} />
         </TabsContent>
-        <TabsContent value="registration" className="space-y-2">
-          {displayAnnualRegisters?.map((annual, index) => (
-            <div key={index} className="grid gap-4">
-              {annual?.register_semester?.length ? (
-                annual.register_semester.map((semester, semesterIndex) => (
-                  <div
-                    key={`${index}-semester-${semesterIndex}`}
-                    className="grid gap-4 rounded-lg border border-dashed bg-background/60 p-3"
-                  >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <StudentFormInfoItem
-                        label="Semestre"
-                        value={semester?.semester || "N/A"}
-                      />
-                      <StudentFormInfoItem
-                        label="Statut de redoublement"
-                        value={
-                          formatRepeatStatus(semester?.repeat_status) || "N/A"
-                        }
-                      />
-                    </div>
-                    <StudentFormInfoItem
-                      label="Parcours"
-                      value={semester?.journey?.name || "N/A"}
-                    />
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Aucune inscription enregistrée.
-                </p>
-              )}
-            </div>
-          ))}
+        <TabsContent value="registration" className="space-y-2 max-h-[260px] overflow-y-auto">
+          <RegistrationSummary displayAnnualRegisters={displayAnnualRegisters} />
+        </TabsContent>
+        <TabsContent value="document" className="space-y-2 max-h-[260px] overflow-y-auto">
+          <DocumentSummary displayAnnualRegisters={displayAnnualRegisters} />
         </TabsContent>
       </Tabs>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -1165,131 +1212,92 @@ export const ReinscriptionAnnualRegister = ({
                 Chargement des inscriptions...
               </p>
             ) : null}
-            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4 space-y-4">
+            <div className="flex-1 px-6 pb-6 pt-4 space-y-4">
               <Tabs defaultValue="registration" className="space-y-3">
-                <TabsList className="grid w-full grid-cols-2 md:w-auto">
+                <TabsList className="grid w-full grid-cols-3 md:w-auto">
                   <TabsTrigger value="registration">Registration</TabsTrigger>
                   <TabsTrigger value="payment">Payment</TabsTrigger>
+                  <TabsTrigger value="document">Document</TabsTrigger>
                 </TabsList>
-                <TabsContent value="registration" className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">Inscriptions</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 gap-2 px-3"
-                      onClick={handleAddRegistration}
-                      disabled={!annualRegisterDrafts.length}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Ajouter
-                    </Button>
-                  </div>
-                  {annualRegisterDrafts.length && hasRegistrationEntries ? (
-                    annualRegisterDrafts.flatMap((annual, index) => {
-                      const mergedAnnual = mergeAnnualWithDrafts(annual, index);
-                      return (mergedAnnual.register_semester ?? []).map(
-                        (_entry, registrationIndex) => (
-                          <RegistrationForm
-                            key={`${annual.id ?? "new"}-${index}-${registrationIndex}`}
-                            annual={mergedAnnual}
-                            index={index}
-                            registrationIndex={registrationIndex}
-                            filters={filters}
-                            journeyOptions={journeyOptions}
-                        onToggleEdit={(annualIndex, registrationIndex) => {
-                          const annualKey = getAnnualKey(annual, annualIndex);
-                          setEditingRegistrationIndexByAnnual((previous) => ({
-                            ...previous,
-                            [annualKey]: registrationIndex
-                          }));
-                        }}
-                            onDelete={(annualIndex, targetIndex) =>
-                              setConfirmDeleteTarget({
-                                type: "registration",
-                                index: annualIndex,
-                                itemIndex: targetIndex
-                              })
-                            }
-                        onCancel={handleCancelRegistrationEdit}
-                        onSave={handleSaveAnnualRegister}
-                            onUpdateRegistrationField={updateRegistrationField}
-                        isSaving={savingIndex === index}
-                        isEditing={
-                          editingRegistrationIndexByAnnual[
-                            getAnnualKey(annual, index)
-                          ] === registrationIndex
-                        }
-                      />
-                        )
+                <TabsContent value="registration" className="space-y-4 max-h-[520px] overflow-y-auto">
+                  <RegistrationEditor
+                    annualRegisterDrafts={annualRegisterDrafts}
+                    hasRegistrationEntries={hasRegistrationEntries}
+                    mergeAnnualWithDrafts={mergeAnnualWithDrafts}
+                    filters={filters}
+                    journeyOptions={journeyOptions}
+                    onAddRegistration={handleAddRegistration}
+                    onSave={handleSaveAnnualRegister}
+                    onUpdateRegistrationField={updateRegistrationField}
+                    onCancel={handleCancelRegistrationEdit}
+                    onToggleEdit={(annualIndex, registrationIndex) => {
+                      const annualKey = getAnnualKey(
+                        annualRegisterDrafts[annualIndex],
+                        annualIndex
                       );
-                    })
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Aucune inscription à afficher.
-                    </p>
-                  )}
+                      setEditingRegistrationIndexByAnnual((previous) => ({
+                        ...previous,
+                        [annualKey]: registrationIndex
+                      }));
+                    }}
+                    onDelete={(annualIndex, targetIndex) =>
+                      setConfirmDeleteTarget({
+                        type: "registration",
+                        index: annualIndex,
+                        itemIndex: targetIndex
+                      })
+                    }
+                    editingRegistrationIndexByAnnual={
+                      editingRegistrationIndexByAnnual
+                    }
+                    getAnnualKey={getAnnualKey}
+                    savingIndex={savingIndex}
+                  />
                 </TabsContent>
-                <TabsContent value="payment" className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">Paiements</p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 gap-2 px-3"
-                      onClick={handleAddPayment}
-                      disabled={!annualRegisterDrafts.length}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Ajouter
-                    </Button>
-                  </div>
-                  {annualRegisterDrafts.length && hasPaymentEntries ? (
-                    annualRegisterDrafts.flatMap((annual, index) => {
-                      const mergedAnnual = mergeAnnualWithDrafts(annual, index);
-                      return (mergedAnnual.payment ?? []).map(
-                        (_entry, paymentIndex) => (
-                          <PaymentForm
-                            key={`${annual.id ?? "new"}-${index}-${paymentIndex}`}
-                            annual={mergedAnnual}
-                            index={index}
-                            paymentIndex={paymentIndex}
-                            filters={filters}
-                            journeyOptions={journeyOptions}
-                        onToggleEdit={(annualIndex, paymentIndex) => {
-                          const annualKey = getAnnualKey(annual, annualIndex);
-                          setEditingPaymentIndexByAnnual((previous) => ({
-                            ...previous,
-                            [annualKey]: paymentIndex
-                          }));
-                        }}
-                            onDelete={(annualIndex, targetIndex) =>
-                              setConfirmDeleteTarget({
-                                type: "payment",
-                                index: annualIndex,
-                                itemIndex: targetIndex
-                              })
-                            }
-                        onCancel={handleCancelPaymentEdit}
-                        onSave={handleSaveAnnualRegister}
-                        onUpdatePaymentField={updatePaymentField}
-                        isSaving={savingIndex === index}
-                        isEditing={
-                          editingPaymentIndexByAnnual[
-                            getAnnualKey(annual, index)
-                          ] === paymentIndex
-                        }
-                      />
-                        )
+                <TabsContent value="payment" className="space-y-4 max-h-[520px] overflow-y-auto">
+                  <PaymentEditor
+                    annualRegisterDrafts={annualRegisterDrafts}
+                    hasPaymentEntries={hasPaymentEntries}
+                    mergeAnnualWithDrafts={mergeAnnualWithDrafts}
+                    filters={filters}
+                    journeyOptions={journeyOptions}
+                    onAddPayment={handleAddPayment}
+                    onSave={handleSaveAnnualRegister}
+                    onUpdatePaymentField={updatePaymentField}
+                    onCancel={handleCancelPaymentEdit}
+                    onToggleEdit={(annualIndex, paymentIndex) => {
+                      const annualKey = getAnnualKey(
+                        annualRegisterDrafts[annualIndex],
+                        annualIndex
                       );
-                    })
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Aucun paiement à afficher.
-                    </p>
-                  )}
+                      setEditingPaymentIndexByAnnual((previous) => ({
+                        ...previous,
+                        [annualKey]: paymentIndex
+                      }));
+                    }}
+                    onDelete={(annualIndex, targetIndex) =>
+                      setConfirmDeleteTarget({
+                        type: "payment",
+                        index: annualIndex,
+                        itemIndex: targetIndex
+                      })
+                    }
+                    editingPaymentIndexByAnnual={editingPaymentIndexByAnnual}
+                    getAnnualKey={getAnnualKey}
+                    savingIndex={savingIndex}
+                  />
+                </TabsContent>
+                <TabsContent value="document" className="space-y-4 max-h-[520px] overflow-y-auto">
+                  <DocumentEditor
+                    annualRegisterDrafts={annualRegisterDrafts}
+                    documentDrafts={documentDrafts}
+                    documentDescriptions={documentDescriptions}
+                    documentUploadError={documentUploadError}
+                    documentUploadingIndex={documentUploadingIndex}
+                    getAnnualKey={getAnnualKey}
+                    handleUploadDocument={handleUploadDocument}
+                    setDocumentDescriptions={setDocumentDescriptions}
+                  />
                 </TabsContent>
               </Tabs>
             </div>
