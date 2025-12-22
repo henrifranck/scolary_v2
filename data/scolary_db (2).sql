@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : mysql:3306
--- Généré le : ven. 19 déc. 2025 à 08:48
+-- Généré le : lun. 22 déc. 2025 à 06:50
 -- Version du serveur : 8.0.44
 -- Version de PHP : 8.3.26
 
@@ -41,7 +41,11 @@ CREATE TABLE `academic_year` (
 --
 
 INSERT INTO `academic_year` (`id`, `name`, `code`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, '2024-2025', '2XT3ZUWL', '2025-11-16 11:53:54', '2025-11-16 11:57:21', NULL);
+(1, '2021-2022', 'QSQSF', '2024-01-09 00:00:00', NULL, NULL),
+(2, '2023-2024', 'azdazd', '2024-01-17 00:00:00', NULL, NULL),
+(3, '2022-2023', 'azdazd', '2024-03-26 00:00:00', NULL, NULL),
+(4, '2024-2025', 'fazjabkz', '2025-12-20 20:06:40', '2025-01-13 11:59:19', NULL),
+(5, '2025-2026', 'V6YY2V3B', '2025-12-21 16:35:19', '2025-12-21 16:35:19', NULL);
 
 -- --------------------------------------------------------
 
@@ -58,7 +62,7 @@ CREATE TABLE `alembic_version` (
 --
 
 INSERT INTO `alembic_version` (`version_num`) VALUES
-('20241110_0001');
+('2bfb9c425525');
 
 -- --------------------------------------------------------
 
@@ -76,13 +80,6 @@ CREATE TABLE `annual_register` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Déchargement des données de la table `annual_register`
---
-
-INSERT INTO `annual_register` (`id`, `num_carte`, `id_academic_year`, `semester_count`, `id_enrollment_fee`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'M001234', 1, 2, NULL, '2025-11-22 06:15:18', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -318,6 +315,24 @@ CREATE TABLE `file_asset` (
   `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Déchargement des données de la table `file_asset`
+--
+
+INSERT INTO `file_asset` (`id`, `name`, `path`, `type`, `size_bytes`, `mime_type`, `uploaded_by_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'images.png', 'uploads/a41f86c8f125431789a52b14555cbfa4.png', 'image', 2812, 'image/png', 1, '2025-12-20 10:27:18', '2025-12-20 10:27:18', NULL),
+(2, 'signature.png', 'uploads/0a3412b6fd1d4a1192774002fb446301.png', 'image', 36606, 'image/png', 1, '2025-12-20 10:30:39', '2025-12-20 10:30:39', NULL),
+(3, 'signature.png', 'uploads/cf1c32bf36204679a7e0ea141a99715f.png', 'image', 55387, 'image/png', 1, '2025-12-20 10:31:19', '2025-12-20 10:31:19', NULL),
+(4, 'images.png', 'uploads/4e8ea1f0396441dca2432273cb5bfc9c.png', 'image', 2812, 'image/png', 1, '2025-12-20 10:34:08', '2025-12-20 10:34:08', NULL),
+(5, 'signature.png', 'uploads/1961b4ee4ebd452783954d30b6c1ba91.png', 'image', 33892, 'image/png', 1, '2025-12-20 10:35:59', '2025-12-20 10:35:59', NULL),
+(6, 'images.png', 'uploads/d604e753b9db4ff7b557c275d5ba349b.png', 'image', 2812, 'image/png', 1, '2025-12-20 10:45:31', '2025-12-20 10:45:31', NULL),
+(7, 'images.png', 'uploads/d0a267a7884240fa88ff0d3b6269cfc8.png', 'image', 2812, 'image/png', 1, '2025-12-20 10:45:31', '2025-12-20 10:45:31', NULL),
+(8, 'signature.png', 'uploads/cc9d1e05f8b0461185740ad1973c1f24.png', 'image', 21327, 'image/png', 1, '2025-12-20 10:45:31', '2025-12-20 10:45:31', NULL),
+(9, 'signature.png', 'uploads/e8ab7cfa7ec24f0fbac59c15046bcb0f.png', 'image', 4509, 'image/png', 1, '2025-12-20 10:47:44', '2025-12-20 10:47:44', NULL),
+(10, 'signature.png', 'uploads/c7d477e30d4746aca219bba3ec858427.png', 'image', 23476, 'image/png', 1, '2025-12-20 10:48:46', '2025-12-20 10:48:46', NULL),
+(11, 'y_scolar.png', 'uploads/24818549255c453fa384bc8fb6ade792.png', 'image', 19777, 'image/png', 1, '2025-12-20 10:56:48', '2025-12-20 10:56:48', NULL),
+(12, 'logo_univ.jpg', 'uploads/19668b5da172414dbe33e1e12dfa4d76.jpg', 'image', 31795, 'image/jpeg', 1, '2025-12-20 10:56:48', '2025-12-20 10:56:48', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -356,7 +371,7 @@ CREATE TABLE `journey` (
 --
 
 INSERT INTO `journey` (`id`, `name`, `abbreviation`, `id_mention`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Tronc commun Science de la vie', 'TCSV', 2, '2024-01-08 00:00:00', NULL, NULL),
+(1, 'Tronc commun Science de la vie', 'TCSV', 2, '2024-01-08 00:00:00', '2025-12-20 20:47:31', NULL),
 (2, 'Biologie Moleculaire', 'BM', 2, '2024-01-09 00:00:00', NULL, NULL),
 (3, 'Biodiversité Tropicale', 'BT', 2, '2024-01-09 00:00:00', NULL, NULL),
 (4, 'Tronc Commun Mathematique', 'TCM', 3, '2024-01-09 00:00:00', '2025-11-22 08:50:50', NULL),
@@ -411,7 +426,10 @@ INSERT INTO `journey_semester` (`id`, `id_journey`, `semester`, `created_at`, `u
 (7, 7, 'S5', '2025-11-22 07:52:36', '2025-11-22 07:52:36', NULL),
 (8, 7, 'S9', '2025-11-22 07:52:36', '2025-11-22 07:52:36', NULL),
 (9, 7, 'S2', '2025-11-22 07:52:36', '2025-11-22 07:52:36', NULL),
-(10, 4, 'S1', '2025-11-22 08:05:06', '2025-11-22 08:05:06', NULL);
+(10, 4, 'S1', '2025-11-22 08:05:06', '2025-11-22 08:05:06', NULL),
+(12, 1, 'S1', '2025-12-20 20:47:31', '2025-12-20 20:47:31', NULL),
+(13, 1, 'S3', '2025-12-20 20:47:31', '2025-12-20 20:47:31', NULL),
+(14, 1, 'S2', '2025-12-20 20:47:31', '2025-12-20 20:47:31', NULL);
 
 -- --------------------------------------------------------
 
@@ -502,13 +520,6 @@ CREATE TABLE `payement` (
   `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `payement`
---
-
-INSERT INTO `payement` (`id`, `id_annual_register`, `payed`, `num_receipt`, `date_receipt`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 1, 160000, '54785023354620025', '2025-09-10', '2025-11-23 08:08:41', NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -552,13 +563,6 @@ CREATE TABLE `register_semester` (
   `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Déchargement des données de la table `register_semester`
---
-
-INSERT INTO `register_semester` (`id`, `id_annual_register`, `semester`, `repeat_status`, `id_journey`, `imported_id`, `is_valid`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 1, 'S1', 'PASSING', 4, NULL, NULL, '2025-11-22 06:22:34', NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -588,17 +592,19 @@ CREATE TABLE `role` (
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime DEFAULT NULL,
-  `deleted_at` datetime DEFAULT NULL
+  `deleted_at` datetime DEFAULT NULL,
+  `use_for_card` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Déchargement des données de la table `role`
 --
 
-INSERT INTO `role` (`id`, `name`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Administrateur', '2025-11-15 22:21:48', '2025-11-16 08:44:42', NULL),
-(2, 'Secretaire', '2025-11-15 22:22:00', '2025-11-16 09:38:21', NULL),
-(3, 'Enseignant', '2025-11-15 22:22:11', '2025-11-16 10:28:05', NULL);
+INSERT INTO `role` (`id`, `name`, `created_at`, `updated_at`, `deleted_at`, `use_for_card`) VALUES
+(1, 'Administrateur', '2025-11-15 22:21:48', '2025-11-16 08:44:42', NULL, 0),
+(2, 'Secretaire', '2025-11-15 22:22:00', '2025-11-16 09:38:21', NULL, 0),
+(3, 'Enseignant', '2025-11-15 22:22:11', '2025-11-16 10:28:05', NULL, 0),
+(4, 'Chef de service scolarté', '2025-12-20 12:10:51', '2025-12-20 16:53:47', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -625,7 +631,9 @@ INSERT INTO `role_permission` (`id`, `id_role`, `id_permission`, `created_at`, `
 (3, 2, 1, '2025-11-16 09:38:21', '2025-11-16 09:38:21', NULL),
 (4, 2, 2, '2025-11-16 09:38:21', '2025-11-16 09:38:21', NULL),
 (5, 3, 1, '2025-11-16 10:28:05', '2025-11-16 10:28:05', NULL),
-(6, 3, 2, '2025-11-16 10:28:05', '2025-11-16 10:28:05', NULL);
+(6, 3, 2, '2025-11-16 10:28:05', '2025-11-16 10:28:05', NULL),
+(9, 4, 1, '2025-12-20 16:53:47', '2025-12-20 16:53:47', NULL),
+(10, 4, 2, '2025-12-20 16:53:47', '2025-12-20 16:53:47', NULL);
 
 -- --------------------------------------------------------
 
@@ -635,7 +643,7 @@ INSERT INTO `role_permission` (`id`, `id_role`, `id_permission`, `created_at`, `
 
 CREATE TABLE `student` (
   `id` int NOT NULL,
-  `num_carte` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `num_carte` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `num_select` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -662,7 +670,7 @@ CREATE TABLE `student` (
   `parent_address` text COLLATE utf8mb4_unicode_ci,
   `level` enum('L1','L2','L3','M1','M2') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `mean` float DEFAULT NULL,
-  `enrollment_status` enum('pending','selected','registered','former') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `enrollment_status` enum('pending','selected','rejected','registered','former') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `imported_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `id_mention` int DEFAULT NULL,
   `id_enter_year` int DEFAULT NULL,
@@ -2723,7 +2731,7 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (2051, 'S000343', 'no-email-2051@local', 'SEL-2051', 'JEAN CLAUDE ', 'Richard', '2002-02-23', 'Antsoamaina', 'Tanambao Fianarantsoa', 'MALE', 'SINGLE', '0345725421', '202111009278-2051', '2019-07-09', 'Ambatofinandraha ', NULL, 'S000343.png', '4530129-2051', 'Ambatofinandrahana', '2019-01-01', 'ETUDIANT', 'RAVELOMBOLA Aristide', NULL, 'RAZAFINAMASY Meline', NULL, 'Ampitana Antsoamaina', NULL, 10, 'former', NULL, 2, NULL, NULL, NULL, '2024-02-22 00:00:00', '2024-02-22 00:00:00', NULL),
 (2052, '5266', 'no-email-2052@local', 'SEL-2052', 'RAZAIARIMANANA', 'Mirantsoa Emilienne', '1997-05-16', 'Sahamamy', 'Andrainjato', 'FEMALE', 'SINGLE', NULL, '312012029285-2052', '2015-05-16', 'Amparafaravola', NULL, '5266.png', '4752580-2052', 'Amparafaravola', '2016-01-01', 'ETUDIANT', 'RAFALIMANANA Zafimanantsoa', 'Cultivateur', 'RAZAIARISOA Haingotiana', 'Cultivateur', 'Fianarantsoa', NULL, 10, 'former', NULL, 2, NULL, 1, NULL, '2024-02-22 00:00:00', '2025-02-07 11:01:41', NULL),
 (2053, 'S000308', 'no-email-2053@local', 'SEL-2053', 'RAMAHATOLOTRA', 'Anthonie Wenceslace', '2001-04-17', 'Ambalakininy', 'Andrainjato', 'MALE', 'SINGLE', NULL, '101251217344-2053', '2019-08-14', 'Antananarivo V', NULL, 'S000308.png', 'UNK-2053', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, NULL, NULL, '2024-02-22 00:00:00', '2024-02-22 00:00:00', NULL),
-(2054, 'S000760', 'no-email-2054@local', 'SEL-2054', 'BELLAH', 'Natane Ratsoarimanana', '2004-08-08', 'Ikongo', 'Andrainjato', 'FEMALE', 'SINGLE', NULL, '211012034989-2054', '2022-09-30', 'Ikongo', NULL, 'S000760.png', 'UNK-2054', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, 1, NULL, '2024-02-22 00:00:00', '2025-02-07 11:41:55', NULL),
+(2054, 'S000760', 'no-email-2054@local', 'SEL-2054', 'BELLAH', 'Natane Ratsoarimanana', '2004-08-08', 'Ikongo', 'Andrainjato', 'FEMALE', 'SINGLE', NULL, '211012034989-2054', '2022-09-30', 'Ikongo', NULL, 'S000760.png', 'UNK-2054', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, 1, NULL, '2024-02-22 00:00:00', '2025-12-21 18:09:11', NULL),
 (2055, 'P001016', 'no-email-2055@local', 'SEL-2055', 'ANDRIANAIVO FITIAVANA ROBENA', 'Emmanuel', '2006-05-13', 'Fianarantsoa', 'Andrainjato', 'MALE', 'SINGLE', NULL, '205011035674-2055', '2024-05-31', 'Ambalavao', NULL, 'P001016.png', '4500513-2055', 'Fianarantsoa', '2022-01-01', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 1, NULL, 1, NULL, '2024-02-22 00:00:00', '2025-03-05 10:47:45', NULL),
 (2056, 'P000552', 'zouanaandoarimanana@gmail.com', 'SEL-2056', 'ANDOARIMANANA', 'Nathalie Zouana', '2003-04-27', 'Fiananrantsoa', 'Ambohibory Soatsihadino F/tsoa As/039 B', 'FEMALE', 'SINGLE', '034 55 837 41', '208012010055-2056', '2021-05-26', 'Ambohimahasoa ', NULL, 'P000552.png', '4557050-2056', 'Fandriana', '2021-01-01', 'ETUDIANT', 'RAHAOVA Emmanuel Jérôme ', 'Cultivateur', 'RAZANANORO Alphonsine', 'Institutrice', 'Befeta Ambohimahasoa', NULL, 10, 'former', NULL, 1, NULL, NULL, NULL, '2024-02-22 00:00:00', '2024-02-22 00:00:00', NULL),
 (2057, 'P000516', 'andrianantenainazofitiavana@gmail.com', 'SEL-2057', 'ANDRIANANTENAINA', 'Tahintsoa Zo Fitiavana', '2003-01-22', 'Fianarantsoa', 'Lot 205AG/3602 Ankofafa Ambony', 'MALE', 'SINGLE', '033 29 119 75', '201031056585-2057', '2021-02-04', 'Ville Basse', NULL, 'P000516.png', '4754033-2057', 'Vohibinany Brickaville', '2021-01-01', 'ETUDIANT', 'DORE Pierrot', 'Employé du SIRAMA', 'SAKIBOMENA Martine', 'Ménagère', 'Maromamy Brickaville', NULL, 10, 'former', NULL, 1, NULL, 1, NULL, '2024-02-22 00:00:00', '2025-02-06 10:34:12', NULL),
@@ -3031,7 +3039,7 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (2389, 'M000760', 'no-email-2389@local', 'SEL-2389', 'HENITSOA', 'Faratanjona', '2003-02-12', 'IFANADIANA', 'Ambatolahy Mandravina', 'MALE', 'SINGLE', '0338293054', '201031058912-2389', '2022-01-28', 'Fianarantsoa', NULL, 'M000760.png', '3580248-2389', 'Fianarantsoa', '2022-01-01', 'Etudiant', NULL, NULL, 'ANDRIAMAMONJY Virginie Celestine', 'Couturiere', 'Lot :IIP 120 à AMBATOLAHIMANDRAVINA', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-01 00:00:00', NULL),
 (2390, 'M000763', 'no-email-2390@local', 'SEL-2390', 'HERISENDRA', 'Sarobidy Hortencia Léa', '2005-01-24', 'Fianarantsoa', 'Anjoma', 'FEMALE', 'SINGLE', '0343302141', '201092016182-2390', '2023-02-07', 'Fianarantsoa', NULL, 'M000763.png', '4345447-2390', 'Manakara', '2022-01-01', 'Etudiant', 'ZAKASENDRA Isidore', 'GENDARME', 'RAVAOSOLO Heriniaina Marie J . A', 'Sage Femme', 'MANDRITSA', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-05 00:00:00', NULL),
 (2391, 'M000769', 'no-email-2391@local', 'SEL-2391', 'LAHITONIRINA', 'Gaston Brillant Remahery', '2001-11-25', 'Manakara', 'TANAMBAO ZOARA ', 'MALE', 'SINGLE', '0342630268', '210011045529-2391', '2019-12-12', 'Manakara', NULL, 'M000769.png', '3660007-2391', 'manakara', '2022-01-01', 'Etudiant', 'TSIRANGA Gaston', 'Cultivateur', 'TSABAO Bernadette', 'MENAGERE', 'MANAKARA', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-04 17:51:35', NULL),
-(2392, 'M000772', 'no-email-2392@local', 'SEL-2392', 'MAHENINJATOVO', 'Nirina Jean Férdinand', '2004-06-20', 'Ambalanirana', 'Ambatoharanana', 'MALE', 'SINGLE', '0337481606', '111091026686-2392', '2022-09-20', 'Tsiroanomandidy', NULL, 'M000772.png', '4685095-2392', 'ANKADINONDRY', '2022-01-01', 'Etudiant', 'ANDRIAMAHENINA Justin', 'cultivateur', 'RADAORO ZAFINDRAVELO', 'cultivatrice', 'AMPARIHIVATO', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-03-04 13:34:04', NULL),
+(2392, 'M000772', 'no-email-2392@local', 'SEL-2392', 'MAHENINJATOVO', 'Nirina Jean Férdinand', '2004-06-20', 'Ambalanirana', 'Ambatoharanana', 'MALE', 'SINGLE', '0337481606', '111091026686-2392', '2022-09-20', 'Tsiroanomandidy', NULL, 'M000772.png', '4685095-2392', 'ANKADINONDRY', '2022-01-01', 'Etudiant', 'ANDRIAMAHENINA Justin', 'cultivateur', 'RADAORO ZAFINDRAVELO', 'cultivatrice', 'AMPARIHIVATO', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-12-21 16:38:53', NULL),
 (2393, 'M000775', 'no-email-2393@local', 'SEL-2393', 'MAMINIRINA', 'Arsène Laurent', '2003-07-23', 'Mté Ikalalao', 'Antanifotsy', 'MALE', 'SINGLE', '0344336031', '208011010209-2393', '2022-05-04', 'Ambohimahasoa', NULL, 'M000775.png', '3605014-2393', 'IKALALAO', '2022-01-01', 'Etudiant', 'MAMINIAINA Hermence', 'cultivateur', 'RAVAHA Hélène', 'cultivatrice', 'Ikalalao', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-01 00:00:00', NULL),
 (2394, 'M000776', 'no-email-2394@local', 'SEL-2394', 'MAMORINIAINA', 'Anjarasoa Mickael', '2006-04-15', 'Faratsiho', 'Manaontsara', 'MALE', 'SINGLE', '0338471200', 'CIN-2394', NULL, '', NULL, 'M000776.png', '3836058-2394', 'Faratsiho', '2022-01-01', 'Etudiant', 'TOVO Anjarasoa Solohery', 'Enseignant', 'RALEVASOA Olive', 'Enseignante', 'Faratsiho', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-13 00:00:00', NULL),
 (2395, 'M000779', 'no-email-2395@local', 'SEL-2395', 'MAROSEDRA VOAJANAHARY', 'Nambinina Jean Danielson', '2003-04-12', 'Ambatolahy', 'Soanierana', 'MALE', 'SINGLE', '0344473660', '205111004069-2395', '2021-07-06', 'Ambalavao', NULL, 'M000779.png', '4520271-2395', 'Ambalavao', '2021-01-01', 'Etudiant', 'RAMAROLAHY Jean de Dieu', 'Cultivateur', 'RASOAVOLOLONA Jeanette', 'TAILLEUSE', 'AMBALAVAO', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 11:45:24', NULL),
@@ -3060,7 +3068,7 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (2418, 'M000885', 'no-email-2418@local', 'SEL-2418', 'RASOANANDRASANA', 'Marie Lydià', '2002-08-13', 'Ambalavao', 'Anjoma', 'FEMALE', 'SINGLE', '0383169506', '205092011964-2418', '2020-09-14', 'Ambalavao', NULL, 'M000885.png', '4251195-2418', 'Fianarantsoa', '2022-01-01', 'Etudiant', 'RAKOTOMALALA Jean Maurice', 'Cultivateur', 'RAVAOSOLO Marie Jeanne', 'Cultivatrice', 'AMBALAVAO', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-05 00:00:00', NULL),
 (2419, 'M000887', 'no-email-2419@local', 'SEL-2419', 'RASOANOMENJANAHARY', 'Françine', '2003-01-30', 'Anjoma', 'Soatsihadino', 'FEMALE', 'SINGLE', '0385419262', '220552016005-2419', '2022-03-01', 'Vohibato', NULL, 'M000887.png', '4260104-2419', 'Alakamisy Itenina', '2022-01-01', 'Etudiant', 'PI', NULL, 'RAHARINIRINA Célestine', 'cultivatrice', 'Ialampanory', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 13:38:57', NULL),
 (2420, 'M000891', 'no-email-2420@local', 'SEL-2420', 'RASOLONIRINA', 'Sana Amadine', '2002-08-26', 'Ankarimbary', 'Andrainjato', 'FEMALE', 'SINGLE', '387695116', '210012047171-2420', '2020-10-12', 'Manakara', NULL, 'M000891.png', '4635078-2420', 'VOHIPENO', '2021-01-01', 'Etudiant', 'RASOLONDRAINY ', 'Instituteur', 'SANA Anastasie', 'MENAGERE', 'TAMBOHOLAVA', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 13:41:14', NULL),
-(2421, 'M000893', 'no-email-2421@local', 'SEL-2421', 'RATOLOJANAHARY ', 'Samy Roberto', '1998-12-22', 'Ambohinamboarina', 'Tanamabao  ', 'MALE', 'SINGLE', '0344624650', '208111006667-2421', '2017-02-17', 'Ambhimahasoa', NULL, 'M000893.png', '3536018-2421', 'AMBOHINAMBOARINA', '2017-01-01', 'Etudiant', 'RANOMENJANAHARY Herimanana Norbert', 'Cultivateur', 'RASAMIARISOA Rosette', 'Cultivatrice', 'ALAKAMISY CR SAHAVE', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 11:06:34', NULL),
+(2421, 'M000893', 'no-email-2421@local', 'SEL-2421', 'RATOLOJANAHARY ', 'Samy Roberto', '1998-12-22', 'Ambohinamboarina', 'Tanamabao  ', 'MALE', 'SINGLE', '0344624650', '208111006667-2421', '2017-02-17', 'Ambhimahasoa', NULL, 'M000893.png', '3536018-2421', 'AMBOHINAMBOARINA', '2017-01-01', 'Etudiant', 'RANOMENJANAHARY Herimanana Norbert', 'Cultivateur', 'RASAMIARISOA Rosette', 'Cultivatrice', 'ALAKAMISY CR SAHAVE', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-12-21 10:21:12', NULL),
 (2422, 'M000905', 'no-email-2422@local', 'SEL-2422', 'RAZAFIMAHAFALY', 'Eugène', '2001-04-02', 'Ambalamaharavo', 'Tanambao', 'MALE', 'SINGLE', '0381701239', '203231007477-2422', '2021-03-10', 'Ambositra', NULL, 'M000905.png', '4552057-2422', 'KIANJANDRAKEFINA', '2021-01-01', 'Etudiant', 'RALAISOANJARA Pascal', 'Cultivateur', 'RASOARAZY', 'Eleveur', 'AMBALAMAHARAVO', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 11:36:50', NULL),
 (2423, 'M000908', 'no-email-2423@local', 'SEL-2423', 'RAZAFIMAHATRATRA', 'Tanjona Louis Germain', '2001-05-26', 'Ambohimahasoa', 'Ankindry', 'MALE', 'SINGLE', '0349616236', '208011009477-2423', '2019-09-16', 'Ambohimahasoa', NULL, 'M000908.png', '3605004-2423', 'AMBOHIMAHASOA', '2022-01-01', 'Etudiant', 'PI', NULL, 'RAMANANTENASOA Jeanine Marie Therese', 'Institutrice', 'AMBOHIMAHASOA', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 12:06:22', NULL),
 (2424, 'M000909', 'no-email-2424@local', 'SEL-2424', 'RAZAFIMAHATRATRA', 'Philbert', '2000-06-17', 'Morafeno', 'Beravina', 'MALE', 'SINGLE', '0341336324', '208131006046-2424', '2021-04-15', 'Ambvohimahasoa', NULL, 'M000909.png', '4275122-2424', 'Ambohimahasoa', '2022-01-01', 'Etudiant', 'RABIALAHY Louis Maurice', 'cultivateur', 'RAVOLAMPIMANJATO Marie Anne ', 'Mpandrary', 'Ambalanonoka', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 12:01:15', NULL),
@@ -3069,7 +3077,7 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (2427, 'M000928', 'no-email-2427@local', 'SEL-2427', 'SAFIDIMPANAHY', 'Iaretantsoa Narovana', '2003-04-24', 'Ankarinoro', 'Soanierana', 'MALE', 'SINGLE', '0340291135', '204011024156-2427', '2021-06-14', 'Fandriana', NULL, 'M000928.png', '4557044-2427', 'FANDRIANA', '2021-01-01', 'Etudiant', 'ANDRIAMAROMANANA Gratien Rolland', 'Cultivateur', 'RASOANANDRASANA Manandraibe', 'Eleveur', 'AMBOHIPENO', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-03-04 13:35:40', NULL),
 (2428, 'M000946', 'no-email-2428@local', 'SEL-2428', 'TOLOTRA', ' ', '2005-07-04', 'Toliara', 'Tearomangaika', 'MALE', 'SINGLE', '336754782', '201071008744-2428', '2023-09-19', 'Fianarantsoa', NULL, 'M000946.png', '4900394-2428', 'Ambovombe', '2021-01-01', 'Etudiant', 'TANDRIAMAMPIONONA Justin', 'PASTEUR FLM', 'ZAINABO Soavelo ', 'sage femme', 'Ambovombe Androy', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-01 00:00:00', NULL),
 (2429, 'M000948', 'no-email-2429@local', 'SEL-2429', 'TSARATOMBO', 'Jean Michelin', '2001-01-01', 'Ambohipeno ', 'Andrainjato', 'MALE', 'SINGLE', '0347440773', '214131102880-2429', '2022-01-25', 'Vangaindrano', NULL, 'M000948.png', '3680035-2429', 'Vangaindrano', '2022-01-01', 'Etudiant', 'RAMAMONJISOA Michelin', 'Cultivateur', 'FLORENTINE', 'Cultivatrice', 'Vangaindrano', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 11:43:07', NULL),
-(2430, 'M000951', 'no-email-2430@local', 'SEL-2430', 'TSINJO ANDRIAMANANTENA ', 'Jonshon Martin', '2002-11-19', 'Antanifotsy Imito', 'Ambatomena', 'MALE', 'SINGLE', '0349533199', '204231011690-2430', '2021-04-07', 'Fandriana', NULL, 'M000951.png', '3648012-2430', 'Fandriana', '2022-01-01', 'Etudiant', 'RATSARANDRONIRINA Martin', 'Cultivateur', 'RAZAFIALISOA Julienne', 'Cultivatrice', 'Fandriana', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-02-05 13:47:19', NULL),
+(2430, 'M000951', 'no-email-2430@local', 'SEL-2430', 'TSINJO ANDRIAMANANTENA ', 'Jonshon Martin', '2002-11-19', 'Antanifotsy Imito', 'Ambatomena', 'MALE', 'SINGLE', '0349533199', '204231011690-2430', '2021-04-07', 'Fandriana', NULL, 'M000951.png', '3648012-2430', 'Fandriana', '2022-01-01', 'Etudiant', 'RATSARANDRONIRINA Martin', 'Cultivateur', 'RAZAFIALISOA Julienne', 'Cultivatrice', 'Fandriana', NULL, 10, 'former', NULL, 3, NULL, 1, NULL, '2024-03-01 00:00:00', '2025-12-21 17:24:51', NULL),
 (2431, 'M001013', 'no-email-2431@local', 'SEL-2431', 'JUVENOT', 'Androlexe', '2004-02-27', 'Sandrakatsy', 'Sandrakatry', 'MALE', 'SINGLE', '321516231', '304091034238-2431', '2023-05-09', 'Varary', NULL, '', '4643694-2431', 'Mananara Avaratra', '2023-01-01', 'Etudiant', 'Donne Marcel', 'Mpamboly', 'Lucianne', 'Mpamboly', 'Sandrakatry', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-04 00:00:00', NULL),
 (2432, 'M001014', 'no-email-2432@local', 'SEL-2432', 'LAHIAVOTRA', 'Razafindramanana Vincent', '1999-07-07', 'Amboasary Sud', 'Andovoka', 'MALE', 'SINGLE', '336408323', '519051006871-2432', '2019-08-28', 'Tanandava', NULL, 'M001014.png', '4782013-2432', 'Amboasary', '2023-01-01', 'Etudiant', '***', '***', 'MASY Liavinagne', 'Mpamboly', 'Amboasary-sud', NULL, 10, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-01 00:00:00', '2024-03-01 00:00:00', NULL);
 INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `first_name`, `date_of_birth`, `place_of_birth`, `address`, `sex`, `martial_status`, `phone_number`, `num_of_cin`, `date_of_cin`, `place_of_cin`, `repeat_status`, `picture`, `num_of_baccalaureate`, `center_of_baccalaureate`, `year_of_baccalaureate`, `job`, `father_name`, `father_job`, `mother_name`, `mother_job`, `parent_address`, `level`, `mean`, `enrollment_status`, `imported_id`, `id_mention`, `id_enter_year`, `id_nationality`, `id_baccalaureate_series`, `created_at`, `updated_at`, `deleted_at`) VALUES
@@ -3137,7 +3145,7 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (2494, 'P001068', 'no-email-2494@local', 'SEL-2494', 'RANDRIAMANANTENA', 'Herivalisoa Louisa Sarah', '2003-11-16', 'Ambohimahasoa', 'Batiment A213', 'FEMALE', 'SINGLE', NULL, '103052024623-2494', '2022-03-21', 'Ambohidratrimo', NULL, 'P001068.png', 'UNK-2494', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 1, NULL, 1, NULL, '2024-03-11 00:00:00', '2025-02-10 14:18:11', NULL),
 (2495, 'P001093', 'no-email-2495@local', 'SEL-2495', 'RATIANANDRASANA', 'Fenitriniaina', '2002-12-16', 'Ankofafa', 'Ankofafa', 'MALE', 'SINGLE', NULL, '201031058258-2495', '2022-03-17', 'Fianarantsoa', NULL, '', 'UNK-2495', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 1, NULL, NULL, NULL, '2024-03-11 00:00:00', NULL, NULL),
 (2496, 'M001125', 'no-email-2496@local', 'SEL-2496', 'RAVONJINIAINA', 'Jean Felix', '2005-07-12', 'Soatanana', 'Ivory Avaratra', 'MALE', 'SINGLE', NULL, '220371011498-2496', '2023-08-12', 'Isandra', NULL, 'M001125.png', 'UNK-2496', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 3, NULL, NULL, NULL, '2024-03-12 00:00:00', '2024-03-12 00:00:00', NULL),
-(2497, '5352', 'no-email-2497@local', 'SEL-2497', 'DHINOU', 'Kamil', '1996-08-09', 'Dagi Anjouan', 'Andrainjato', 'MALE', 'SINGLE', NULL, 'NBE:340553-2497', '2015-10-14', 'Moroni', NULL, '5352.png', 'UNK-2497', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 3, NULL, 2, NULL, '2024-03-12 00:00:00', '2025-02-20 09:33:59', NULL),
+(2497, '5352', 'no-email-2497@local', 'SEL-2497', 'DHINOU', 'Kamil', '1996-08-09', 'Dagi Anjouan', 'Andrainjato', 'MALE', 'SINGLE', NULL, 'NBE:340553-2497', '2015-10-14', 'Moroni', NULL, '5352.png', 'UNK-2497', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 3, NULL, 2, NULL, '2024-03-12 00:00:00', '2025-12-21 17:52:05', NULL),
 (2498, 'P000289', 'no-email-2498@local', 'SEL-2498', 'NJARA', 'Tokisoa Edmond', '2001-06-10', 'Ikalamavony', 'Andrainjato', 'MALE', 'SINGLE', NULL, '220371008337-2498', '2019-02-21', 'Isandra', NULL, 'P000289.png', 'UNK-2498', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 1, NULL, NULL, NULL, '2024-03-13 00:00:00', '2024-03-13 00:00:00', NULL),
 (2499, '5145', 'no-email-2499@local', 'SEL-2499', 'RAKOTOVAO', 'Martial', '1995-12-08', 'Ambinanindovoka', 'Amontana', 'MALE', 'SINGLE', NULL, '205191003851-2499', '2013-05-05', 'Ambalavao', NULL, '5145.png', 'UNK-2499', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, NULL, NULL, '2024-03-13 00:00:00', '2024-03-13 00:00:00', NULL),
 (2500, '7220', 'no-email-2500@local', 'SEL-2500', 'RABENANDRASANA', 'Riri', '2000-12-30', 'Vohilengo', 'Andrainjato', 'MALE', 'SINGLE', NULL, '305011042673-2500', '2018-01-07', 'Fenerive Est', NULL, '7220.png', 'UNK-2500', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 1, NULL, 1, NULL, '2024-03-14 00:00:00', '2025-02-13 09:16:28', NULL),
@@ -3344,7 +3352,7 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (2699, '6608', 'no-email-2699@local', 'SEL-2699', 'RANDRIANARISON', 'Fenotolotra Mickaêl', '2001-02-24', 'Fiadanana', 'Ankofafalahy Fianarantsoa', 'MALE', 'SINGLE', '034 59 958 09', '201091013142-2699', '2019-03-04', 'Fianarantsoa', NULL, '', '4501171-2699', 'CSFX', '2017-01-01', 'Etudiant', 'RALARISOA Eric Michel', 'Chauffeur', 'RAFARAMALALARéginah', 'Cultivatrice', 'Fiadanana Ambohimahasoa', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', '2024-07-03 08:17:03', NULL),
 (2700, '7587', 'no-email-2700@local', 'SEL-2700', 'RAZAFINANDRASANA', 'Hérnandéz', '1998-07-20', 'Toamasina', 'Cité Univ Bat E0007', 'MALE', 'SINGLE', '034 63 426 07', '301071038560-2700', '2016-12-15', 'Toamasina', NULL, '', '4750557-2700', 'LJR Toamasina', '2018-01-01', 'Etudiant', 'RAKOTO Edmond (feu)', NULL, 'JUDITH Mélanie Olivette', 'Vendeuse', 'Lot 106 Parcelle 11/11  Mangarivotra', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', NULL, NULL),
 (2701, '6188', 'no-email-2701@local', 'SEL-2701', 'RAZAIARINORO', 'Anja Léa', '1995-01-01', 'Tsangandrano', 'Ambatotokana Andrainjato', 'FEMALE', 'SINGLE', '034 23 953 61', '202012015227-2701', '2016-01-20', 'Ambatofinandrahana', NULL, '', '4530032-2701', 'Ambatofinandrahana', '2017-01-01', 'Etudiant', NULL, NULL, 'RASOANDRAINY Raozy Aveline', 'Cultivatrice', 'Marovotry Tsangandrano', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', NULL, NULL),
-(2702, '7602', 'no-email-2702@local', 'SEL-2702', 'RAZAINJAFY', 'Joêlson Florent', '1998-11-21', 'Fohiloha', 'Lot isa 12 bis/3205Soatsihadino ', 'MALE', 'SINGLE', '034 26 835 66', '220311011942-2702', '2017-01-26', 'Vohibato', NULL, '7602.png', '4501224-2702', 'Fianarantsoa', '2017-01-01', 'Etudiant', 'RATONGAVAO Alexandre', 'Cultivateur', 'LALAO Georgette', 'Cultivatrice', 'Fohiloha', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', '2025-02-07 14:46:39', NULL),
+(2702, '7602', 'no-email-2702@local', 'SEL-2702', 'RAZAINJAFY', 'Joêlson Florent', '1998-11-21', 'Fohiloha', 'Lot isa 12 bis/3205Soatsihadino ', 'MALE', 'SINGLE', '034 26 835 66', '220311011942-2702', '2017-01-26', 'Vohibato', NULL, '7602.png', '4501224-2702', 'Fianarantsoa', '2017-01-01', 'Etudiant', 'RATONGAVAO Alexandre', 'Cultivateur', 'LALAO Georgette', 'Cultivatrice', 'Fohiloha', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', '2025-12-20 11:51:10', NULL),
 (2703, '6209', 'no-email-2703@local', 'SEL-2703', 'SAHOLINIAINA', 'Emma Marie Holande', '1997-07-07', 'Ambalahafotra', 'Lot 741A2/3710 Ampitakely', 'FEMALE', 'SINGLE', '034 36 331 68', '220232003914-2703', '2016-01-25', 'Manera', NULL, '', '4501203-2703', 'Lycée RR', '2017-01-01', 'Etudiant', 'RANDRIMBISON Jean Fidéle', 'Cultivateur', 'FALILALAO Emarline', 'Cultivatrice', 'Ambalamena Maneva', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', NULL, NULL),
 (2704, '7635', 'no-email-2704@local', 'SEL-2704', 'TSARAHIRA', 'Angelin', '1995-06-30', 'Vohipeno', 'CU B 313 Andrainjato', 'FEMALE', 'SINGLE', '034 06 472 36', '305011033510-2704', '2018-08-29', 'Mahajanga I', NULL, '', '4754474-2704', 'Fenerive Est', '2016-01-01', 'Etudiant', NULL, NULL, 'SASATRA Chrisée', 'Menagère', 'Vohipeno Fenerive est', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', '2024-07-03 08:17:03', NULL),
 (2705, '6688', 'no-email-2705@local', 'SEL-2705', 'VOAHIRANA TANTELISOA', 'Marie Lydia', '1998-09-06', 'Besoa', 'Soatsihadino Lot isb 120/3205', 'FEMALE', 'SINGLE', '034 45 906 08', '205012023799-2705', '2017-02-09', 'Ambalavao', NULL, '', '4520167-2705', 'Ambalavao', '2018-01-01', 'Etudiant', 'RASAMBO Jean Fréne', 'Cultivateur', 'RASOANANDRASANA Vololonirina', 'Cultivatrice', 'Antako Besoa', NULL, NULL, 'former', NULL, 2, NULL, 1, 2, '2025-11-21 19:18:47', NULL, NULL),
@@ -4014,7 +4022,7 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (3373, 'M001474', 'no-email-3373@local', 'SEL-3373', 'RAMANANDRAIBE', 'Sosthene William', '2002-10-03', 'Bodrano', 'Igaga Fianarantsoa', 'MALE', 'SINGLE', '383327077', '208111009351-3373', '2022-10-06', 'Ambohimahazaka', NULL, 'M001474.png', '4425104-3373', 'Ambohimahasoa', '2024-01-01', 'Etudiant', 'RANDRIANARIVELO Ignace William', 'Mpamboly', 'Tsiandavana Vololoniaina Sosthene Florence', 'Mpandrary', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-02-05 15:24:54', NULL),
 (3374, 'M001475', 'no-email-3374@local', 'SEL-3374', 'TOJONIRINA', 'Nomenjanahary Francisco', '2003-05-08', 'Fandrandava', 'Antanifotsy', 'MALE', 'SINGLE', '381784283', '220431006824-3374', '2022-11-02', 'Lalangina', NULL, 'M001475.png', '3660721-3374', 'Fianarantsoa', '2024-01-01', 'Etudiant', 'PI', NULL, 'RAZAFINDRAVAO Zanaboto', 'Mpamboly', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-02-05 15:43:40', NULL),
 (3375, 'M001476', 'no-email-3375@local', 'SEL-3375', 'RASOLOFOMANANA', 'Valson David', '1999-02-11', 'Fanjakana', 'Ankofafa lot II 053AE/3602', 'MALE', 'SINGLE', '348459668', '220531005756-3375', '2017-09-06', 'Isandra', NULL, 'M001476.png', '4400514-3375', 'Fianarantsoa', '2024-01-01', 'Etudiant', 'PI', NULL, 'RAHELIARISOA Hanitriniony Ernestine', 'Cultivatrice', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-02-05 15:44:48', NULL),
-(3376, 'M001477', 'no-email-3376@local', 'SEL-3376', 'NOMENJANAHARY', 'Narson Maminihony Fabien', '2005-11-24', 'Ambatomanga', 'Ankindry', 'FEMALE', 'SINGLE', '383446553', '204231013186-3376', '2023-11-29', 'Fandriana', NULL, 'M001477.png', '3728032-3376', 'Imito', '2024-01-01', 'Etudiant', 'RAHARISONINA Desiré', 'Cultivateur', 'RAHARINIRINA Hortense', 'Cultuvatrice', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-02-26 12:32:03', NULL),
+(3376, 'M001477', 'no-email-3376@local', 'SEL-3376', 'NOMENJANAHARY', 'Narson Maminihony Fabien', '2005-11-24', 'Ambatomanga', 'Ankindry', 'FEMALE', 'SINGLE', '383446553', '204231013186-3376', '2023-11-29', 'Fandriana', NULL, 'M001477.png', '3728032-3376', 'Imito', '2024-01-01', 'Etudiant', 'RAHARISONINA Desiré', 'Cultivateur', 'RAHARINIRINA Hortense', 'Cultuvatrice', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-12-21 16:36:53', NULL),
 (3377, 'M001478', 'no-email-3377@local', 'SEL-3377', 'RANOTAHINJANAHARY', 'Paul Edgard', '2007-02-07', 'Andoharanomaintso FII', 'Beravina lot67A/BA', 'MALE', 'SINGLE', '382185924', '201051021998-3377', '2025-02-07', 'Fianarantsoa', NULL, 'M001478.png', '4400964-3377', 'Fianarantsoa', '2024-01-01', 'Etudiant', 'RANOTAHINJANAHARY Paulin', 'Cultivateur', 'SAHOLINIRINA', 'Cultivatrice', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-02-26 12:48:53', NULL),
 (3378, 'M001479', 'no-email-3378@local', 'SEL-3378', 'RAZAFIMAHATRADRAIBE ', 'Francklé Fidèle', '2003-09-30', 'Ambatovory Ikalalao', 'Ambohibory', 'MALE', 'SINGLE', '342323275', '208011010480-3378', '2022-10-20', 'Ambohimahasoa', NULL, 'M001479.png', '3685082-3378', 'Ambohimahasoa', '2024-01-01', 'Etudiant', 'RAZAFINIRINA Fidelis Celestin', 'Cultivateur', 'RAHOLIARISOA Zanakolona Jeannette', 'Cultuvatrice', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-02-05 15:45:47', NULL),
 (3379, 'M001480', 'no-email-3379@local', 'SEL-3379', 'TOLOJANAHARY', 'Rijaniaina Floridah', '2006-11-24', 'Ilakaka', 'Ankofafa', 'MALE', 'SINGLE', '341955215', '201031064781-3379', '2024-04-18', 'Fianarantsoa', NULL, '', '4400371-3379', 'Fianarantsoa', '2024-01-01', 'Etudiant', 'RAKOTONIAINA Amédé', 'Guichetier', 'ZAFINORO Berthe Marie J.', 'Ménagère', NULL, NULL, NULL, 'former', 'dabcd045-7037-4b2b-b88d-857e368c4fb3', 3, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-02-05 15:46:10', NULL),
@@ -4362,7 +4370,10 @@ INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `f
 (3800, 'S001718', 'no-email-3800@local', 'SEL-3800', 'RAHARIMALALA', 'Denise', '2002-10-08', 'Ambohimanarina', 'Amboanio Farafangana', 'FEMALE', 'SINGLE', NULL, '212012014973-3800', '2022-02-28', 'Vohipeno ', NULL, 'S001718.png', 'UNK-3800', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-07-08 10:44:42', NULL),
 (3801, 'S001722', 'no-email-3801@local', 'SEL-3801', 'LEONTINE', 'Germaine', '1999-01-04', 'Anakatrika Anosivelo', 'Farafangana', 'FEMALE', 'SINGLE', NULL, '213052008093-3801', '2017-12-21', 'Farafangana', NULL, 'S001722.png', 'UNK-3801', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-07-08 10:19:57', NULL),
 (3802, 'S001719', 'no-email-3802@local', 'SEL-3802', 'RANDRIANAMBINY ', 'Dolia', '2002-01-01', 'Analafia Mahavelo', 'Farafangana ', 'MALE', 'SINGLE', NULL, '213011036991-3802', '2021-06-30', 'Farafangana ', NULL, 'S001719.png', 'UNK-3802', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-07-08 10:45:01', NULL),
-(3803, 'S001720', 'no-email-3803@local', 'SEL-3803', 'VELOTSARA', 'Hanjaniriko Alex Ricardo', '2006-06-10', 'Amboanio Farafangana', 'Amboanio Farafangana', 'MALE', 'SINGLE', NULL, '213011042687-3803', '2024-06-28', 'Farafangana ', NULL, 'S001720.png', 'UNK-3803', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-07-08 10:45:27', NULL);
+(3803, 'S001720', 'no-email-3803@local', 'SEL-3803', 'VELOTSARA', 'Hanjaniriko Alex Ricardo', '2006-06-10', 'Amboanio Farafangana', 'Amboanio Farafangana', 'MALE', 'SINGLE', NULL, '213011042687-3803', '2024-06-28', 'Farafangana ', NULL, 'S001720.png', 'UNK-3803', 'UNKNOWN', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'former', NULL, 2, NULL, 1, NULL, '2025-11-21 19:18:47', '2025-07-08 10:45:27', NULL),
+(3805, NULL, 'milk@gmail.com', '20251221-0001', 'RAMAMY', 'Milk', '2003-08-21', 'Fianarstoa', 'Andafiatsimo', 'MALE', 'SINGLE', '+261 38 17 591 93', NULL, NULL, NULL, NULL, NULL, '12312E12EE', 'Andrefatsena', NULL, 'Etudiant', NULL, NULL, NULL, NULL, NULL, 'L1', NULL, 'rejected', NULL, 3, 4, NULL, NULL, '2025-12-21 10:32:20', '2025-12-21 15:58:38', NULL);
+INSERT INTO `student` (`id`, `num_carte`, `email`, `num_select`, `last_name`, `first_name`, `date_of_birth`, `place_of_birth`, `address`, `sex`, `martial_status`, `phone_number`, `num_of_cin`, `date_of_cin`, `place_of_cin`, `repeat_status`, `picture`, `num_of_baccalaureate`, `center_of_baccalaureate`, `year_of_baccalaureate`, `job`, `father_name`, `father_job`, `mother_name`, `mother_job`, `parent_address`, `level`, `mean`, `enrollment_status`, `imported_id`, `id_mention`, `id_enter_year`, `id_nationality`, `id_baccalaureate_series`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(3806, NULL, 'paul@test.com', '20251221-0002', 'Rakoto', 'Jean Paule', '2003-02-13', 'Fianarantsoa', 'Andrainjato', 'MALE', 'SINGLE', '+261 38 77 657 89', '201034543425', '2021-07-21', 'Fianarantsoa', NULL, NULL, '123GE1T4R1', 'Fianarantsoa', NULL, 'Etudiant', NULL, NULL, NULL, NULL, NULL, 'L1', NULL, 'selected', NULL, 3, 4, NULL, NULL, '2025-12-21 10:54:03', '2025-12-21 12:44:02', NULL);
 
 -- --------------------------------------------------------
 
@@ -4479,6 +4490,13 @@ CREATE TABLE `university` (
   `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Déchargement des données de la table `university`
+--
+
+INSERT INTO `university` (`id`, `province`, `department_name`, `department_other_information`, `department_address`, `email`, `logo_university`, `logo_departement`, `phone_number`, `admin_signature`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Fianarantsoa', 'Facultés des sciences', 'test', 'andrainjato', 'facs@email.com', '../uploads/24818549255c453fa384bc8fb6ade792.png', '../uploads/19668b5da172414dbe33e1e12dfa4d76.jpg', 'tes', '../uploads/c7d477e30d4746aca219bba3ec858427.png', '2025-12-20 08:06:30', '2025-12-20 10:56:48', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -4506,7 +4524,7 @@ CREATE TABLE `user` (
 INSERT INTO `user` (`id`, `email`, `first_name`, `last_name`, `hashed_password`, `is_superuser`, `picture`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'admin@scolary-user.com', 'Scolary', 'Admin', '$2b$12$mysGRHOg59s5iQsZcasTCuximQee6AujmDae0kf79nun4BAuRcfyC', 1, '/files/user_pictures/3a65b46cfc174cf59051a9c373b55df1.png', 1, '2025-11-15 19:05:45', '2025-11-16 06:57:28', NULL),
 (2, 'enricfranck@gmail.com', 'Franck', 'Henri', '$2b$12$HZZhIOQ7pclhEYHGASn7a.o70qtbhl6SxDzonmiaILi8aZ5FnGB6q', 0, '/files/user_pictures/268a6367437c4a7ca7f148eb3c936a90.jpg', 1, '2025-11-16 05:54:55', '2025-11-16 07:18:54', NULL),
-(3, 'benani@gmail.com', 'Amina', 'Bennani', '$2b$12$Mud3lDQlzsN4ZV7FXB5PLedxRlAbkrJCXQEsVR0Iv8Y3dO/yzG4lG', 0, '/files/user_pictures/60cff92c3ff74f3fa5171c515b7da041.jpeg', 1, '2025-11-16 07:36:11', '2025-11-16 07:37:51', NULL);
+(3, 'benani@gmail.com', 'Amina', 'Bennani', '$2b$12$Mud3lDQlzsN4ZV7FXB5PLedxRlAbkrJCXQEsVR0Iv8Y3dO/yzG4lG', 0, '/files/user_pictures/60cff92c3ff74f3fa5171c515b7da041.jpeg', 1, '2025-11-16 07:36:11', '2025-12-20 16:54:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -4530,7 +4548,12 @@ CREATE TABLE `user_mention` (
 INSERT INTO `user_mention` (`id`, `id_user`, `id_mention`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (2, 2, 2, '2025-11-16 07:02:35', '2025-11-16 07:02:35', NULL),
 (3, 2, 1, '2025-11-16 07:18:54', '2025-11-16 07:18:54', NULL),
-(4, 3, 1, '2025-11-16 07:36:11', '2025-11-16 07:36:11', NULL);
+(4, 3, 1, '2025-11-16 07:36:11', '2025-11-16 07:36:11', NULL),
+(6, 3, 2, '2025-12-20 16:54:49', '2025-12-20 16:54:49', NULL),
+(7, 3, 3, '2025-12-20 16:54:49', '2025-12-20 16:54:49', NULL),
+(8, 3, 5, '2025-12-20 16:54:49', '2025-12-20 16:54:49', NULL),
+(9, 3, 6, '2025-12-20 16:54:49', '2025-12-20 16:54:49', NULL),
+(10, 3, 7, '2025-12-20 16:54:49', '2025-12-20 16:54:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -4555,7 +4578,7 @@ INSERT INTO `user_role` (`id`, `id_user`, `id_role`, `created_at`, `updated_at`,
 (1, 1, 1, '2025-11-15 22:57:31', '2025-11-15 22:57:31', NULL),
 (2, 1, 3, '2025-11-15 22:57:31', '2025-11-15 22:57:31', NULL),
 (3, 2, 2, '2025-11-16 05:54:55', '2025-11-16 05:54:55', NULL),
-(4, 3, 3, '2025-11-16 07:36:11', '2025-11-16 07:36:11', NULL);
+(5, 3, 4, '2025-12-20 16:54:49', '2025-12-20 16:54:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -4930,13 +4953,13 @@ ALTER TABLE `working_time`
 -- AUTO_INCREMENT pour la table `academic_year`
 --
 ALTER TABLE `academic_year`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT pour la table `annual_register`
 --
 ALTER TABLE `annual_register`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8203;
 
 --
 -- AUTO_INCREMENT pour la table `baccalaureate_serie`
@@ -5008,7 +5031,7 @@ ALTER TABLE `feature`
 -- AUTO_INCREMENT pour la table `file_asset`
 --
 ALTER TABLE `file_asset`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT pour la table `group`
@@ -5026,7 +5049,7 @@ ALTER TABLE `journey`
 -- AUTO_INCREMENT pour la table `journey_semester`
 --
 ALTER TABLE `journey_semester`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT pour la table `mention`
@@ -5050,19 +5073,19 @@ ALTER TABLE `note`
 -- AUTO_INCREMENT pour la table `payement`
 --
 ALTER TABLE `payement`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7913;
 
 --
 -- AUTO_INCREMENT pour la table `permission`
 --
 ALTER TABLE `permission`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT pour la table `register_semester`
 --
 ALTER TABLE `register_semester`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15203;
 
 --
 -- AUTO_INCREMENT pour la table `result_teaching_unit`
@@ -5074,19 +5097,19 @@ ALTER TABLE `result_teaching_unit`
 -- AUTO_INCREMENT pour la table `role`
 --
 ALTER TABLE `role`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT pour la table `role_permission`
 --
 ALTER TABLE `role_permission`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT pour la table `student`
 --
 ALTER TABLE `student`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3804;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3807;
 
 --
 -- AUTO_INCREMENT pour la table `student_subscription`
@@ -5128,7 +5151,7 @@ ALTER TABLE `teaching_unit_optional_group`
 -- AUTO_INCREMENT pour la table `university`
 --
 ALTER TABLE `university`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT pour la table `user`
@@ -5140,13 +5163,13 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT pour la table `user_mention`
 --
 ALTER TABLE `user_mention`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT pour la table `user_role`
 --
 ALTER TABLE `user_role`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT pour la table `working_time`
