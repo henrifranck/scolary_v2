@@ -37,7 +37,7 @@ export const LoginPage = () => {
       const response = await loginWithCredentials(values.email, values.password);
       const currentUser = await fetchCurrentUser();
       const isSuperuser = currentUser?.is_superuser ?? response.is_superuser;
-      const role = isSuperuser ? 'admin' : 'student';
+      const role = isSuperuser ? 'admin' : 'user';
       const displayName =
         [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ') ||
         values.email.split('@')[0];

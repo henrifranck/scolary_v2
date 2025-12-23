@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-export type AuthRole = 'student' | 'admin';
+export type AuthRole = 'user' | 'admin';
 
 export interface AuthUser {
   id: string;
@@ -33,6 +33,9 @@ const readFromStorage = (): AuthState | null => {
 
     const parsed = JSON.parse(raw) as AuthState;
     if (parsed && typeof parsed === 'object' && 'status' in parsed) {
+      if (parsed.user?.role === 'student') {
+        parsed.user.role = 'user';
+      }
       return parsed;
     }
   } catch (error) {

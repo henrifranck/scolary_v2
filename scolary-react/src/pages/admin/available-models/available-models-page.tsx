@@ -52,6 +52,20 @@ const buildRoutes = (name: string) => {
   return { routeApi, routeUi };
 };
 
+const applyNoPrefix = (value: string, hideFromUser: boolean) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return hideFromUser ? 'no-' : '';
+  }
+  const hasLeadingSlash = trimmed.startsWith('/');
+  const segments = trimmed.replace(/^\/+/, '').split('/');
+  const lastSegment = segments.pop() ?? '';
+  const baseSegment = lastSegment.replace(/^no-/, '');
+  const nextSegment = hideFromUser ? `no-${baseSegment}` : baseSegment;
+  const nextPath = [...segments, nextSegment].filter(Boolean).join('/');
+  return `${hasLeadingSlash ? '/' : ''}${nextPath}`;
+};
+
 const toPayload = (
   values: AvailableModelFormValues,
   mode: 'create' | 'edit',
@@ -103,6 +117,9 @@ const AvailableModelForm = ({
   const nameValue = watch('name');
   const routeApiValue = watch('route_api');
   const routeUiValue = watch('route_ui');
+  const isHiddenFromUser = routeUiValue
+    ? routeUiValue.trim().replace(/^\/+/, '').startsWith('no-')
+    : false;
 
   useEffect(() => {
     if (mode !== 'create') {
@@ -161,6 +178,20 @@ const AvailableModelForm = ({
             className={cn(errors.route_ui && 'border-destructive text-destructive')}
             {...register('route_ui', { required: 'Route UI is required' })}
           />
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={isHiddenFromUser}
+              onChange={(event) =>
+                setValue(
+                  'route_ui',
+                  applyNoPrefix(routeUiValue ?? '', event.target.checked),
+                  { shouldDirty: true }
+                )
+              }
+            />
+            Masquer ce menu pour l'utilisateur (ajoute le prefixe no-)
+          </label>
           {errors.route_ui ? (
             <p className="text-xs text-destructive">{errors.route_ui.message}</p>
           ) : null}

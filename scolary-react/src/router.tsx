@@ -123,11 +123,25 @@ const concoursRoute = createRoute({
   beforeLoad: ensureAuthenticated
 });
 
+const mentionsUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'mentions',
+  component: MentionsPage,
+  beforeLoad: ensureAuthenticated
+});
+
+const journeysUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'journeys',
+  component: JourneysPage,
+  beforeLoad: ensureAuthenticated
+});
+
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'admin',
   component: () => <Outlet />,
-  beforeLoad: ensureRole('admin')
+  beforeLoad: ensureAuthenticated
 });
 
 const adminReinscriptionRoute = createRoute({
@@ -178,16 +192,37 @@ const academicYearsRoute = createRoute({
   component: AcademicYearsPage
 });
 
+const academicYearsUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'academic-years',
+  component: AcademicYearsPage,
+  beforeLoad: ensureAuthenticated
+});
+
 const workingTimeRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'working-time',
   component: WorkingTimePage
 });
 
+const workingTimeUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'working-time',
+  component: WorkingTimePage,
+  beforeLoad: ensureAuthenticated
+});
+
 const permissionsRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'permissions',
   component: PermissionsPage
+});
+
+const permissionsUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'permissions',
+  component: PermissionsPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const universityInfoRoute = createRoute({
@@ -208,10 +243,24 @@ const teachingUnitRoute = createRoute({
   component: TeachingUnitPage
 });
 
+const teachingUnitUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'teaching-unit',
+  component: TeachingUnitPage,
+  beforeLoad: ensureAuthenticated
+});
+
 const constituentElementsRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'constituent-elements',
   component: ConstituentElementsPage
+});
+
+const constituentElementsUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'constituent-elements',
+  component: ConstituentElementsPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const groupsRoute = createRoute({
@@ -220,6 +269,12 @@ const groupsRoute = createRoute({
   component: GroupsPage
 });
 
+const groupsUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'groups',
+  component: GroupsPage,
+  beforeLoad: ensureAuthenticated
+});
 const availableServicesRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'available-services',
@@ -238,16 +293,37 @@ const availableModelsRoute = createRoute({
   component: AvailableModelsPage
 });
 
+const availableModelsUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'available-models',
+  component: AvailableModelsPage,
+  beforeLoad: ensureAuthenticated
+});
+
 const usersRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'users',
   component: UsersPage
 });
 
+const usersUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'users',
+  component: UsersPage,
+  beforeLoad: ensureAuthenticated
+});
+
 const rolesRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'roles',
   component: RolesPage
+});
+
+const rolesUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'roles',
+  component: RolesPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const subjectsRoute = createRoute({
@@ -272,6 +348,13 @@ const cmsManagerRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'cms',
   component: CmsManagerPage
+});
+
+const cmsManagerUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'cms',
+  component: CmsManagerPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const authRoute = createRoute({
@@ -303,6 +386,18 @@ const routeTree = rootRoute.addChildren([
   inscriptionRoute,
   dossierSelectionRoute,
   concoursRoute,
+  mentionsUserRoute,
+  journeysUserRoute,
+  academicYearsUserRoute,
+  workingTimeUserRoute,
+  teachingUnitUserRoute,
+  constituentElementsUserRoute,
+  groupsUserRoute,
+  usersUserRoute,
+  rolesUserRoute,
+  permissionsUserRoute,
+  availableModelsUserRoute,
+  cmsManagerUserRoute,
   adminRoute.addChildren([
     adminDashboardRoute,
     adminNotesRoute,

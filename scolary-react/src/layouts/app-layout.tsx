@@ -138,15 +138,57 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
     generalSection,
     {
       title: 'Etudiant',
-      roles: ['student'],
+      roles: ['user'],
       items: [
-        { to: '/notes', label: 'Notes', icon: NotepadText, roles: ['student'] },
-        { to: '/folder-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['student'] },
-        { to: '/registration', label: 'Inscription', icon: FileSignature, roles: ['student'] },
-        { to: '/re-registration', label: 'Re-inscription', icon: RefreshCcw, roles: ['student'] },
+        { to: '/notes', label: 'Notes', icon: NotepadText, roles: ['user'] },
+        { to: '/folder-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['user'] },
+        { to: '/registration', label: 'Inscription', icon: FileSignature, roles: ['user'] },
+        { to: '/re-registration', label: 'Re-inscription', icon: RefreshCcw, roles: ['user'] },
         { to: '/re-registration-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] },
-        { to: '/competitions', label: 'Concours', icon: Trophy, roles: ['student'], badge: 'New' }
+        { to: '/competitions', label: 'Concours', icon: Trophy, roles: ['user'], badge: 'New' }
       ]
+    },
+    {
+      title: 'Service',
+      roles: ['user'],
+      items: [
+        { to: '/mentions', label: 'Mentions', icon: Waypoints, roles: ['user'] },
+        { to: '/journeys', label: 'Journeys', icon: Route, roles: ['user'] },
+        { to: '/available-services', label: 'Available services', icon: ListChecks, roles: ['user'] },
+        { to: '/required-documents', label: 'Required documents', icon: FileText, roles: ['user'] },
+        { to: '/university-info', label: 'University info', icon: Building2, roles: ['user'] },
+        { to: '/files', label: 'File manager', icon: HardDrive, roles: ['user'] }
+      ]
+    },
+    {
+      title: 'Academique',
+      roles: ['user'],
+      items: [{ to: '/academic-years', label: 'Academic years', icon: GraduationCap, roles: ['user'] }]
+    },
+    {
+      title: 'Enseignant',
+      roles: ['user'],
+      items: [
+        { to: '/teaching-unit', label: 'Teaching unit', icon: BookOpenCheck, roles: ['user'] },
+        { to: '/constituent-elements', label: 'Constituent element', icon: Layers, roles: ['user'] },
+        { to: '/working-time', label: 'Working time', icon: CalendarClock, roles: ['user'] },
+        { to: '/groups', label: 'Group', icon: Users, roles: ['user'] }
+      ]
+    },
+    {
+      title: 'Utilisateur',
+      roles: ['user'],
+      items: [
+        { to: '/users', label: 'Users', icon: Users, roles: ['user'] },
+        { to: '/roles', label: 'Roles', icon: ShieldCheck, roles: ['user'] },
+        { to: '/permissions', label: 'Permissions', icon: Settings, roles: ['user'] },
+        { to: '/available-models', label: 'Available models', icon: Layers, roles: ['user'] }
+      ]
+    },
+    {
+      title: 'Contenu',
+      roles: ['user'],
+      items: [{ to: '/cms', label: 'Pages CMS', icon: FileText, roles: ['user'] }]
     }
   ];
 };
@@ -201,6 +243,22 @@ const resolvePermissionKey = (
   return normalizeRouteKey(candidate.replace(/-/g, '_'));
 };
 
+const hasRouteUiMatch = (path: string, availableModels: { route_ui: string }[]) => {
+  if (!path || path === '/') {
+    return true;
+  }
+  return availableModels.some((model) => {
+    const routeUi = model.route_ui?.trim();
+    if (!routeUi) {
+      return false;
+    }
+    const candidates = routeUi.startsWith('/admin/')
+      ? [routeUi, routeUi.replace(/^\/admin/, '')]
+      : [routeUi, `/admin${routeUi}`];
+    return candidates.some((candidate) => path === candidate || path.startsWith(`${candidate}/`));
+  });
+};
+
 interface AppLayoutProps {
   children: ReactNode;
 }
@@ -238,6 +296,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     })
     .map((section) => {
       const items = section.items.filter((item) => {
+        if (!isSuperuser && !hasRouteUiMatch(item.to, availableModels)) {
+          return false;
+        }
         if (!shouldEnforcePermissions) {
           return true;
         }
@@ -268,7 +329,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       return;
     }
     const isSuperuser = currentUser.is_superuser ?? user.is_superuser;
-    const role: AuthRole = isSuperuser ? 'admin' : user.role;
+    const role: AuthRole =
+      isSuperuser ? 'admin' : user.role === 'student' ? 'user' : user.role;
     const nextPermissions = currentUser.permissions ?? user.permissions ?? null;
     const samePermissions =
       JSON.stringify(user.permissions ?? null) === JSON.stringify(nextPermissions);
