@@ -13,9 +13,11 @@ class Document(Base):
     description = Column(Text)
     url = Column(String(255), nullable=False)
     id_annual_register = Column(Integer, ForeignKey('annual_register.id'), nullable=True)
+    id_required_document = Column(Integer, ForeignKey('required_document.id'), nullable=True)
 
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime)
 
     annual_register = relationship('AnnualRegister', foreign_keys=[id_annual_register])
+    required_document = relationship('RequiredDocument', foreign_keys=[id_required_document])

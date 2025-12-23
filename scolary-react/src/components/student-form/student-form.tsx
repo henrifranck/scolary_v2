@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 import { fetchStudentByCardNumber } from "@/services/student-service";
 import { Check, Pencil, Layers } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -33,6 +34,7 @@ import { ReinscriptionFilters } from "@/services/reinscription-service";
 import { ReinscriptionAnnualRegister } from "@/pages/user/reinscription/reinscription-payment-form";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { MentionOption } from "@/components/filters/academic-filters";
+import { fetchMentions } from "@/services/inscription-service";
 
 type dialogMode = "edit" | "create";
 
@@ -95,6 +97,18 @@ export const StudentForm = ({
   enablePicture = true,
   mentionOptions = []
 }: StudentFormProps) => {
+  const { data: fetchedMentions = [], isLoading: isLoadingMentions } = useQuery({
+    queryKey: ["student-form", "mentions"],
+    queryFn: () => fetchMentions({ user_only: true }),
+    enabled: mentionOptions.length === 0
+  });
+  const effectiveMentionOptions =
+    mentionOptions.length > 0
+      ? mentionOptions
+      : fetchedMentions.map((mention) => ({
+          id: String(mention.id),
+          label: mention.name ?? mention.abbreviation ?? `Mention ${mention.id}`
+        }));
   const lastLookupKeyRef = useRef<string>("");
   const [studentLookupLoading, setStudentLookupLoading] = useState(false);
   const [annualRegister, setAnnualRegister] = useState<StudentAnnualProps[]>(
@@ -511,7 +525,7 @@ export const StudentForm = ({
               classnNames="grid gap-4"
             />
 
-            {mentionOptions.length > 0 && (
+            {effectiveMentionOptions.length > 0 && (
               <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-muted-foreground" />
@@ -522,12 +536,13 @@ export const StudentForm = ({
                   onValueChange={(value) =>
                     handleFormChange("mentionId", value)
                   }
+                  disabled={isLoadingMentions}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="Sélectionner la mention" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mentionOptions.map((mention) => (
+                    {effectiveMentionOptions.map((mention) => (
                       <SelectItem key={mention.id} value={mention.id}>
                         {mention.label}
                       </SelectItem>

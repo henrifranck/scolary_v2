@@ -10,9 +10,10 @@ type ApiListResponse<T> = {
 export interface AvailableService {
   id: number;
   name: string;
+  route_ui?: string | null;
 }
 
-export type AvailableServicePayload = Pick<AvailableService, 'name'>;
+export type AvailableServicePayload = Pick<AvailableService, 'name' | 'route_ui'>;
 export type AvailableServiceListQuery = Record<string, string | number | boolean | undefined>;
 
 const availableServicesKey = ['available-services'] as const;

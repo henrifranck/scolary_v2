@@ -43,7 +43,8 @@ const relations = JSON.stringify([
   "annual_register.register_semester{id,id_annual_register,id_journey,semester,repeat_status}",
   "annual_register.register_semester.journey{id_mention,name}",
   "annual_register.register_semester.journey.mention{name}",
-  "annual_register.payment{id,payed,num_receipt,date_receipt}"
+  "annual_register.payment{id,payed,num_receipt,date_receipt}",
+  "annual_register.document{id,name,url,description}"
 ]);
 const baseColumn = JSON.stringify([
   "last_name",
@@ -137,13 +138,18 @@ export const fetchStudentByNumSelect = async (
     throw new Error("Le numéro de sélection est requis.");
   }
 
-  const response = await apiRequest<OneStudentApiResponse>("/students/one_student", {
-    query: {
-      relation: relations,
-      base_column: baseColumn,
-      where: JSON.stringify([{ key: "num_select", operator: "==", value: trimmed }])
+  const response = await apiRequest<OneStudentApiResponse>(
+    "/students/one_student",
+    {
+      query: {
+        relation: relations,
+        base_column: baseColumn,
+        where: JSON.stringify([
+          { key: "num_select", operator: "==", value: trimmed }
+        ])
+      }
     }
-  });
+  );
 
   const student = extractStudent(response);
   if (!student || (!student.num_select && !student.id)) {

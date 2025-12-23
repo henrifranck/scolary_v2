@@ -3,6 +3,7 @@ import { apiRequest } from "./api-client";
 export type DocumentAsset = {
   id: number;
   id_annual_register?: number | null;
+  id_required_document?: number | null;
   name: string;
   description?: string | null;
   url: string;
@@ -12,11 +13,13 @@ export type DocumentPayload = {
   id_annual_register: number;
   name?: string;
   description?: string;
+  id_required_document?: number;
 };
 
 export type DocumentUpdatePayload = {
   name?: string;
   description?: string;
+  id_required_document?: number;
 };
 
 export type UploadDocumentInput = {
@@ -33,6 +36,8 @@ export const uploadDocument = ({
   formData.append("id_annual_register", String(payload.id_annual_register));
   if (payload.name) formData.append("name", payload.name);
   if (payload.description) formData.append("description", payload.description);
+  if (payload.id_required_document)
+    formData.append("id_required_document", String(payload.id_required_document));
 
   return apiRequest<DocumentAsset>("/documents/upload/", {
     method: "POST",

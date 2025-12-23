@@ -35,6 +35,9 @@ import {
   updateDocument,
   uploadDocument
 } from "@/services/document-service";
+import { fetchAvailableServices } from "@/services/available-service";
+import { fetchAvailableServiceRequiredDocuments } from "@/services/available-service-required-document";
+import { RequiredDocument } from "@/services/required-document-service";
 import {
   DocumentEditor,
   DocumentSummary
@@ -76,8 +79,10 @@ export const ReinscriptionAnnualRegister = ({
   >({});
   const [editingPaymentIndexByAnnual, setEditingPaymentIndexByAnnual] =
     useState<Record<string, number | null>>({});
-  const [editingRegistrationIndexByAnnual, setEditingRegistrationIndexByAnnual] =
-    useState<Record<string, number | null>>({});
+  const [
+    editingRegistrationIndexByAnnual,
+    setEditingRegistrationIndexByAnnual
+  ] = useState<Record<string, number | null>>({});
   const [journeyOptions, setJourneyOptions] = useState<
     Array<{
       id: string;
@@ -107,6 +112,9 @@ export const ReinscriptionAnnualRegister = ({
   const [documentUploadingIndex, setDocumentUploadingIndex] = useState<
     number | null
   >(null);
+  const [requiredDocuments, setRequiredDocuments] = useState<
+    RequiredDocument[]
+  >([]);
   const [documentDescriptions, setDocumentDescriptions] = useState<
     Record<string, string>
   >({});
@@ -115,6 +123,41 @@ export const ReinscriptionAnnualRegister = ({
     index: number;
     itemIndex?: number;
   } | null>(null);
+  useEffect(() => {
+    const loadRequiredDocuments = async () => {
+      try {
+        const routeUi = "re-registration";
+        const availableServices = await fetchAvailableServices({
+          where: JSON.stringify([
+            { key: "route_ui", operator: "==", value: routeUi }
+          ]),
+          relation: JSON.stringify(["available_service_required_document"]),
+          limit: 1
+        });
+        const service = availableServices.data?.[0];
+        if (!service?.id) {
+          setRequiredDocuments([]);
+          return;
+        }
+        const associations = await fetchAvailableServiceRequiredDocuments({
+          where: JSON.stringify([
+            { key: "id_available_service", operator: "==", value: service.id }
+          ]),
+          relation: JSON.stringify(["required_document{id,name}"]),
+          limit: 1000
+        });
+        const docs =
+          associations.data
+            ?.map((entry) => entry.required_document)
+            .filter((doc): doc is RequiredDocument => Boolean(doc)) ?? [];
+        setRequiredDocuments(docs);
+      } catch (error) {
+        console.error("Unable to fetch required documents", error);
+        setRequiredDocuments([]);
+      }
+    };
+    loadRequiredDocuments();
+  }, []);
 
   const emptyJourney = {
     id: 0,
@@ -176,7 +219,8 @@ export const ReinscriptionAnnualRegister = ({
     ? annualRegisterDrafts.map(mergeAnnualWithDrafts)
     : annualRegister;
   const hasRegistrationEntries = annualRegisterDrafts.some(
-    (annual, index) => (registrationDrafts[getAnnualKey(annual, index)] ?? []).length
+    (annual, index) =>
+      (registrationDrafts[getAnnualKey(annual, index)] ?? []).length
   );
   const hasPaymentEntries = annualRegisterDrafts.some(
     (annual, index) => (paymentDrafts[getAnnualKey(annual, index)] ?? []).length
@@ -244,7 +288,8 @@ export const ReinscriptionAnnualRegister = ({
       normalized.map(({ isEditing, isNew, ...rest }) => rest)
     );
     const initialPaymentDrafts: Record<string, StudentPaymentState[]> = {};
-    const initialRegistrationDrafts: Record<string, StudentSemesterState[]> = {};
+    const initialRegistrationDrafts: Record<string, StudentSemesterState[]> =
+      {};
     const initialDocumentDrafts: Record<string, StudentDocumentState[]> = {};
     normalized.forEach((annual, index) => {
       const key = getAnnualKey(annual, index);
@@ -310,7 +355,8 @@ export const ReinscriptionAnnualRegister = ({
           string,
           StudentSemesterState[]
         > = {};
-        const initialDocumentDrafts: Record<string, StudentDocumentState[]> = {};
+        const initialDocumentDrafts: Record<string, StudentDocumentState[]> =
+          {};
         normalized.forEach((annual, index) => {
           const key = getAnnualKey(annual, index);
           initialPaymentDrafts[key] =
@@ -363,9 +409,7 @@ export const ReinscriptionAnnualRegister = ({
   const handleAddAnnualRegister = async () => {
     setSaveError(null);
     const cardValue = cardNumber?.trim() ?? "";
-    const academicYearId = Number(
-      filters?.id_year ?? filters?.academicYearId
-    );
+    const academicYearId = Number(filters?.id_year ?? filters?.academicYearId);
 
     if (!cardValue) {
       setSaveError("Le numéro de carte est requis pour enregistrer.");
@@ -512,7 +556,7 @@ export const ReinscriptionAnnualRegister = ({
     }
     let targetIndex = annualRegisterDrafts.findIndex((annual, index) => {
       const key = getAnnualKey(annual, index);
-      return !(paymentDrafts[key]?.length);
+      return !paymentDrafts[key]?.length;
     });
     if (targetIndex < 0) {
       targetIndex = 0;
@@ -526,7 +570,7 @@ export const ReinscriptionAnnualRegister = ({
     }));
     setEditingPaymentIndexByAnnual((previous) => ({
       ...previous,
-      [targetKey]: (paymentDrafts[targetKey]?.length ?? 0)
+      [targetKey]: paymentDrafts[targetKey]?.length ?? 0
     }));
     setAnnualRegisterDrafts((previous) =>
       previous.map((annual, annualIndex) =>
@@ -541,7 +585,7 @@ export const ReinscriptionAnnualRegister = ({
     }
     let targetIndex = annualRegisterDrafts.findIndex((annual, index) => {
       const key = getAnnualKey(annual, index);
-      return !(registrationDrafts[key]?.length);
+      return !registrationDrafts[key]?.length;
     });
     if (targetIndex < 0) {
       targetIndex = 0;
@@ -558,7 +602,7 @@ export const ReinscriptionAnnualRegister = ({
     }));
     setEditingRegistrationIndexByAnnual((previous) => ({
       ...previous,
-      [targetKey]: (registrationDrafts[targetKey]?.length ?? 0)
+      [targetKey]: registrationDrafts[targetKey]?.length ?? 0
     }));
     setAnnualRegisterDrafts((previous) =>
       previous.map((annual, annualIndex) =>
@@ -860,9 +904,8 @@ export const ReinscriptionAnnualRegister = ({
       return;
     }
     const targetKey = getAnnualKey(target, annualIndex);
-    const savedRegistration = savedRegistrationDrafts[targetKey]?.[
-      registrationIndex
-    ];
+    const savedRegistration =
+      savedRegistrationDrafts[targetKey]?.[registrationIndex];
     if (!savedRegistration) {
       setRegistrationDrafts((previous) => ({
         ...previous,
@@ -886,7 +929,8 @@ export const ReinscriptionAnnualRegister = ({
 
   const handleUploadDocument = async (
     annualIndex: number,
-    file: File | null
+    file: File | null,
+    id_required_document?: number
   ) => {
     if (!file) {
       return;
@@ -903,16 +947,22 @@ export const ReinscriptionAnnualRegister = ({
     setDocumentUploadingIndex(annualIndex);
     try {
       const description = documentDescriptions[targetKey] || undefined;
+      const requiredDocName = id_required_document
+        ? requiredDocuments.find((doc) => doc.id === id_required_document)?.name
+        : null;
       const created = await uploadDocument({
         file,
         payload: {
           id_annual_register: target.id,
-          name: file.name,
-          description
+          name: requiredDocName || file.name,
+          description,
+          id_required_document
         }
       });
       const createdDoc: StudentDocumentState = {
         ...created,
+        id_required_document:
+          created.id_required_document ?? id_required_document,
         id_annual_register: created.id_annual_register ?? undefined
       };
       setDocumentDrafts((previous) => ({
@@ -943,7 +993,11 @@ export const ReinscriptionAnnualRegister = ({
   const handleUpdateDocument = async (
     annualIndex: number,
     documentId: number,
-    payload: { name?: string; description?: string }
+    payload: {
+      name?: string;
+      description?: string;
+      id_required_document?: number;
+    }
   ) => {
     const target = annualRegisterDrafts[annualIndex];
     if (!target) {
@@ -955,6 +1009,8 @@ export const ReinscriptionAnnualRegister = ({
       const updated = await updateDocument(documentId, payload);
       const updatedDoc: StudentDocumentState = {
         ...updated,
+        id_required_document:
+          updated.id_required_document ?? payload.id_required_document,
         id_annual_register: updated.id_annual_register ?? undefined
       };
       setDocumentDrafts((previous) => ({
@@ -1029,7 +1085,8 @@ export const ReinscriptionAnnualRegister = ({
       }
 
       const draftKey = getAnnualKey(draft, index);
-      let savedRegisterSemester:any = registrationDrafts[draftKey]?.[itemIndex];
+      let savedRegisterSemester: any =
+        registrationDrafts[draftKey]?.[itemIndex];
       let savedPayment: any = paymentDrafts[draftKey]?.[itemIndex];
 
       if (mode === "registration") {
@@ -1224,14 +1281,28 @@ export const ReinscriptionAnnualRegister = ({
           <TabsTrigger value="document">Document</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="payment" className="space-y-2 max-h-[260px] overflow-y-auto">
+        <TabsContent
+          value="payment"
+          className="space-y-2 max-h-[260px] overflow-y-auto"
+        >
           <PaymentSummary displayAnnualRegisters={displayAnnualRegisters} />
         </TabsContent>
-        <TabsContent value="registration" className="space-y-2 max-h-[260px] overflow-y-auto">
-          <RegistrationSummary displayAnnualRegisters={displayAnnualRegisters} />
+        <TabsContent
+          value="registration"
+          className="space-y-2 max-h-[260px] overflow-y-auto"
+        >
+          <RegistrationSummary
+            displayAnnualRegisters={displayAnnualRegisters}
+          />
         </TabsContent>
-        <TabsContent value="document" className="space-y-2 max-h-[260px] overflow-y-auto">
-          <DocumentSummary displayAnnualRegisters={displayAnnualRegisters} />
+        <TabsContent
+          value="document"
+          className="space-y-2 max-h-[260px] overflow-y-auto"
+        >
+          <DocumentSummary
+            displayAnnualRegisters={displayAnnualRegisters}
+            requiredDocuments={requiredDocuments}
+          />
         </TabsContent>
       </Tabs>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -1250,7 +1321,6 @@ export const ReinscriptionAnnualRegister = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center justify-start gap-2 px-6 pt-4">
                 <p>{currentAcademicYearName || "Année académique"}</p>
-                
               </div>
               <div className="flex items-center justify-end px-6 pt-4">
                 {!annualRegisterDrafts.length ? (
@@ -1264,19 +1334,21 @@ export const ReinscriptionAnnualRegister = ({
                     <Plus className="h-4 w-4" />
                     Ajouter
                   </Button>
-                ) : <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-2 px-3 text-destructive hover:text-destructive"
-                  onClick={() =>
-                    setConfirmDeleteTarget({ type: "annual", index: 0 })
-                  }
-                  disabled={!annualRegisterDrafts.length || savingIndex === 0}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Supprimer
-                </Button>}
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-2 px-3 text-destructive hover:text-destructive"
+                    onClick={() =>
+                      setConfirmDeleteTarget({ type: "annual", index: 0 })
+                    }
+                    disabled={!annualRegisterDrafts.length || savingIndex === 0}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Supprimer
+                  </Button>
+                )}
               </div>
             </div>
             {saveError ? (
@@ -1294,7 +1366,10 @@ export const ReinscriptionAnnualRegister = ({
                   <TabsTrigger value="payment">Payment</TabsTrigger>
                   <TabsTrigger value="document">Document</TabsTrigger>
                 </TabsList>
-                <TabsContent value="registration" className="space-y-4 max-h-[520px] overflow-y-auto">
+                <TabsContent
+                  value="registration"
+                  className="space-y-4 max-h-[520px] overflow-y-auto"
+                >
                   <RegistrationEditor
                     annualRegisterDrafts={annualRegisterDrafts}
                     hasRegistrationEntries={hasRegistrationEntries}
@@ -1329,7 +1404,10 @@ export const ReinscriptionAnnualRegister = ({
                     savingIndex={savingIndex}
                   />
                 </TabsContent>
-                <TabsContent value="payment" className="space-y-4 max-h-[520px] overflow-y-auto">
+                <TabsContent
+                  value="payment"
+                  className="space-y-4 max-h-[520px] overflow-y-auto"
+                >
                   <PaymentEditor
                     annualRegisterDrafts={annualRegisterDrafts}
                     hasPaymentEntries={hasPaymentEntries}
@@ -1362,8 +1440,12 @@ export const ReinscriptionAnnualRegister = ({
                     savingIndex={savingIndex}
                   />
                 </TabsContent>
-                <TabsContent value="document" className="space-y-4 max-h-[520px] overflow-y-auto">
+                <TabsContent
+                  value="document"
+                  className="space-y-4 max-h-[520px] overflow-y-auto"
+                >
                   <DocumentEditor
+                    requiredDocuments={requiredDocuments}
                     annualRegisterDrafts={annualRegisterDrafts}
                     documentDrafts={documentDrafts}
                     documentDescriptions={documentDescriptions}

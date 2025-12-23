@@ -72,6 +72,7 @@ def upload_document(
         db: Session = Depends(deps.get_db),
         file: UploadFile = File(...),
         id_annual_register: int = Form(...),
+        id_required_document: Optional[int] = Form(None),
         name: Optional[str] = Form(None),
         description: Optional[str] = Form(None),
         current_user: models.User = Depends(deps.get_current_active_user),
@@ -98,6 +99,7 @@ def upload_document(
             name=original_name,
             description=description,
             id_annual_register=id_annual_register,
+            id_required_document=id_required_document,
             url=url,
         ),
     )

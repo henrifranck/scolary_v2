@@ -2,16 +2,18 @@
 # ---write your code here--- #
 # end #
 
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, ConfigDict
 
 
 class AvailableServiceBase(BaseModel):
     name: Optional[str] = None
+    route_ui: Optional[str] = None
 
 
 class AvailableServiceCreate(AvailableServiceBase):
     name: str
+    route_ui: str
 
 
 class AvailableServiceUpdate(AvailableServiceBase):
@@ -29,7 +31,7 @@ class AvailableService(AvailableServiceInDBBase):
 
 
 class AvailableServiceWithRelation(AvailableServiceInDBBase):
-    pass
+    available_service_required_document: Optional[Any]
 
 
 class AvailableServiceInDB(AvailableServiceInDBBase):

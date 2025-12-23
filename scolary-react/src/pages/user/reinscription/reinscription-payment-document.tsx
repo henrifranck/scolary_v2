@@ -20,9 +20,11 @@ import { Pencil, Trash2 } from "lucide-react";
 
 type DocumentSummaryProps = {
   displayAnnualRegisters: Array<StudentAnnualProps>;
+  requiredDocuments?: { id: number; name: string }[];
 };
 
 type DocumentEditorProps = {
+  requiredDocuments: { id: number; name: string }[];
   annualRegisterDrafts: Array<
     StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }
   >;
@@ -34,42 +36,58 @@ type DocumentEditorProps = {
     annual: StudentAnnualProps & { id?: number },
     index: number
   ) => string;
-  handleUploadDocument: (annualIndex: number, file: File | null) => void;
+  handleUploadDocument: (annualIndex: number, file: File | null, id_required_document?: number) => void;
   onDeleteDocument: (annualIndex: number, documentId: number) => void;
   onUpdateDocument: (
     annualIndex: number,
     documentId: number,
-    payload: { name?: string; description?: string }
+    payload: { name?: string; description?: string; id_required_document?: number }
   ) => void;
   setDocumentDescriptions: Dispatch<SetStateAction<Record<string, string>>>;
 };
 
 export const DocumentSummary = ({
-  displayAnnualRegisters
+  displayAnnualRegisters,
+  requiredDocuments = []
 }: DocumentSummaryProps) => (
   <div className="space-y-2">
     {displayAnnualRegisters?.map((annual, index) => (
       <div key={index} className="grid gap-3">
         {annual?.document?.length ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {annual.document.map((doc, docIndex) => (
-              <a
-                key={`${index}-document-${docIndex}`}
-                href={resolveAssetUrl(doc.url)}
-                className="group relative aspect-square overflow-hidden rounded-lg border border-dashed bg-muted/20"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <img
-                  src={resolveAssetUrl(doc.url)}
-                  alt={doc.name}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1 text-xs text-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                  {doc.name}
-                </div>
-              </a>
-            ))}
+            {(annual.document ?? []).slice(0, 3).map((doc, docIndex) => {
+              const remaining = (annual.document?.length ?? 0) - 3;
+              const showBadge = docIndex === 2 && remaining > 0;
+              return (
+                <a
+                  key={`${index}-document-${docIndex}`}
+                  href={resolveAssetUrl(doc.url)}
+                  className="group relative aspect-square overflow-hidden rounded-lg border border-dashed bg-muted/20"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={resolveAssetUrl(doc.url)}
+                    alt={doc.name}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-background/80 px-2 py-1 text-xs text-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                    {doc.name}
+                  </div>
+                  {doc.id_required_document ? (
+                    <span className="absolute left-2 top-2 z-10 rounded-full bg-background/90 px-2 py-1 text-[11px] font-semibold text-foreground shadow">
+                      {requiredDocuments.find((rd) => rd.id === doc.id_required_document)?.name ??
+                        "Document"}
+                    </span>
+                  ) : null}
+                  {showBadge ? (
+                    <div className="absolute right-2 top-2 rounded-full bg-foreground px-3 py-1.5 text-sm font-semibold text-background">
+                      +{remaining}
+                    </div>
+                  ) : null}
+                </a>
+              );
+            })}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -84,6 +102,7 @@ export const DocumentSummary = ({
 );
 
 export const DocumentEditor = ({
+  requiredDocuments,
   annualRegisterDrafts,
   documentDrafts,
   documentDescriptions,
@@ -95,6 +114,7 @@ export const DocumentEditor = ({
   onUpdateDocument,
   setDocumentDescriptions
 }: DocumentEditorProps) => {
+  const [selectedRequiredByAnnual, setSelectedRequiredByAnnual] = useState<Record<string, number | ''>>({});
   const [editingDoc, setEditingDoc] = useState<{
     annualIndex: number;
     doc: StudentDocumentState;
@@ -106,17 +126,20 @@ export const DocumentEditor = ({
   const [isSaving, setIsSaving] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editRequiredId, setEditRequiredId] = useState<number | ''>('');
 
   const openEdit = (annualIndex: number, doc: StudentDocumentState) => {
     setEditingDoc({ annualIndex, doc });
     setEditName(doc.name ?? "");
     setEditDescription(doc.description ?? "");
+    setEditRequiredId(doc.id_required_document ?? '');
   };
 
   const closeEdit = () => {
     setEditingDoc(null);
     setEditName("");
     setEditDescription("");
+    setEditRequiredId('');
   };
 
   const handleSaveEdit = async () => {
@@ -127,7 +150,9 @@ export const DocumentEditor = ({
     try {
       await onUpdateDocument(editingDoc.annualIndex, editingDoc.doc.id, {
         name: editName.trim() || undefined,
-        description: editDescription.trim() || undefined
+        description: editDescription.trim() || undefined,
+        id_required_document:
+          typeof editRequiredId === "number" ? editRequiredId : undefined
       });
       closeEdit();
     } finally {
@@ -144,6 +169,9 @@ export const DocumentEditor = ({
         annualRegisterDrafts.map((annual, index) => {
           const annualKey = getAnnualKey(annual, index);
           const docs = documentDrafts[annualKey] ?? [];
+          const selectedRequiredId =
+            selectedRequiredByAnnual[annualKey] ??
+            (requiredDocuments[0]?.id ?? "");
           return (
             <div
               key={`${annual.id ?? "new"}-${index}`}
@@ -154,6 +182,30 @@ export const DocumentEditor = ({
                   Ajouter les document obligatoires pour l'année{" "}
                   {annual.academic_year?.name || "Année académique"}
                 </label>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Type de document requis
+                </label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none"
+                  value={selectedRequiredId}
+                  onChange={(event) =>
+                    setSelectedRequiredByAnnual((previous) => ({
+                      ...previous,
+                      [annualKey]:
+                        event.target.value === "" ? "" : Number(event.target.value)
+                    }))
+                  }
+                  disabled={!requiredDocuments.length}
+                >
+                  <option value="">Aucun</option>
+                  {requiredDocuments.map((doc) => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -191,21 +243,27 @@ export const DocumentEditor = ({
                         {doc.name}
                       </div>
                     </a>
-                    <div className="absolute right-2 top-2 z-10 flex gap-1">
+                    {doc.id_required_document ? (
+                      <span className="absolute left-2 top-2 z-10 rounded-full bg-background/90 px-2 py-1 text-[11px] font-semibold text-foreground shadow">
+                        {requiredDocuments.find((rd) => rd.id === doc.id_required_document)?.name ??
+                          'Document'}
+                      </span>
+                    ) : null}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="icon"
-                        className="h-8 w-8 bg-background/80"
+                        className="pointer-events-auto h-9 w-9"
                         onClick={() => openEdit(index, doc)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="destructive"
                         size="icon"
-                        className="h-8 w-8 bg-background/80 text-destructive hover:text-destructive"
+                        className="pointer-events-auto h-9 w-9"
                         onClick={() =>
                           doc.id
                             ? setConfirmDelete({
@@ -228,7 +286,10 @@ export const DocumentEditor = ({
                     onChange={(event) =>
                       handleUploadDocument(
                         index,
-                        event.target.files?.[0] ?? null
+                        event.target.files?.[0] ?? null,
+                        typeof selectedRequiredId === "number"
+                          ? selectedRequiredId
+                          : undefined
                       )
                     }
                     disabled={documentUploadingIndex === index}
@@ -269,6 +330,27 @@ export const DocumentEditor = ({
                 onChange={(event) => setEditDescription(event.target.value)}
                 placeholder="Description"
               />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Document requis
+              </label>
+              <select
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none"
+                value={editRequiredId}
+                onChange={(event) =>
+                  setEditRequiredId(
+                    event.target.value === "" ? "" : Number(event.target.value)
+                  )
+                }
+              >
+                <option value="">Aucun</option>
+                {requiredDocuments.map((doc) => (
+                  <option key={doc.id} value={doc.id}>
+                    {doc.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <DialogFooter className="gap-2">

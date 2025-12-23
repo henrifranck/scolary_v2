@@ -84,6 +84,7 @@ export type StudentPaymentState = {
 export type StudentDocumentState = {
   id?: number;
   id_annual_register?: number;
+  id_required_document?: number | null;
   name: string;
   description?: string | null;
   url: string;

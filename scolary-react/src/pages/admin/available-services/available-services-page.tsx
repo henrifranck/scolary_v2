@@ -34,19 +34,26 @@ import {
 
 type AvailableServiceFormValues = {
   name: string;
+  routeUi: string;
 };
 
 const defaultFormValues: AvailableServiceFormValues = {
-  name: ''
+  name: '',
+  routeUi: ''
 };
 
 const toFormValues = (service?: AvailableService | null): AvailableServiceFormValues => ({
-  name: service?.name ?? ''
+  name: service?.name ?? '',
+  routeUi: service?.route_ui ?? ''
 });
 
-const toPayload = (values: AvailableServiceFormValues): AvailableServicePayload => ({
-  name: values.name.trim()
-});
+const toPayload = (values: AvailableServiceFormValues): AvailableServicePayload => {
+  const route = values.routeUi.trim();
+  return {
+    name: values.name.trim(),
+    route_ui: route || undefined
+  };
+};
 
 interface AvailableServiceFormProps {
   mode: 'create' | 'edit';
@@ -97,6 +104,18 @@ const AvailableServiceForm = ({
           {...register('name', { required: 'Name is required' })}
         />
         {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="available-service-route">
+          Route UI
+        </label>
+        <Input
+          id="available-service-route"
+          placeholder="/student/services"
+          className={cn(errors.routeUi && 'border-destructive text-destructive')}
+          {...register('routeUi')}
+        />
+        {errors.routeUi ? <p className="text-xs text-destructive">{errors.routeUi.message}</p> : null}
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between">

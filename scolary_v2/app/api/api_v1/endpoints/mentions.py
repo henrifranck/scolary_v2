@@ -8,6 +8,8 @@ import ast
 
 router = APIRouter()
 from app.api import deps
+
+
 @router.get('/', response_model=schemas.ResponseMention)
 def read_mentions(
         *,
@@ -24,12 +26,12 @@ def read_mentions(
     """
     relations = []
     if relation is not None and relation != "" and relation != []:
-       relations += ast.literal_eval(relation)
+        relations += ast.literal_eval(relation)
 
     wheres = []
     if where is not None and where != "" and where != []:
-       wheres += ast.literal_eval(where)
-    if user_only:
+        wheres += ast.literal_eval(where)
+    if user_only and current_user.is_superuser == False:
         mention_ids = [
             assignment.id_mention
             for assignment in (current_user.user_mention or [])
@@ -44,7 +46,7 @@ def read_mentions(
         )
 
     mentions = crud.mention.get_multi_where_array(
-      db=db, relations=relations, skip=offset, limit=limit, where=wheres)
+        db=db, relations=relations, skip=offset, limit=limit, where=wheres)
     count = crud.mention.get_count_where_array(db=db, where=wheres)
     response = schemas.ResponseMention(**{'count': count, 'data': jsonable_encoder(mentions)})
     return response
@@ -96,11 +98,11 @@ def read_mention(
     """
     relations = []
     if relation is not None and relation != "" and relation != [] and relation != "[]":
-       relations += ast.literal_eval(relation)
+        relations += ast.literal_eval(relation)
 
     wheres = []
     if where is not None and where != "" and where != []:
-       wheres += ast.literal_eval(where)
+        wheres += ast.literal_eval(where)
 
     mention = crud.mention.get(db=db, id=mention_id, relations=relations, where=wheres)
     if not mention:

@@ -11,6 +11,7 @@ export interface AvailableServiceRequiredDocument {
   id: number;
   id_available_service: number;
   id_required_document: number;
+  required_document?: { id: number; name: string };
 }
 
 export type AvailableServiceRequiredDocumentPayload = Pick<

@@ -9,12 +9,14 @@ class DocumentBase(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     id_annual_register: Optional[int] = None
+    id_required_document: Optional[int] = None
     url: Optional[str] = None
 
 
 class DocumentCreate(DocumentBase):
     name: str
     id_annual_register: int
+    id_required_document: Optional[int] = None
     url: str
 
 
