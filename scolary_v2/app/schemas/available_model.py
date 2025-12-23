@@ -8,10 +8,14 @@ from pydantic import BaseModel, ConfigDict
 
 class AvailableModelBase(BaseModel):
     name: Optional[str] = None
+    route_api: Optional[str] = None
+    route_ui: Optional[str] = None
 
 
 class AvailableModelCreate(AvailableModelBase):
     name: str
+    route_api: str
+    route_ui: str
 
 
 class AvailableModelUpdate(AvailableModelBase):

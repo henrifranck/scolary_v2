@@ -13,6 +13,7 @@ import {
   DialogTitle
 } from '../../../components/ui/dialog';
 import { cn } from '../../../lib/utils';
+import { useAuth } from '../../../providers/auth-provider';
 import {
   type AvailableModel,
   type AvailableModelPayload,
@@ -21,22 +22,48 @@ import {
   useUpdateAvailableModel,
   useDeleteAvailableModel
 } from '../../../services/available-model-service';
+import { useCurrentUser } from '../../../services/user-service';
 
 type AvailableModelFormValues = {
   name: string;
+  route_api: string;
+  route_ui: string;
 };
 
 const defaultFormValues: AvailableModelFormValues = {
-  name: ''
+  name: '',
+  route_api: '',
+  route_ui: ''
 };
 
 const toFormValues = (model?: AvailableModel | null): AvailableModelFormValues => ({
-  name: model?.name ?? ''
+  name: model?.name ?? '',
+  route_api: model?.route_api ?? '',
+  route_ui: model?.route_ui ?? ''
 });
 
-const toPayload = (values: AvailableModelFormValues): AvailableModelPayload => ({
-  name: values.name.trim()
-});
+const normalizeRouteKey = (value: string) => value.trim().toLowerCase().replace(/^\/+/, '');
+
+const buildRoutes = (name: string) => {
+  const normalized = normalizeRouteKey(name).replace(/\s+/g, '_');
+  const routeApi = normalized ? `/${normalized}` : '';
+  const routeUi = routeApi ? `/${normalized.replace(/_/g, '-')}` : '';
+  return { routeApi, routeUi };
+};
+
+const toPayload = (
+  values: AvailableModelFormValues,
+  mode: 'create' | 'edit',
+  initialValues?: AvailableModelFormValues
+): AvailableModelPayload => {
+  const trimmedName = values.name.trim();
+  const { routeApi, routeUi } = buildRoutes(trimmedName);
+  return {
+    name: trimmedName,
+    route_api: mode === 'create' ? routeApi : initialValues?.route_api ?? routeApi,
+    route_ui: mode === 'create' ? routeUi : initialValues?.route_ui ?? routeUi
+  };
+};
 
 interface AvailableModelFormProps {
   mode: 'create' | 'edit';
@@ -57,7 +84,8 @@ const AvailableModelForm = ({
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    watch
   } = useForm<AvailableModelFormValues>({
     defaultValues: initialValues ?? defaultFormValues
   });
@@ -65,6 +93,15 @@ const AvailableModelForm = ({
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
   }, [initialValues, reset]);
+
+  const nameValue = watch('name');
+  const routePreview =
+    mode === 'create'
+      ? buildRoutes(nameValue ?? '')
+      : {
+          routeApi: initialValues?.route_api ?? '',
+          routeUi: initialValues?.route_ui ?? ''
+        };
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -79,6 +116,32 @@ const AvailableModelForm = ({
           {...register('name', { required: 'Name is required' })}
         />
         {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <label className="text-sm font-medium" htmlFor="available-model-route-api">
+            Route API
+          </label>
+          <Input
+            id="available-model-route-api"
+            value={routePreview.routeApi}
+            disabled
+            readOnly
+            placeholder="/mentions"
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium" htmlFor="available-model-route-ui">
+            Route UI
+          </label>
+          <Input
+            id="available-model-route-ui"
+            value={routePreview.routeUi}
+            disabled
+            readOnly
+            placeholder="/admin/mentions"
+          />
+        </div>
       </div>
       <div className="flex items-center justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
@@ -95,6 +158,9 @@ const AvailableModelForm = ({
 type Feedback = { type: 'success' | 'error'; text: string };
 
 export const AvailableModelsPage = () => {
+  const {
+    state: { user }
+  } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<AvailableModel | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -115,6 +181,9 @@ export const AvailableModelsPage = () => {
   const createModel = useCreateAvailableModel();
   const updateModel = useUpdateAvailableModel();
   const deleteModel = useDeleteAvailableModel();
+  const { data: currentUser } = useCurrentUser(Boolean(user));
+  const permissionMap = currentUser?.permissions ?? null;
+  const isAdmin = user?.role === 'admin';
 
   const openCreateForm = useCallback(() => {
     setEditingModel(null);
@@ -133,7 +202,7 @@ export const AvailableModelsPage = () => {
 
   const handleSubmit = useCallback(
     async (values: AvailableModelFormValues) => {
-      const payload = toPayload(values);
+      const payload = toPayload(values, editingModel ? 'edit' : 'create', toFormValues(editingModel));
       try {
         if (editingModel) {
           await updateModel.mutateAsync({ id: editingModel.id, payload });
@@ -175,6 +244,20 @@ export const AvailableModelsPage = () => {
     setPage(1);
   }, []);
 
+  const canUpdate = isAdmin || Boolean(permissionMap?.available_models?.put);
+  const canDelete = isAdmin || Boolean(permissionMap?.available_models?.delete);
+
+  const visibleModels = useMemo(() => {
+    if (isAdmin || !permissionMap) {
+      return models;
+    }
+    return models.filter((model) => {
+      const key = normalizeRouteKey(model.route_api || model.name);
+      const permission = permissionMap[key];
+      return Boolean(permission?.get);
+    });
+  }, [isAdmin, models, permissionMap]);
+
   const columns = useMemo<ColumnDef<AvailableModel>[]>(() => {
     return [
       {
@@ -182,17 +265,28 @@ export const AvailableModelsPage = () => {
         header: 'Model'
       },
       {
+        accessorKey: 'route_api',
+        header: 'Route API',
+        cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.route_api}</span>
+      },
+      {
+        accessorKey: 'route_ui',
+        header: 'Route UI',
+        cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.route_ui}</span>
+      },
+      {
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleEdit(row.original)}>
+            <Button variant="outline" size="sm" onClick={() => handleEdit(row.original)} disabled={!canUpdate}>
               Edit
             </Button>
             <Button
               variant="ghost"
               className="text-destructive hover:text-destructive"
               onClick={() => setModelToDelete(row.original)}
+              disabled={!canDelete}
             >
               Delete
             </Button>
@@ -200,7 +294,7 @@ export const AvailableModelsPage = () => {
         )
       }
     ];
-  }, [handleEdit]);
+  }, [canDelete, canUpdate, handleEdit]);
 
   const isSubmitting = createModel.isPending || updateModel.isPending;
 
@@ -277,11 +371,11 @@ export const AvailableModelsPage = () => {
 
       <DataTable
         columns={columns}
-        data={models}
+        data={visibleModels}
         isLoading={isPending}
         searchPlaceholder="Search models"
         emptyText={isError ? error?.message ?? 'Unable to load models' : 'No models found'}
-        totalItems={totalModels}
+        totalItems={visibleModels.length}
         page={page}
         pageSize={pageSize}
         onPageChange={handlePageChange}

@@ -71,6 +71,12 @@ from .permission import (
     PermissionUpdate,
     ResponsePermission
 )
+from .cms_page import (
+    CmsPage,
+    CmsPageCreate,
+    CmsPageUpdate,
+    ResponseCmsPage
+)
 from .classroom import (
     Classroom,
     ClassroomCreate,

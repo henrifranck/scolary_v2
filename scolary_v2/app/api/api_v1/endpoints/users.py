@@ -75,6 +75,17 @@ def update_user(
     return user
 
 
+@router.get('/me', response_model=schemas.User)
+def read_current_user(
+        *,
+        current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Get current user.
+    """
+    return current_user
+
+
 @router.get('/{user_id}', response_model=schemas.User)
 def read_user(
         *,

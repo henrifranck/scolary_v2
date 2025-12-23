@@ -103,10 +103,10 @@ const PermissionForm = ({
   const selectedModel = watch('model_name');
 
   const methodOptions = [
-    { key: 'method_get', label: 'GET' },
-    { key: 'method_post', label: 'POST' },
-    { key: 'method_put', label: 'PUT' },
-    { key: 'method_delete', label: 'DELETE' }
+    { key: 'method_get', label: 'Lire' },
+    { key: 'method_post', label: 'Créer' },
+    { key: 'method_put', label: 'Modifier' },
+    { key: 'method_delete', label: 'Supprimer' }
   ] as const;
 
   return (
@@ -290,19 +290,19 @@ export const PermissionsPage = () => {
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={Boolean(row.original.method_get)} readOnly />
-              GET
+              Lire
             </label>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={Boolean(row.original.method_post)} readOnly />
-              POST
+              Créer
             </label>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={Boolean(row.original.method_put)} readOnly />
-              PUT
+              Modifier
             </label>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={Boolean(row.original.method_delete)} readOnly />
-              DELETE
+              Supprimer
             </label>
           </div>
         )

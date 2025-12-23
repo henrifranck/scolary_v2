@@ -39,4 +39,5 @@ from .crud_file_asset import file_asset
 from .crud_required_document import required_document
 from .crud_available_service import available_service
 from .crud_available_model import available_model
+from .crud_cms_page import cms_page
 from .crud_available_service_required_document import available_service_required_document

@@ -40,3 +40,4 @@ from .required_document import RequiredDocument
 from .available_service import AvailableService
 from .service_required_document import AvailableServiceRequiredDocument
 from .available_model import AvailableModel
+from .cms_page import CmsPage

@@ -30,6 +30,10 @@ export interface User {
   is_superuser?: boolean;
   picture?: string | null;
   is_active?: boolean;
+  permissions?: Record<
+    string,
+    { get: boolean; post: boolean; put: boolean; delete: boolean }
+  > | null;
   role_id?: number | null;
   role?: Role | null;
   role_ids?: number[] | null;
@@ -84,6 +88,9 @@ export const fetchUsers = async (query?: UserListQuery): Promise<{ data: User[];
 export const fetchUser = (id: number, query?: UserListQuery): Promise<User> =>
   apiRequest<User>(`/users/${id}/`, { query: withDefaultRelation(query) });
 
+export const fetchCurrentUser = (): Promise<User> =>
+  apiRequest<User>('/users/me');
+
 export const createUser = (payload: UserPayload): Promise<User> =>
   apiRequest<User>('/users/', {
     method: 'POST',
@@ -124,6 +131,13 @@ export const useUser = (id: number, enabled = true, query?: UserListQuery) =>
     enabled
   });
 
+export const useCurrentUser = (enabled = true) =>
+  useQuery({
+    queryKey: ['users', 'me'],
+    queryFn: () => fetchCurrentUser(),
+    enabled
+  });
+
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
 
@@ -161,12 +175,14 @@ export const useDeleteUser = () => {
 export const userService = {
   fetchUsers,
   fetchUser,
+  fetchCurrentUser,
   createUser,
   updateUser,
   deleteUser,
   uploadUserPicture,
   useUsers,
   useUser,
+  useCurrentUser,
   useCreateUser,
   useUpdateUser,
   useDeleteUser

@@ -6,6 +6,8 @@ import { ReinscriptionTrashPage } from './pages/user/reinscription/reinscription
 import { InscriptionPage } from './pages/user/inscription/inscription-page';
 import { DossierSelectionPage } from './pages/user/dossier-selection/dossier-selection-page';
 import { ConcoursPage } from './pages/user/concours/concours-page';
+import { HomePage } from './pages/home/home-page';
+import { CmsPublicPage } from './pages/home/cms-public-page';
 import { AcademicYearsPage } from './pages/admin/academic-years-page';
 import { WorkingTimePage } from './pages/admin/working-time-page';
 import { UsersPage } from './pages/admin/users-page';
@@ -22,6 +24,7 @@ import { AvailableServicesPage } from './pages/admin/available-services/availabl
 import { RequiredDocumentsPage } from './pages/admin/required-documents/required-documents-page';
 import { AvailableModelsPage } from './pages/admin/available-models/available-models-page';
 import { FileManagerPage } from './pages/admin/files/files-page';
+import { CmsManagerPage } from './pages/admin/cms/cms-manager-page';
 import { LoginPage } from './pages/auth/login-page';
 import type { AuthRole } from './lib/auth-store';
 import type { AppRouterContext } from './router-context';
@@ -47,52 +50,63 @@ const ensureRole = (role: AuthRole) => ({ context }: { context: AppRouterContext
 
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/',
+  path: '/dashboard',
   component: DashboardPage,
   beforeLoad: ensureAuthenticated
 });
 
-const userRoute = createRoute({
+const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: 'user',
-  component: () => <Outlet />,
-  beforeLoad: ensureAuthenticated
+  path: '/',
+  component: HomePage
+});
+
+const cmsPublicRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'pages/$slug',
+  component: CmsPublicPage
 });
 
 const reinscriptionRoute = createRoute({
-  getParentRoute: () => userRoute,
-  path: 're-inscription',
-  component: ReinscriptionPage
+  getParentRoute: () => rootRoute,
+  path: 're-registration',
+  component: ReinscriptionPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const reinscriptionTrashRoute = createRoute({
-  getParentRoute: () => userRoute,
-  path: 're-inscription-trash',
-  component: ReinscriptionTrashPage
+  getParentRoute: () => rootRoute,
+  path: 're-registration-trash',
+  component: ReinscriptionTrashPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const inscriptionRoute = createRoute({
-  getParentRoute: () => userRoute,
-  path: 'inscription',
-  component: InscriptionPage
+  getParentRoute: () => rootRoute,
+  path: 'registration',
+  component: InscriptionPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const userNotesRoute = createRoute({
-  getParentRoute: () => userRoute,
+  getParentRoute: () => rootRoute,
   path: 'notes',
-  component: NotesPage
+  component: NotesPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const dossierSelectionRoute = createRoute({
-  getParentRoute: () => userRoute,
-  path: 'dossier-selection',
-  component: DossierSelectionPage
+  getParentRoute: () => rootRoute,
+  path: 'folder-selection',
+  component: DossierSelectionPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const concoursRoute = createRoute({
-  getParentRoute: () => userRoute,
-  path: 'concours',
-  component: ConcoursPage
+  getParentRoute: () => rootRoute,
+  path: 'competitions',
+  component: ConcoursPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const adminRoute = createRoute({
@@ -100,6 +114,42 @@ const adminRoute = createRoute({
   path: 'admin',
   component: () => <Outlet />,
   beforeLoad: ensureRole('admin')
+});
+
+const adminReinscriptionRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 're-registration',
+  component: ReinscriptionPage
+});
+
+const adminReinscriptionTrashRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 're-registration-trash',
+  component: ReinscriptionTrashPage
+});
+
+const adminInscriptionRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'registration',
+  component: InscriptionPage
+});
+
+const adminNotesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'notes',
+  component: NotesPage
+});
+
+const adminDossierSelectionRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'folder-selection',
+  component: DossierSelectionPage
+});
+
+const adminConcoursRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'competitions',
+  component: ConcoursPage
 });
 
 const academicYearsRoute = createRoute({
@@ -198,6 +248,12 @@ const journeysRoute = createRoute({
   component: JourneysPage
 });
 
+const cmsManagerRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'cms',
+  component: CmsManagerPage
+});
+
 const authRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'auth',
@@ -216,16 +272,22 @@ const loginRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
+  homeRoute,
+  cmsPublicRoute,
   dashboardRoute,
-  userRoute.addChildren([
-    userNotesRoute,
-    reinscriptionRoute,
-    reinscriptionTrashRoute,
-    inscriptionRoute,
-    dossierSelectionRoute,
-    concoursRoute
-  ]),
+  userNotesRoute,
+  reinscriptionRoute,
+  reinscriptionTrashRoute,
+  inscriptionRoute,
+  dossierSelectionRoute,
+  concoursRoute,
   adminRoute.addChildren([
+    adminNotesRoute,
+    adminDossierSelectionRoute,
+    adminInscriptionRoute,
+    adminReinscriptionRoute,
+    adminReinscriptionTrashRoute,
+    adminConcoursRoute,
     academicYearsRoute,
     workingTimeRoute,
     usersRoute,
@@ -241,7 +303,8 @@ const routeTree = rootRoute.addChildren([
     availableServicesRoute,
     requiredDocumentsRoute,
     availableModelsRoute,
-    universityInfoRoute
+    universityInfoRoute,
+    cmsManagerRoute
   ]),
   authRoute.addChildren([loginRoute])
 ]);

@@ -7,6 +7,8 @@ export interface AuthUser {
   name: string;
   email: string;
   role: AuthRole;
+  permissions?: Record<string, { get: boolean; post: boolean; put: boolean; delete: boolean }> | null;
+  is_superuser?: boolean;
 }
 
 export interface AuthState {

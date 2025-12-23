@@ -16,6 +16,7 @@ class UserBase(BaseModel):
     is_superuser: Optional[bool] = None
     picture: Optional[str] = None
     is_active: Optional[bool] = None
+    permissions: Optional[dict] = None
 
 
 class UserCreate(UserBase):

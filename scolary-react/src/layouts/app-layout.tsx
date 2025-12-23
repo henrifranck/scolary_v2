@@ -49,7 +49,9 @@ import {
 import { cn } from '../lib/utils';
 import { useAuth } from '../providers/auth-provider';
 import type { AuthRole, AuthUser } from '../lib/auth-store';
+import { useAvailableModels } from '../services/available-model-service';
 import { clearAuthSession } from '../services/auth-service';
+import { useCurrentUser } from '../services/user-service';
 
 interface NavItem {
   to: string;
@@ -68,7 +70,10 @@ interface NavSection {
 const getNavSections = (user?: AuthUser | null): NavSection[] => {
   const generalSection: NavSection = {
     title: 'General',
-    items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }]
+    items: [
+      { to: '/', label: 'Accueil', icon: LayoutDashboard },
+      { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }
+    ]
   };
 
   if (user?.role === 'admin') {
@@ -83,10 +88,10 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         title: 'Student',
         roles: ['admin'],
         items: [
-          { to: '/user/dossier-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['admin'] },
-          { to: '/user/inscription', label: 'Inscription', icon: FileSignature, roles: ['admin'] },
-          { to: '/user/re-inscription', label: 'Re-inscription', icon: RefreshCcw, roles: ['admin'] },
-          { to: '/user/re-inscription-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] }
+          { to: '/admin/folder-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['admin'] },
+          { to: '/admin/registration', label: 'Inscription', icon: FileSignature, roles: ['admin'] },
+          { to: '/admin/re-registration', label: 'Re-inscription', icon: RefreshCcw, roles: ['admin'] },
+          { to: '/admin/re-registration-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] }
         ]
       },
       {
@@ -112,6 +117,11 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         ]
       },
       {
+        title: 'Contenu',
+        roles: ['admin'],
+        items: [{ to: '/admin/cms', label: 'Pages CMS', icon: FileText, roles: ['admin'] }]
+      },
+      {
         title: 'Enseignant',
         roles: ['admin'],
         items: [
@@ -130,12 +140,12 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
       title: 'Student',
       roles: ['student'],
       items: [
-        { to: '/user/notes', label: 'Notes', icon: NotepadText, roles: ['student'] },
-        { to: '/user/dossier-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['student'] },
-        { to: '/user/inscription', label: 'Inscription', icon: FileSignature, roles: ['student'] },
-        { to: '/user/re-inscription', label: 'Re-inscription', icon: RefreshCcw, roles: ['student'] },
-        { to: '/user/re-inscription-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] },
-        { to: '/user/concours', label: 'Concours', icon: Trophy, roles: ['student'], badge: 'New' }
+        { to: '/notes', label: 'Notes', icon: NotepadText, roles: ['student'] },
+        { to: '/folder-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['student'] },
+        { to: '/registration', label: 'Inscription', icon: FileSignature, roles: ['student'] },
+        { to: '/re-registration', label: 'Re-inscription', icon: RefreshCcw, roles: ['student'] },
+        { to: '/re-registration-trash', label: 'Re-inscription Trash', icon: Trash2, roles: ['admin'] },
+        { to: '/competitions', label: 'Concours', icon: Trophy, roles: ['student'], badge: 'New' }
       ]
     }
   ];
@@ -146,6 +156,31 @@ const academicYears = [
   { value: '2023-2024', label: '2023 / 2024' },
   { value: '2022-2023', label: '2022 / 2023' }
 ];
+
+const normalizeRouteKey = (value: string) => value.trim().toLowerCase().replace(/^\/+/, '');
+
+const resolvePermissionKey = (path: string, availableModels: { route_ui: string; route_api: string }[]) => {
+  const match = availableModels.find((model) => {
+    const routeUi = model.route_ui?.trim();
+    if (!routeUi) {
+      return false;
+    }
+    const candidates = routeUi.startsWith('/admin/')
+      ? [routeUi, routeUi.replace(/^\/admin/, '')]
+      : [routeUi, `/admin${routeUi}`];
+    return candidates.some((candidate) => path === candidate || path.startsWith(`${candidate}/`));
+  });
+  if (match) {
+    return normalizeRouteKey(match.route_api || '');
+  }
+  const parts = path.split('/').filter(Boolean);
+  if (!parts.length) {
+    return null;
+  }
+  const scopeIndex = parts[0] === 'admin' ? 1 : 0;
+  const candidate = parts[scopeIndex] ?? '';
+  return normalizeRouteKey(candidate.replace(/-/g, '_'));
+};
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -158,27 +193,82 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     store
   } = useAuth();
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser(Boolean(user));
+  const { data: availableModelsResponse, isPending: areModelsLoading } = useAvailableModels({ limit: 1000 });
+  const availableModels = availableModelsResponse?.data ?? [];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const isReinscriptionPage = location.pathname.startsWith('/user/re-inscription');
+  const isReinscriptionPage =
+    location.pathname.startsWith('/re-registration') ||
+    location.pathname.startsWith('/admin/re-registration');
   const [selectedYear, setSelectedYear] = useState('2024-2025');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const isSuperuser = Boolean(user?.is_superuser);
+  const permissionMap = currentUser?.permissions ?? user?.permissions ?? null;
+  const shouldEnforcePermissions = Boolean(user) && !isSuperuser;
   const navSections = getNavSections(user);
 
-  const filteredNavSections = navSections.filter((section) => {
-    if (!section.roles) {
-      return true;
-    }
-    return user ? section.roles.includes(user.role) : false;
-  });
+  const filteredNavSections = navSections
+    .filter((section) => {
+      if (!section.roles) {
+        return true;
+      }
+      return user ? section.roles.includes(user.role) : false;
+    })
+    .map((section) => {
+      const items = section.items.filter((item) => {
+        if (!shouldEnforcePermissions) {
+          return true;
+        }
+        if (!permissionMap) {
+          return false;
+        }
+        if (item.to === '/') {
+          return true;
+        }
+        const permissionKey = resolvePermissionKey(item.to, availableModels);
+        if (!permissionKey) {
+          return false;
+        }
+        return Boolean(permissionMap[permissionKey]?.get);
+      });
+      return { ...section, items };
+    })
+    .filter((section) => section.items.length > 0);
 
   const handleLogout = () => {
     clearAuthSession();
     store.logout();
     router.navigate({ to: '/auth/login' });
   };
+
+  useEffect(() => {
+    if (!currentUser || !user) {
+      return;
+    }
+    const isSuperuser = currentUser.is_superuser ?? user.is_superuser;
+    const role: AuthRole = isSuperuser ? 'admin' : user.role;
+    const nextPermissions = currentUser.permissions ?? user.permissions ?? null;
+    const samePermissions =
+      JSON.stringify(user.permissions ?? null) === JSON.stringify(nextPermissions);
+    if (
+      user.id === String(currentUser.id ?? user.id) &&
+      user.is_superuser === isSuperuser &&
+      samePermissions
+    ) {
+      return;
+    }
+    const nextUser: AuthUser = {
+      ...user,
+      id: currentUser.id ? String(currentUser.id) : user.id,
+      role,
+      is_superuser: isSuperuser,
+      permissions: nextPermissions
+    };
+    store.login(nextUser);
+  }, [currentUser, store, user]);
 
   useEffect(() => {
     if (!isReinscriptionPage || typeof window === 'undefined') {
@@ -233,6 +323,58 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
     return breadcrumbs;
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (!user || !shouldEnforcePermissions) {
+      return;
+    }
+    if (!permissionMap) {
+      router.navigate({ to: '/' });
+      return;
+    }
+    if (location.pathname.startsWith('/auth') || location.pathname === '/') {
+      return;
+    }
+    const permissionKey = resolvePermissionKey(location.pathname, availableModels);
+    if (!permissionKey || !permissionMap[permissionKey]?.get) {
+      router.navigate({ to: '/' });
+    }
+  }, [availableModels, location.pathname, permissionMap, router, shouldEnforcePermissions, user]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (!user || !user.is_superuser) {
+      return;
+    }
+    if (location.pathname.startsWith('/auth') || location.pathname === '/') {
+      return;
+    }
+    if (location.pathname.startsWith('/admin')) {
+      return;
+    }
+    const isKnownRoute = availableModels.some((model) => {
+      const routeUi = model.route_ui?.trim();
+      if (!routeUi) {
+        return false;
+      }
+      const candidates = routeUi.startsWith('/admin/')
+        ? [routeUi.replace(/^\/admin/, ''), routeUi]
+        : [routeUi, `/admin${routeUi}`];
+      return candidates.some(
+        (candidate) =>
+          location.pathname === candidate ||
+          location.pathname.startsWith(`${candidate}/`)
+      );
+    });
+    if (isKnownRoute) {
+      router.navigate({ to: `/admin${location.pathname}` });
+    }
+  }, [availableModels, location.pathname, router, user]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {

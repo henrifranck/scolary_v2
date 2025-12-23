@@ -7,10 +7,12 @@ import type { AppRouterContext } from '../router-context';
 const RootComponent = () => {
   const { location } = useRouterState();
   const isAuthRoute = location.pathname.startsWith('/auth');
+  const isHomeRoute = location.pathname === '/';
+  const isPublicCmsRoute = location.pathname.startsWith('/pages/');
 
   return (
     <>
-      {isAuthRoute ? (
+      {isAuthRoute || isHomeRoute || isPublicCmsRoute ? (
         <Outlet />
       ) : (
         <AppLayout>

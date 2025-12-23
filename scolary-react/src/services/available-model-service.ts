@@ -10,9 +10,11 @@ type ApiListResponse<T> = {
 export interface AvailableModel {
   id: number;
   name: string;
+  route_api: string;
+  route_ui: string;
 }
 
-export type AvailableModelPayload = Pick<AvailableModel, 'name'>;
+export type AvailableModelPayload = Pick<AvailableModel, 'name' | 'route_api' | 'route_ui'>;
 export type AvailableModelListQuery = Record<string, string | number | boolean | undefined>;
 
 const availableModelsKey = ['available-models'] as const;

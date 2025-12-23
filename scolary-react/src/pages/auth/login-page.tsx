@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../providers/auth-provider';
 import { loginWithCredentials } from '../../services/auth-service';
+import { fetchCurrentUser } from '../../services/user-service';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -34,15 +35,22 @@ export const LoginPage = () => {
     setFormError(null);
     try {
       const response = await loginWithCredentials(values.email, values.password);
-      const role = response.is_superuser ? 'admin' : 'student';
+      const currentUser = await fetchCurrentUser();
+      const isSuperuser = currentUser?.is_superuser ?? response.is_superuser;
+      const role = isSuperuser ? 'admin' : 'student';
+      const displayName =
+        [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ') ||
+        values.email.split('@')[0];
       login({
-        id: crypto.randomUUID(),
-        name: values.email.split('@')[0],
+        id: currentUser?.id ? String(currentUser.id) : crypto.randomUUID(),
+        name: displayName,
         email: values.email,
-        role
+        role,
+        permissions: currentUser?.permissions ?? null,
+        is_superuser: isSuperuser ?? undefined
       });
 
-      const destination = role === 'admin' ? '/admin/academic-years' : '/';
+      const destination = role === 'admin' ? '/admin/academic-years' : '/dashboard';
       router.navigate({ to: destination });
     } catch (error) {
       const message =

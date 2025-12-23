@@ -42,3 +42,4 @@ from app.models.required_document import RequiredDocument # noqa
 from app.models.available_service import AvailableService # noqa
 from app.models.available_model import AvailableModel # noqa
 from app.models.service_required_document import AvailableServiceRequiredDocument # noqa
+from app.models.cms_page import CmsPage # noqa
