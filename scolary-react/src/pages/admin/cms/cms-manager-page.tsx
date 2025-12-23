@@ -1,5 +1,7 @@
+import { Pencil, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { Button } from "../../../components/ui/button";
 import { DataTable, type ColumnDef } from "../../../components/data-table/data-table";
 import { Input } from "../../../components/ui/input";
@@ -25,6 +27,7 @@ const emptyForm: CmsPagePayload = {
   slug: "",
   title: "",
   content_json: "",
+  draft_content: "",
   meta_json: "",
   status: "published"
 };
@@ -36,6 +39,8 @@ export const CmsManagerPage = () => {
   const [formValues, setFormValues] = useState<CmsPagePayload>(emptyForm);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<CmsPage | null>(null);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
 
@@ -52,6 +57,7 @@ export const CmsManagerPage = () => {
       slug: page?.slug ?? "",
       title: page?.title ?? "",
       content_json: page?.content_json ?? "",
+      draft_content: page?.draft_content ?? page?.content_json ?? "",
       meta_json: page?.meta_json ?? "",
       status: page?.status ?? "published"
     });
@@ -60,7 +66,7 @@ export const CmsManagerPage = () => {
   const handleCreateNew = useCallback(() => {
     selectPage(null);
     setIsEditorOpen(true);
-  }, [selectPage]);
+  }, [selectPage, setDeleteTarget, setIsDeleteConfirmOpen]);
 
   const handleSave = useCallback(async () => {
     setFeedback(null);
@@ -70,6 +76,7 @@ export const CmsManagerPage = () => {
       slug: formValues.slug.trim(),
       title: formValues.title?.trim() || null,
       content_json: contentValue.length ? contentValue : null,
+      draft_content: formValues.draft_content?.trim() || null,
       meta_json: metaValue.length ? metaValue : null,
       status: formValues.status?.trim() || "published"
     };
@@ -98,22 +105,71 @@ export const CmsManagerPage = () => {
     }
   }, [createPage, formValues, selectPage, selectedPage, updatePage]);
 
+  const handlePublish = useCallback(async () => {
+    setFeedback(null);
+    const draftValue = (formValues.draft_content ?? "").trim();
+    if (!draftValue) {
+      setFeedback({ type: "error", text: "Le brouillon est vide." });
+      return;
+    }
+
+    const basePayload: CmsPagePayload = {
+      slug: formValues.slug.trim(),
+      title: formValues.title?.trim() || null,
+      content_json: draftValue,
+      draft_content: draftValue,
+      meta_json: formValues.meta_json?.trim() || null,
+      status: "published"
+    };
+
+    if (!basePayload.slug) {
+      setFeedback({ type: "error", text: "Le slug est requis." });
+      return;
+    }
+
+    try {
+      if (selectedPage?.id) {
+        const updated = await updatePage.mutateAsync({ id: selectedPage.id, payload: basePayload });
+        selectPage(updated);
+        setFeedback({ type: "success", text: "Page publiee." });
+      } else {
+        const created = await createPage.mutateAsync(basePayload);
+        selectPage(created);
+        setFeedback({ type: "success", text: "Page publiee." });
+      }
+      setIsEditorOpen(true);
+    } catch (mutationError) {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Impossible de publier la page.";
+      setFeedback({ type: "error", text: message });
+    }
+  }, [createPage, formValues, selectPage, selectedPage, updatePage]);
+
   const handleDelete = useCallback(async () => {
-    if (!selectedPage?.id) {
+    const target = deleteTarget ?? selectedPage;
+    if (!target?.id) {
       return;
     }
     try {
-      await deletePage.mutateAsync(selectedPage.id);
-      selectPage(null);
+      await deletePage.mutateAsync(target.id);
+      if (selectedPage?.id === target.id) {
+        selectPage(null);
+      }
       setFeedback({ type: "success", text: "Page supprimee." });
+      setIsDeleteConfirmOpen(false);
+      setDeleteTarget(null);
     } catch (mutationError) {
       const message =
         mutationError instanceof Error
           ? mutationError.message
           : "Impossible de supprimer la page.";
       setFeedback({ type: "error", text: message });
+      setIsDeleteConfirmOpen(false);
+      setDeleteTarget(null);
     }
-  }, [deletePage, selectedPage, selectPage]);
+  }, [deletePage, deleteTarget, selectPage, selectedPage]);
 
   const highlightHtml = useCallback((value: string) => {
     if (!value) {
@@ -147,8 +203,8 @@ export const CmsManagerPage = () => {
   }, []);
 
   const highlightedHtml = useMemo(
-    () => highlightHtml(formValues.content_json ?? ""),
-    [formValues.content_json, highlightHtml]
+    () => highlightHtml(formValues.draft_content ?? ""),
+    [formValues.draft_content, highlightHtml]
   );
 
   const handleEditorScroll = useCallback((event: React.UIEvent<HTMLTextAreaElement>) => {
@@ -170,6 +226,15 @@ export const CmsManagerPage = () => {
         header: "Titre"
       },
       {
+        id: "draft",
+        header: "Brouillon",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.draft_content ? "Oui" : "Non"}
+          </span>
+        )
+      },
+      {
         accessorKey: "status",
         header: "Statut"
       },
@@ -177,16 +242,30 @@ export const CmsManagerPage = () => {
         id: "actions",
         header: "",
         cell: ({ row }) => (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              selectPage(row.original);
-              setIsEditorOpen(true);
-            }}
-          >
-            Editer
-          </Button>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                selectPage(row.original);
+                setIsEditorOpen(true);
+              }}
+              aria-label="Editer"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="destructive"
+              onClick={() => {
+                setDeleteTarget(row.original);
+                setIsDeleteConfirmOpen(true);
+              }}
+              aria-label="Supprimer"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         )
       }
     ];
@@ -272,8 +351,8 @@ export const CmsManagerPage = () => {
                 />
               </div>
             </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Titre</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Titre</label>
                 <Input
                   value={formValues.title ?? ""}
                   onChange={(event) =>
@@ -282,24 +361,24 @@ export const CmsManagerPage = () => {
                   placeholder="Titre de la page"
                 />
               </div>
-              <div className="flex min-h-0 flex-col space-y-2">
-                <label className="text-sm font-medium">Contenu (HTML)</label>
-                <div className="relative min-h-[320px] rounded-md border border-input bg-background">
+            <div className="flex min-h-0 flex-col space-y-2">
+              <label className="text-sm font-medium">Brouillon (HTML)</label>
+              <div className="relative min-h-[320px] rounded-md border border-input bg-background">
                   <pre
                     ref={highlightRef}
                     className="pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-sm leading-6"
                     dangerouslySetInnerHTML={{ __html: highlightedHtml }}
                   />
-                  {formValues.content_json ? null : (
-                    <div className="pointer-events-none absolute left-3 top-2 text-sm text-muted-foreground">
-                      &lt;div class='space-y-8'&gt;...&lt;/div&gt;
-                    </div>
-                  )}
-                  <Textarea
-                    ref={editorRef}
-                    value={formValues.content_json ?? ""}
+                {formValues.draft_content ? null : (
+                  <div className="pointer-events-none absolute left-3 top-2 text-sm text-muted-foreground">
+                    &lt;div class='space-y-8'&gt;...&lt;/div&gt;
+                  </div>
+                )}
+                <Textarea
+                  ref={editorRef}
+                  value={formValues.draft_content ?? ""}
                   onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, content_json: event.target.value }))
+                    setFormValues((prev) => ({ ...prev, draft_content: event.target.value }))
                   }
                   onKeyDown={(event) => {
                     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
@@ -307,14 +386,14 @@ export const CmsManagerPage = () => {
                     }
                   }}
                   onScroll={handleEditorScroll}
-                    aria-label="Editeur HTML"
-                    spellCheck={false}
-                    className="relative z-10 min-h-[320px] border-0 bg-transparent p-3 font-mono text-sm leading-6 text-transparent caret-foreground selection:bg-primary/30 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
+                  aria-label="Editeur HTML"
+                  spellCheck={false}
+                  className="relative z-10 min-h-[320px] border-0 bg-transparent p-3 font-mono text-sm leading-6 text-transparent caret-foreground selection:bg-primary/30 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Meta (JSON)</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Meta (JSON)</label>
                 <Textarea
                   value={formValues.meta_json ?? ""}
                   onChange={(event) =>
@@ -324,25 +403,47 @@ export const CmsManagerPage = () => {
                   className="min-h-[120px]"
                 />
               </div>
-              <div className="flex flex-wrap items-center gap-2 justify-end">
-                {selectedPage?.id ? (
-                  <Button variant="ghost" onClick={handleDelete} disabled={deletePage.isPending}>
-                    Supprimer
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  {selectedPage?.id ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setDeleteTarget(selectedPage);
+                        setIsDeleteConfirmOpen(true);
+                      }}
+                      disabled={deletePage.isPending}
+                    >
+                      Supprimer
+                    </Button>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handlePublish}
+                    disabled={
+                      createPage.isPending ||
+                      updatePage.isPending ||
+                      !(formValues.draft_content || "").trim()
+                    }
+                  >
+                    Publier
                   </Button>
-                ) : null}
-                <Button onClick={handleSave} disabled={createPage.isPending || updatePage.isPending}>
-                  Enregistrer
-                </Button>
+                  <Button onClick={handleSave} disabled={createPage.isPending || updatePage.isPending}>
+                    Enregistrer
+                  </Button>
+                </div>
               </div>
             </div>
 
             <div className="flex min-h-0 flex-col rounded-lg border bg-muted/20 p-4">
               <p className="text-sm font-semibold">Apercu</p>
               <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-md border bg-background p-4">
-                {formValues.content_json ? (
+                {formValues.draft_content ? (
                   <div
                     className="w-full"
-                    dangerouslySetInnerHTML={{ __html: formValues.content_json }}
+                    dangerouslySetInnerHTML={{ __html: formValues.draft_content }}
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -354,6 +455,21 @@ export const CmsManagerPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Supprimer cette page ?"
+        description="Cette action est irreversible."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        destructive
+        isConfirming={deletePage.isPending}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };

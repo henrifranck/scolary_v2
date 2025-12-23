@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -312,16 +313,22 @@ export const PermissionsPage = () => {
         header: '',
         cell: ({ row }) => (
           <div className="flex justify-end gap-2">
-            <Button size="sm" variant="outline" onClick={() => handleEdit(row.original)}>
-              Edit
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => handleEdit(row.original)}
+              aria-label="Editer"
+            >
+              <Pencil className="h-4 w-4" />
             </Button>
             <Button
-              size="sm"
+              size="icon"
               variant="ghost"
               className="text-destructive hover:text-destructive"
               onClick={() => setPermissionToDelete(row.original)}
+              aria-label="Supprimer"
             >
-              Delete
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         )

@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -269,16 +270,18 @@ export const AvailableServicesPage = () => {
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleEdit(row.original)}>
-              Edit
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="ghost" size="icon" onClick={() => handleEdit(row.original)} aria-label="Editer">
+              <Pencil className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
+              size="icon"
               className="text-destructive hover:text-destructive"
               onClick={() => setServiceToDelete(row.original)}
+              aria-label="Supprimer"
             >
-              Delete
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         )

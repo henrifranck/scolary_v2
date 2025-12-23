@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { Button } from '../../../components/ui/button';
@@ -61,11 +62,21 @@ const columns: ColumnDef<SubjectRow>[] = [
     header: '',
     cell: ({ row }) => (
       <div className="flex justify-end gap-2">
-        <Button size="sm" variant="outline" onClick={() => console.info('Edit subject', row.original.id)}>
-          Edit
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => console.info('Edit subject', row.original.id)}
+          aria-label="Editer"
+        >
+          <Pencil className="h-4 w-4" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => console.info('Archive subject', row.original.id)}>
-          Archive
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => console.info('Archive subject', row.original.id)}
+          aria-label="Archiver"
+        >
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     )

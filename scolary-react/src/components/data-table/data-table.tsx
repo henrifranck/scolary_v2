@@ -249,8 +249,9 @@ export const DataTable = <TData,>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
+                    const isActions = header.column.id === 'actions';
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead key={header.id} className={cn(isActions && 'text-right pr-4')}>
                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     );
@@ -268,9 +269,14 @@ export const DataTable = <TData,>({
               ) : currentRows.length ? (
                 currentRows.map((row) => (
                   <TableRow key={row.id} data-state={row.getIsSelected() ? 'selected' : undefined}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      const isActions = cell.column.id === 'actions';
+                      return (
+                        <TableCell key={cell.id} className={cn(isActions && 'text-right pr-4')}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))
               ) : (

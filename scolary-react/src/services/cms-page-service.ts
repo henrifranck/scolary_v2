@@ -7,6 +7,7 @@ export interface CmsPage {
   slug: string;
   title?: string | null;
   content_json?: string | null;
+  draft_content?: string | null;
   meta_json?: string | null;
   status?: string | null;
 }
@@ -18,7 +19,7 @@ type ApiListResponse<T> = {
 
 export type CmsPagePayload = Pick<
   CmsPage,
-  "slug" | "title" | "content_json" | "meta_json" | "status"
+  "slug" | "title" | "content_json" | "draft_content" | "meta_json" | "status"
 >;
 export type CmsPageListQuery = Record<string, string | number | boolean | undefined>;
 

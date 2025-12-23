@@ -10,6 +10,7 @@ class CmsPageBase(BaseModel):
     slug: Optional[str] = None
     title: Optional[str] = None
     content_json: Optional[str] = None
+    draft_content: Optional[str] = None
     meta_json: Optional[str] = None
     status: Optional[str] = None
 

@@ -13,6 +13,7 @@ class CmsPage(Base):
     slug = Column(String(100), nullable=False, unique=True, index=True)
     title = Column(String(255))
     content_json = Column(Text)
+    draft_content = Column(Text)
     meta_json = Column(Text)
     status = Column(String(50), default="published")
 
