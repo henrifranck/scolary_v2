@@ -44,6 +44,7 @@ from app.api.api_v1.endpoints import liste
 from app.api.api_v1.endpoints import carte
 from app.api.api_v1.endpoints import required_documents
 from app.api.api_v1.endpoints import available_services
+from app.api.api_v1.endpoints import available_models
 from app.api.api_v1.endpoints import available_service_required_documents
 
 api_router = APIRouter()
@@ -83,6 +84,7 @@ api_router.include_router(
     tags=["available_service_required_documents"],
 )
 
+api_router.include_router(available_models.router, prefix="/available_models", tags=["available_models"])
 api_router.include_router(exam_dates.router, prefix="/exam_dates", tags=["exam_dates"])
 api_router.include_router(exam_groups.router, prefix="/exam_groups", tags=["exam_groups"])
 api_router.include_router(groups.router, prefix="/groups", tags=["groups"])

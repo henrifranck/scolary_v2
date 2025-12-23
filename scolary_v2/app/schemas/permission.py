@@ -10,13 +10,15 @@ from pydantic import BaseModel, ConfigDict, field_validator
 
 class PermissionBase(BaseModel):
     name: Optional[str] = None
-    method: Optional[str] = None
     model_name: Optional[str] = None
+    method_post: Optional[bool] = False
+    method_get: Optional[bool] = False
+    method_put: Optional[bool] = False
+    method_delete: Optional[bool] = False
 
 
 class PermissionCreate(PermissionBase):
     name: str
-    method: str
     model_name: str
 
 

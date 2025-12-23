@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -197,7 +198,7 @@ export const PaymentForm = ({
                   <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Description
                   </label>
-                  <Input
+                  <Textarea
                     value={paymentEntry?.description || ""}
                     onChange={(event) =>
                       onUpdatePaymentField(

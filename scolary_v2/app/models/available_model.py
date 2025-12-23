@@ -5,12 +5,11 @@ from sqlalchemy.orm import relationship
 from app.enum.card_type import CardTypeEnum
 
 
-class RequiredDocument(Base):
-    __tablename__ = 'required_document'
+class AvailableModel(Base):
+    __tablename__ = 'available_model'
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=False)
 
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

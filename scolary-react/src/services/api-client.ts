@@ -108,7 +108,11 @@ export async function apiRequest<T>(
     const message =
       typeof detail === "object" && detail && "message" in detail
         ? String(detail.message)
-        : `Request failed with status ${response.status}`;
+        : typeof detail === "object" && detail && "detail" in detail
+          ? String(detail.detail)
+          : response.status === 403
+            ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
+            : `Request failed with status ${response.status}`;
     throw new Error(message);
   }
 
@@ -156,7 +160,11 @@ export async function apiRequestBlob(
     const message =
       typeof detail === "object" && detail && "message" in detail
         ? String((detail as { message: unknown }).message)
-        : `Request failed with status ${response.status}`;
+        : typeof detail === "object" && detail && "detail" in detail
+          ? String((detail as { detail: unknown }).detail)
+          : response.status === 403
+            ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
+            : `Request failed with status ${response.status}`;
     throw new Error(message);
   }
 

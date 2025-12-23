@@ -911,13 +911,17 @@ export const ReinscriptionAnnualRegister = ({
           description
         }
       });
+      const createdDoc: StudentDocumentState = {
+        ...created,
+        id_annual_register: created.id_annual_register ?? undefined
+      };
       setDocumentDrafts((previous) => ({
         ...previous,
-        [targetKey]: [...(previous[targetKey] ?? []), created]
+        [targetKey]: [...(previous[targetKey] ?? []), createdDoc]
       }));
       setSavedDocumentDrafts((previous) => ({
         ...previous,
-        [targetKey]: [...(previous[targetKey] ?? []), created]
+        [targetKey]: [...(previous[targetKey] ?? []), createdDoc]
       }));
       setDocumentDescriptions((previous) => ({
         ...previous,
@@ -949,16 +953,20 @@ export const ReinscriptionAnnualRegister = ({
     setDocumentUploadError(null);
     try {
       const updated = await updateDocument(documentId, payload);
+      const updatedDoc: StudentDocumentState = {
+        ...updated,
+        id_annual_register: updated.id_annual_register ?? undefined
+      };
       setDocumentDrafts((previous) => ({
         ...previous,
         [targetKey]: (previous[targetKey] ?? []).map((doc) =>
-          doc.id === documentId ? updated : doc
+          doc.id === documentId ? updatedDoc : doc
         )
       }));
       setSavedDocumentDrafts((previous) => ({
         ...previous,
         [targetKey]: (previous[targetKey] ?? []).map((doc) =>
-          doc.id === documentId ? updated : doc
+          doc.id === documentId ? updatedDoc : doc
         )
       }));
     } catch (error) {

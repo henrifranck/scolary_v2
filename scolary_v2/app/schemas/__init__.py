@@ -236,6 +236,14 @@ from .available_service import (
     AvailableServiceUpdate,
     ResponseAvailableService
 )
+
+from .available_model import (
+    AvailableModel,
+    AvailableModelCreate,
+    AvailableModelUpdate,
+    ResponseAvailableModel
+)
+
 from .required_document import (
     RequiredDocument,
     RequiredDocumentCreate,

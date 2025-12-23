@@ -20,6 +20,7 @@ import { ConstituentElementsPage } from './pages/admin/constituent-elements-page
 import { GroupsPage } from './pages/admin/groups-page';
 import { AvailableServicesPage } from './pages/admin/available-services/available-services-page';
 import { RequiredDocumentsPage } from './pages/admin/required-documents/required-documents-page';
+import { AvailableModelsPage } from './pages/admin/available-models/available-models-page';
 import { FileManagerPage } from './pages/admin/files/files-page';
 import { LoginPage } from './pages/auth/login-page';
 import type { AuthRole } from './lib/auth-store';
@@ -161,6 +162,12 @@ const requiredDocumentsRoute = createRoute({
   component: RequiredDocumentsPage
 });
 
+const availableModelsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'available-models',
+  component: AvailableModelsPage
+});
+
 const usersRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'users',
@@ -233,6 +240,7 @@ const routeTree = rootRoute.addChildren([
     groupsRoute,
     availableServicesRoute,
     requiredDocumentsRoute,
+    availableModelsRoute,
     universityInfoRoute
   ]),
   authRoute.addChildren([loginRoute])

@@ -16,6 +16,7 @@ def read_mentions(
         relation: str = "[]",
         where: str = "[]",
         db: Session = Depends(deps.get_db),
+        user_only: bool = False,
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
@@ -28,6 +29,19 @@ def read_mentions(
     wheres = []
     if where is not None and where != "" and where != []:
        wheres += ast.literal_eval(where)
+    if user_only:
+        mention_ids = [
+            assignment.id_mention
+            for assignment in (current_user.user_mention or [])
+            if assignment and assignment.id_mention
+        ]
+        wheres.append(
+            {
+                "key": "id",
+                "operator": "in",
+                "value": mention_ids
+            }
+        )
 
     mentions = crud.mention.get_multi_where_array(
       db=db, relations=relations, skip=offset, limit=limit, where=wheres)

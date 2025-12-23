@@ -177,7 +177,7 @@ export const ReinscriptionPage = () => {
 
   const { data: mentionData = [] } = useQuery({
     queryKey: ["reinscription", "mentions"],
-    queryFn: fetchMentions
+    queryFn: () => fetchMentions({ user_only: true })
   });
 
   const { data: collegeYearData = [] } = useQuery({

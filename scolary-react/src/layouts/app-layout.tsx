@@ -95,7 +95,8 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         items: [
           { to: '/admin/users', label: 'Users', icon: Users, roles: ['admin'] },
           { to: '/admin/roles', label: 'Roles', icon: ShieldCheck, roles: ['admin'] },
-          { to: '/admin/permissions', label: 'Permissions', icon: Settings, roles: ['admin'] }
+          { to: '/admin/permissions', label: 'Permissions', icon: Settings, roles: ['admin'] },
+          { to: '/admin/available-models', label: 'Available models', icon: Layers, roles: ['admin'] }
         ]
       },
       {

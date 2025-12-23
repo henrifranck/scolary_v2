@@ -129,9 +129,13 @@ export const fetchNationalities = async () =>
     )
   );
 
-export const fetchMentions = async () =>
+export const fetchMentions = async (
+  query?: Record<string, string | number | boolean | undefined>
+) =>
   normalizeList(
-    await apiRequest<ApiListResponse<Mention> | Mention[]>("/mentions/")
+    await apiRequest<ApiListResponse<Mention> | Mention[]>("/mentions/", {
+      query
+    })
   );
 
 export const fetchJourneys = async (mentionId?: number | string) => {

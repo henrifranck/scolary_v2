@@ -5,7 +5,6 @@ import { Button } from '../../../components/ui/button';
 import { DataTable, type ColumnDef } from '../../../components/data-table/data-table';
 import { ConfirmDialog } from '../../../components/confirm-dialog';
 import { Input } from '../../../components/ui/input';
-import { Textarea } from '../../../components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -15,55 +14,51 @@ import {
 } from '../../../components/ui/dialog';
 import { cn } from '../../../lib/utils';
 import {
-  type RequiredDocument,
-  type RequiredDocumentPayload,
-  useRequiredDocuments,
-  useCreateRequiredDocument,
-  useUpdateRequiredDocument,
-  useDeleteRequiredDocument
-} from '../../../services/required-document-service';
+  type AvailableModel,
+  type AvailableModelPayload,
+  useAvailableModels,
+  useCreateAvailableModel,
+  useUpdateAvailableModel,
+  useDeleteAvailableModel
+} from '../../../services/available-model-service';
 
-type RequiredDocumentFormValues = {
+type AvailableModelFormValues = {
   name: string;
-  description: string;
 };
 
-const defaultFormValues: RequiredDocumentFormValues = {
-  name: '',
-  description: ''
+const defaultFormValues: AvailableModelFormValues = {
+  name: ''
 };
 
-const toFormValues = (document?: RequiredDocument | null): RequiredDocumentFormValues => ({
-  name: document?.name ?? '',
-  description: document?.description ?? ''
+const toFormValues = (model?: AvailableModel | null): AvailableModelFormValues => ({
+  name: model?.name ?? ''
 });
 
-const toPayload = (values: RequiredDocumentFormValues): RequiredDocumentPayload => ({
-  name: values.name.trim(),
-  description: values.description.trim()
+const toPayload = (values: AvailableModelFormValues): AvailableModelPayload => ({
+  name: values.name.trim()
 });
 
-interface RequiredDocumentFormProps {
+interface AvailableModelFormProps {
   mode: 'create' | 'edit';
-  initialValues?: RequiredDocumentFormValues;
+  initialValues?: AvailableModelFormValues;
   isSubmitting: boolean;
-  onSubmit: (values: RequiredDocumentFormValues) => Promise<void>;
+  onSubmit: (values: AvailableModelFormValues) => Promise<void>;
   onCancel: () => void;
 }
 
-const RequiredDocumentForm = ({
+const AvailableModelForm = ({
   mode,
   initialValues,
   onSubmit,
   onCancel,
   isSubmitting
-}: RequiredDocumentFormProps) => {
+}: AvailableModelFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset
-  } = useForm<RequiredDocumentFormValues>({
+  } = useForm<AvailableModelFormValues>({
     defaultValues: initialValues ?? defaultFormValues
   });
 
@@ -74,37 +69,23 @@ const RequiredDocumentForm = ({
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="required-document-name">
+        <label className="text-sm font-medium" htmlFor="available-model-name">
           Name
         </label>
         <Input
-          id="required-document-name"
-          placeholder="Proof of payment, ID, transcript..."
+          id="available-model-name"
+          placeholder="Student, Payment, Role..."
           className={cn(errors.name && 'border-destructive text-destructive')}
           {...register('name', { required: 'Name is required' })}
         />
         {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="required-document-description">
-          Description
-        </label>
-        <Textarea
-          id="required-document-description"
-          placeholder="Describe the document needed."
-          className={cn(errors.description && 'border-destructive text-destructive')}
-          {...register('description', { required: 'Description is required' })}
-        />
-        {errors.description ? (
-          <p className="text-xs text-destructive">{errors.description.message}</p>
-        ) : null}
       </div>
       <div className="flex items-center justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create document'}
+          {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create model'}
         </Button>
       </div>
     </form>
@@ -113,78 +94,77 @@ const RequiredDocumentForm = ({
 
 type Feedback = { type: 'success' | 'error'; text: string };
 
-export const RequiredDocumentsPage = () => {
+export const AvailableModelsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<RequiredDocument | null>(null);
+  const [editingModel, setEditingModel] = useState<AvailableModel | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [documentToDelete, setDocumentToDelete] = useState<RequiredDocument | null>(null);
+  const [modelToDelete, setModelToDelete] = useState<AvailableModel | null>(null);
 
   const offset = (page - 1) * pageSize;
   const {
-    data: documentsResponse,
+    data: modelsResponse,
     isPending,
     isError,
     error
-  } = useRequiredDocuments({ offset, limit: pageSize });
-  const documents = documentsResponse?.data ?? [];
-  const totalDocuments = documentsResponse?.count ?? documents.length;
+  } = useAvailableModels({ offset, limit: pageSize });
+  const models = modelsResponse?.data ?? [];
+  const totalModels = modelsResponse?.count ?? models.length;
 
-  const createDocument = useCreateRequiredDocument();
-  const updateDocument = useUpdateRequiredDocument();
-  const deleteDocument = useDeleteRequiredDocument();
+  const createModel = useCreateAvailableModel();
+  const updateModel = useUpdateAvailableModel();
+  const deleteModel = useDeleteAvailableModel();
 
   const openCreateForm = useCallback(() => {
-    setEditingDocument(null);
+    setEditingModel(null);
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((document: RequiredDocument) => {
-    setEditingDocument(document);
+  const handleEdit = useCallback((model: AvailableModel) => {
+    setEditingModel(model);
     setIsFormOpen(true);
   }, []);
 
   const closeForm = useCallback(() => {
-    setEditingDocument(null);
+    setEditingModel(null);
     setIsFormOpen(false);
   }, []);
 
   const handleSubmit = useCallback(
-    async (values: RequiredDocumentFormValues) => {
+    async (values: AvailableModelFormValues) => {
       const payload = toPayload(values);
       try {
-        if (editingDocument) {
-          await updateDocument.mutateAsync({ id: editingDocument.id, payload });
-          setFeedback({ type: 'success', text: 'Document updated successfully.' });
+        if (editingModel) {
+          await updateModel.mutateAsync({ id: editingModel.id, payload });
+          setFeedback({ type: 'success', text: 'Model updated successfully.' });
         } else {
-          await createDocument.mutateAsync(payload);
-          setFeedback({ type: 'success', text: 'Document created successfully.' });
+          await createModel.mutateAsync(payload);
+          setFeedback({ type: 'success', text: 'Model created successfully.' });
         }
         closeForm();
       } catch (mutationError) {
-        const message =
-          mutationError instanceof Error ? mutationError.message : 'Unable to save the required document.';
+        const message = mutationError instanceof Error ? mutationError.message : 'Unable to save model.';
         setFeedback({ type: 'error', text: message });
       }
     },
-    [closeForm, createDocument, editingDocument, updateDocument]
+    [closeForm, createModel, editingModel, updateModel]
   );
 
   const handleDelete = useCallback(async () => {
-    if (!documentToDelete) {
+    if (!modelToDelete) {
       return;
     }
     try {
-      await deleteDocument.mutateAsync(documentToDelete.id);
-      setFeedback({ type: 'success', text: 'Document deleted successfully.' });
+      await deleteModel.mutateAsync(modelToDelete.id);
+      setFeedback({ type: 'success', text: 'Model deleted successfully.' });
     } catch (mutationError) {
-      const message = mutationError instanceof Error ? mutationError.message : 'Unable to delete the document.';
+      const message = mutationError instanceof Error ? mutationError.message : 'Unable to delete model.';
       setFeedback({ type: 'error', text: message });
     } finally {
-      setDocumentToDelete(null);
+      setModelToDelete(null);
     }
-  }, [deleteDocument, documentToDelete]);
+  }, [deleteModel, modelToDelete]);
 
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -195,11 +175,11 @@ export const RequiredDocumentsPage = () => {
     setPage(1);
   }, []);
 
-  const columns = useMemo<ColumnDef<RequiredDocument>[]>(() => {
+  const columns = useMemo<ColumnDef<AvailableModel>[]>(() => {
     return [
       {
         accessorKey: 'name',
-        header: 'Name'
+        header: 'Model'
       },
       {
         id: 'actions',
@@ -212,7 +192,7 @@ export const RequiredDocumentsPage = () => {
             <Button
               variant="ghost"
               className="text-destructive hover:text-destructive"
-              onClick={() => setDocumentToDelete(row.original)}
+              onClick={() => setModelToDelete(row.original)}
             >
               Delete
             </Button>
@@ -222,17 +202,17 @@ export const RequiredDocumentsPage = () => {
     ];
   }, [handleEdit]);
 
-  const isSubmitting = createDocument.isPending || updateDocument.isPending;
+  const isSubmitting = createModel.isPending || updateModel.isPending;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Required documents</h1>
-          <p className="text-sm text-muted-foreground">Define the documents students must provide for services.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Available models</h1>
+          <p className="text-sm text-muted-foreground">Manage model names for permission scoping.</p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
-          Add document
+          Add model
         </Button>
       </div>
 
@@ -257,22 +237,20 @@ export const RequiredDocumentsPage = () => {
         onOpenChange={(open) => {
           setIsFormOpen(open);
           if (!open) {
-            setEditingDocument(null);
+            setEditingModel(null);
           }
         }}
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingDocument ? 'Edit document' : 'Create new document'}</DialogTitle>
+            <DialogTitle>{editingModel ? 'Edit model' : 'Create new model'}</DialogTitle>
             <DialogDescription>
-              {editingDocument
-                ? 'Update the required document.'
-                : 'Add a required document that can be linked to available services.'}
+              {editingModel ? 'Update the available model.' : 'Add a model that can be used in permissions.'}
             </DialogDescription>
           </DialogHeader>
-          <RequiredDocumentForm
-            mode={editingDocument ? 'edit' : 'create'}
-            initialValues={toFormValues(editingDocument)}
+          <AvailableModelForm
+            mode={editingModel ? 'edit' : 'create'}
+            initialValues={toFormValues(editingModel)}
             onSubmit={handleSubmit}
             onCancel={closeForm}
             isSubmitting={isSubmitting}
@@ -281,29 +259,29 @@ export const RequiredDocumentsPage = () => {
       </Dialog>
 
       <ConfirmDialog
-        open={Boolean(documentToDelete)}
-        title="Delete document"
+        open={Boolean(modelToDelete)}
+        title="Delete model"
         description={
-          documentToDelete ? (
+          modelToDelete ? (
             <>
-              Are you sure you want to delete <strong>{documentToDelete.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{modelToDelete.name}</strong>? This action cannot be undone.
             </>
           ) : null
         }
         confirmLabel="Delete"
         destructive
-        isConfirming={deleteDocument.isPending}
-        onCancel={() => setDocumentToDelete(null)}
+        isConfirming={deleteModel.isPending}
+        onCancel={() => setModelToDelete(null)}
         onConfirm={handleDelete}
       />
 
       <DataTable
         columns={columns}
-        data={documents}
+        data={models}
         isLoading={isPending}
-        searchPlaceholder="Search documents"
-        emptyText={isError ? error?.message ?? 'Unable to load documents' : 'No documents found'}
-        totalItems={totalDocuments}
+        searchPlaceholder="Search models"
+        emptyText={isError ? error?.message ?? 'Unable to load models' : 'No models found'}
+        totalItems={totalModels}
         page={page}
         pageSize={pageSize}
         onPageChange={handlePageChange}

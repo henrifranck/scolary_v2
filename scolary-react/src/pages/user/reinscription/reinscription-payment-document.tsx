@@ -7,6 +7,7 @@ import {
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -154,6 +155,21 @@ export const DocumentEditor = ({
                   {annual.academic_year?.name || "Année académique"}
                 </label>
               </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Description
+                </label>
+                <Textarea
+                  value={documentDescriptions[annualKey] ?? ""}
+                  onChange={(event) =>
+                    setDocumentDescriptions((previous) => ({
+                      ...previous,
+                      [annualKey]: event.target.value
+                    }))
+                  }
+                  placeholder="Description du document"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {docs.map((doc, docIndex) => (
                   <div
@@ -248,7 +264,7 @@ export const DocumentEditor = ({
               <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Description
               </label>
-              <Input
+              <Textarea
                 value={editDescription}
                 onChange={(event) => setEditDescription(event.target.value)}
                 placeholder="Description"

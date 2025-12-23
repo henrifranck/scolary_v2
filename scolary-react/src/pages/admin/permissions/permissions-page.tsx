@@ -6,6 +6,13 @@ import { DataTable, type ColumnDef } from '../../../components/data-table/data-t
 import { ConfirmDialog } from '../../../components/confirm-dialog';
 import { Input } from '../../../components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../../../components/ui/select';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -13,6 +20,7 @@ import {
   DialogTitle
 } from '../../../components/ui/dialog';
 import { cn } from '../../../lib/utils';
+import { useAvailableModels } from '../../../services/available-model-service';
 import {
   type Permission,
   type PermissionPayload,
@@ -24,42 +32,66 @@ import {
 
 type PermissionFormValues = {
   name: string;
-  method: string;
   model_name: string;
+  method_post: boolean;
+  method_get: boolean;
+  method_put: boolean;
+  method_delete: boolean;
 };
 
 const defaultFormValues: PermissionFormValues = {
   name: '',
-  method: '',
-  model_name: ''
+  model_name: '',
+  method_post: false,
+  method_get: false,
+  method_put: false,
+  method_delete: false
 };
 
 const toFormValues = (permission?: Permission | null): PermissionFormValues => ({
   name: permission?.name ?? '',
-  method: permission?.method ?? '',
-  model_name: permission?.model_name ?? ''
+  model_name: permission?.model_name ?? '',
+  method_post: Boolean(permission?.method_post),
+  method_get: Boolean(permission?.method_get),
+  method_put: Boolean(permission?.method_put),
+  method_delete: Boolean(permission?.method_delete)
 });
 
 const toPayload = (values: PermissionFormValues): PermissionPayload => ({
   name: values.name.trim(),
-  method: values.method.trim(),
-  model_name: values.model_name.trim()
+  model_name: values.model_name.trim(),
+  method_post: values.method_post,
+  method_get: values.method_get,
+  method_put: values.method_put,
+  method_delete: values.method_delete
 });
 
 interface PermissionFormProps {
   mode: 'create' | 'edit';
   initialValues?: PermissionFormValues;
+  availableModels: Array<{ id: string; name: string }>;
+  isModelsLoading: boolean;
   isSubmitting: boolean;
   onSubmit: (values: PermissionFormValues) => Promise<void>;
   onCancel: () => void;
 }
 
-const PermissionForm = ({ mode, initialValues, onSubmit, onCancel, isSubmitting }: PermissionFormProps) => {
+const PermissionForm = ({
+  mode,
+  initialValues,
+  availableModels,
+  isModelsLoading,
+  onSubmit,
+  onCancel,
+  isSubmitting
+}: PermissionFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    setValue,
+    watch
   } = useForm<PermissionFormValues>({
     defaultValues: initialValues ?? defaultFormValues
   });
@@ -67,6 +99,15 @@ const PermissionForm = ({ mode, initialValues, onSubmit, onCancel, isSubmitting 
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
   }, [initialValues, reset]);
+
+  const selectedModel = watch('model_name');
+
+  const methodOptions = [
+    { key: 'method_get', label: 'GET' },
+    { key: 'method_post', label: 'POST' },
+    { key: 'method_put', label: 'PUT' },
+    { key: 'method_delete', label: 'DELETE' }
+  ] as const;
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -82,30 +123,41 @@ const PermissionForm = ({ mode, initialValues, onSubmit, onCancel, isSubmitting 
         />
         {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="permission-method">
-            Method
-          </label>
-          <Input
-            id="permission-method"
-            placeholder="GET / POST / PUT"
-            className={cn(errors.method && 'border-destructive text-destructive')}
-            {...register('method', { required: 'Method is required' })}
-          />
-          {errors.method ? <p className="text-xs text-destructive">{errors.method.message}</p> : null}
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="permission-model">
-            Model name
-          </label>
-          <Input
-            id="permission-model"
-            placeholder="User"
-            className={cn(errors.model_name && 'border-destructive text-destructive')}
-            {...register('model_name', { required: 'Model name is required' })}
-          />
-          {errors.model_name ? <p className="text-xs text-destructive">{errors.model_name.message}</p> : null}
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="permission-model">
+          Model name
+        </label>
+        <input type="hidden" {...register('model_name', { required: 'Model name is required' })} />
+        <Select
+          value={selectedModel}
+          onValueChange={(value) => setValue('model_name', value, { shouldDirty: true })}
+          disabled={isModelsLoading || availableModels.length === 0}
+        >
+          <SelectTrigger id="permission-model">
+            <SelectValue placeholder={isModelsLoading ? 'Loading models…' : 'Select a model'} />
+          </SelectTrigger>
+          <SelectContent>
+            {availableModels.map((model) => (
+              <SelectItem key={model.id} value={model.name}>
+                {model.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.model_name ? <p className="text-xs text-destructive">{errors.model_name.message}</p> : null}
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Methods</label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {methodOptions.map((option) => {
+            const inputId = `permission-${option.key}`;
+            return (
+              <label key={option.key} className="flex items-center gap-2 text-sm">
+                <input id={inputId} type="checkbox" {...register(option.key)} />
+                {option.label}
+              </label>
+            );
+          })}
         </div>
       </div>
       <div className="flex items-center justify-end gap-2">
@@ -142,6 +194,15 @@ export const PermissionsPage = () => {
   const createPermission = useCreatePermission();
   const updatePermission = useUpdatePermission();
   const deletePermission = useDeletePermission();
+  const { data: availableModelsResponse, isPending: areModelsLoading } = useAvailableModels({ limit: 1000 });
+  const availableModels = useMemo(
+    () =>
+      (availableModelsResponse?.data ?? []).map((model) => ({
+        id: String(model.id),
+        name: model.name
+      })),
+    [availableModelsResponse]
+  );
 
   const openCreateForm = useCallback(() => {
     setEditingPermission(null);
@@ -218,14 +279,33 @@ export const PermissionsPage = () => {
         )
       },
       {
-        accessorKey: 'method',
-        header: 'Method',
-        cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.method}</span>
-      },
-      {
         accessorKey: 'model_name',
         header: 'Model',
         cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.model_name}</span>
+      },
+      {
+        id: 'methods',
+        header: 'Methods',
+        cell: ({ row }) => (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={Boolean(row.original.method_get)} readOnly />
+              GET
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={Boolean(row.original.method_post)} readOnly />
+              POST
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={Boolean(row.original.method_put)} readOnly />
+              PUT
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={Boolean(row.original.method_delete)} readOnly />
+              DELETE
+            </label>
+          </div>
+        )
       },
       {
         id: 'actions',
@@ -300,6 +380,8 @@ export const PermissionsPage = () => {
           <PermissionForm
             mode={editingPermission ? 'edit' : 'create'}
             initialValues={toFormValues(editingPermission)}
+            availableModels={availableModels}
+            isModelsLoading={areModelsLoading}
             onSubmit={handleSubmit}
             onCancel={closeForm}
             isSubmitting={isSubmitting}

@@ -40,4 +40,5 @@ from app.models.payment import Payment # noqa
 from app.models.file_asset import FileAsset # noqa
 from app.models.required_document import RequiredDocument # noqa
 from app.models.available_service import AvailableService # noqa
+from app.models.available_model import AvailableModel # noqa
 from app.models.service_required_document import AvailableServiceRequiredDocument # noqa

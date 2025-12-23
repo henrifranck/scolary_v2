@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict
 
 class RequiredDocumentBase(BaseModel):
     name: Optional[str] = None
+    description: Optional[str] = None
 
 
 class RequiredDocumentCreate(RequiredDocumentBase):

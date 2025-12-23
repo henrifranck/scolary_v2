@@ -117,7 +117,7 @@ export const DossierSelectionPage = () => {
 
   const { data: mentionData = [] } = useQuery({
     queryKey: ["dossier-selection", "mentions"],
-    queryFn: fetchMentions
+    queryFn: () => fetchMentions({ user_only: true })
   });
 
   const { data: collegeYearData = [] } = useQuery({
