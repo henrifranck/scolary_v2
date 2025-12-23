@@ -42,6 +42,9 @@ from app.api.api_v1.endpoints import files
 from app.api.api_v1.endpoints import pdfs
 from app.api.api_v1.endpoints import liste
 from app.api.api_v1.endpoints import carte
+from app.api.api_v1.endpoints import required_documents
+from app.api.api_v1.endpoints import available_services
+from app.api.api_v1.endpoints import available_service_required_documents
 
 api_router = APIRouter()
 api_router.include_router(classrooms.router, prefix="/classrooms", tags=["classrooms"])
@@ -72,6 +75,13 @@ api_router.include_router(journey_semesters.router, prefix="/journey_semesters",
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(annual_registers.router, prefix="/annual_registers", tags=["annual_registers"])
 api_router.include_router(register_semesters.router, prefix="/register_semesters", tags=["register_semesters"])
+api_router.include_router(required_documents.router, prefix="/required_documents", tags=["required_documents"])
+api_router.include_router(available_services.router, prefix="/available_services", tags=["available_services"])
+api_router.include_router(
+    available_service_required_documents.router,
+    prefix="/available_service_required_documents",
+    tags=["available_service_required_documents"],
+)
 
 api_router.include_router(exam_dates.router, prefix="/exam_dates", tags=["exam_dates"])
 api_router.include_router(exam_groups.router, prefix="/exam_groups", tags=["exam_groups"])

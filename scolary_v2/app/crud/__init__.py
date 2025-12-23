@@ -36,3 +36,6 @@ from .crud_working_time import working_time
 from .crud_baccalaureate_serie import baccalaureate_serie
 from .crud_card_asset import card_asset
 from .crud_file_asset import file_asset
+from .crud_required_document import required_document
+from .crud_available_service import available_service
+from .crud_available_service_required_document import available_service_required_document

@@ -230,3 +230,21 @@ from .file_asset import (
     FileAssetUpdate,
     FileAssetCreate
 )
+from .available_service import (
+    AvailableService,
+    AvailableServiceCreate,
+    AvailableServiceUpdate,
+    ResponseAvailableService
+)
+from .required_document import (
+    RequiredDocument,
+    RequiredDocumentCreate,
+    RequiredDocumentUpdate,
+    ResponseRequiredDocument
+)
+from .available_service_required_document import (
+    AvailableServiceRequiredDocument,
+    AvailableServiceRequiredDocumentCreate,
+    AvailableServiceRequiredDocumentUpdate,
+    ResponseAvailableServiceRequiredDocument
+)

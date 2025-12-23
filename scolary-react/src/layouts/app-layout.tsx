@@ -6,12 +6,14 @@ import {
   ChevronDown,
   ChevronRight,
   FileSignature,
+  FileText,
   Building2,
   FolderOpen,
   GraduationCap,
   HardDrive,
   Layers,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Menu,
   Moon,
@@ -102,6 +104,8 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         items: [
           { to: '/admin/mentions', label: 'Mentions', icon: Waypoints, roles: ['admin'] },
           { to: '/admin/journeys', label: 'Journeys', icon: Route, roles: ['admin'] },
+          { to: '/admin/available-services', label: 'Available services', icon: ListChecks, roles: ['admin'] },
+          { to: '/admin/required-documents', label: 'Required documents', icon: FileText, roles: ['admin'] },
           { to: '/admin/university-info', label: 'University info', icon: Building2, roles: ['admin'] },
           { to: '/admin/files', label: 'File manager', icon: HardDrive, roles: ['admin'] }
         ]

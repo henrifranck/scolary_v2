@@ -18,6 +18,8 @@ import { UniversityInfoPage } from './pages/admin/university-info-page';
 import { TeachingUnitPage } from './pages/admin/teaching-unit-page';
 import { ConstituentElementsPage } from './pages/admin/constituent-elements-page';
 import { GroupsPage } from './pages/admin/groups-page';
+import { AvailableServicesPage } from './pages/admin/available-services/available-services-page';
+import { RequiredDocumentsPage } from './pages/admin/required-documents/required-documents-page';
 import { FileManagerPage } from './pages/admin/files/files-page';
 import { LoginPage } from './pages/auth/login-page';
 import type { AuthRole } from './lib/auth-store';
@@ -147,6 +149,18 @@ const groupsRoute = createRoute({
   component: GroupsPage
 });
 
+const availableServicesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'available-services',
+  component: AvailableServicesPage
+});
+
+const requiredDocumentsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'required-documents',
+  component: RequiredDocumentsPage
+});
+
 const usersRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'users',
@@ -217,6 +231,8 @@ const routeTree = rootRoute.addChildren([
     teachingUnitRoute,
     constituentElementsRoute,
     groupsRoute,
+    availableServicesRoute,
+    requiredDocumentsRoute,
     universityInfoRoute
   ]),
   authRoute.addChildren([loginRoute])
