@@ -3,6 +3,7 @@ import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "./ui/button";
+import { useAuth } from "../providers/auth-provider";
 
 type NavItem = { href: string; label: string };
 
@@ -20,6 +21,9 @@ export const PublicHeader = ({
   navItems
 }: PublicHeaderProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { state } = useAuth();
+  const isAuthenticated = state.status === "authenticated";
+  const dashboardHref = state.user?.role === "admin" ? "/admin/dashboard" : "/dashboard";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -68,9 +72,15 @@ export const PublicHeader = ({
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <Button asChild>
-            <Link to="/auth/login">Connexion</Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button asChild>
+              <Link to={dashboardHref}>CRM</Link>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link to="/auth/login">Connexion</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

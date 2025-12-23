@@ -42,12 +42,22 @@ def _build_permission_map(db: Session, user_id: int) -> dict:
         .filter(models.UserRole.id_user == user_id)
         .all()
     )
+    available_models = crud.available_model.get_multi_where_array(
+        db=db, skip=0, limit=1000
+    )
+    route_by_name = {
+        (model.name or "").strip().lower(): (model.route_api or "").strip().lower()
+        for model in available_models
+        if (model.name or "").strip() and (model.route_api or "").strip()
+    }
+
     permission_map = {}
     for permission in permissions:
         model_name = (permission.model_name or "unknown").strip().lower()
-        model_name = model_name.lstrip("/")
+        route_api = route_by_name.get(model_name, model_name)
+        route_api = route_api.lstrip("/")
         entry = permission_map.setdefault(
-            model_name,
+            route_api,
             {"get": False, "post": False, "put": False, "delete": False}
         )
         entry["get"] = entry["get"] or bool(permission.method_get)
@@ -56,13 +66,31 @@ def _build_permission_map(db: Session, user_id: int) -> dict:
         entry["delete"] = entry["delete"] or bool(permission.method_delete)
     return permission_map
 
-def _resolve_model_from_path(path: str) -> str:
+def _resolve_model_from_path(db: Session, path: str) -> str:
     api_prefix = settings.API_V1_STR.rstrip("/")
     trimmed = path
     if api_prefix and trimmed.startswith(api_prefix):
         trimmed = trimmed[len(api_prefix):]
+    trimmed = "/" + trimmed.lstrip("/")
+
+    available_models = crud.available_model.get_multi_where_array(
+        db=db, skip=0, limit=1000
+    )
+    sorted_models = sorted(
+        available_models,
+        key=lambda model: len((model.route_api or "").strip()),
+        reverse=True
+    )
+    for model in sorted_models:
+        route_api = (model.route_api or "").strip()
+        if not route_api:
+            continue
+        route_api = "/" + route_api.lstrip("/")
+        if trimmed == route_api or trimmed.startswith(f"{route_api}/"):
+            return route_api.lstrip("/").lower()
+
     parts = [part for part in trimmed.split("/") if part]
-    return parts[0] if parts else ""
+    return parts[0].lower() if parts else ""
 
 def _is_method_allowed(permission_map: dict, model_name: str, method: str) -> bool:
     method_key = {
@@ -139,6 +167,7 @@ def get_token_info(token: str = Depends(reusable_oauth2)):
 
 def get_current_active_user(
     current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
     request: Request = None,
 ) -> models.User:
     if not crud.user.is_active(current_user):
@@ -147,7 +176,7 @@ def get_current_active_user(
         return current_user
     if request is None:
         raise HTTPException(status_code=403, detail="Permission denied")
-    model_name = _resolve_model_from_path(request.url.path)
+    model_name = _resolve_model_from_path(db, request.url.path)
     if not model_name:
         raise HTTPException(status_code=403, detail="Permission denied")
     permission_map = getattr(current_user, "permissions", {}) or {}

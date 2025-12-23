@@ -19,7 +19,6 @@ def read_available_models(
     relation: str = "[]",
     where: str = "[]",
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve available models.

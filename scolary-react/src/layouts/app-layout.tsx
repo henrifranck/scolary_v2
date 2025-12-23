@@ -80,12 +80,12 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
     return [
       generalSection,
       {
-        title: 'Academic',
+        title: 'Academique',
         roles: ['admin'],
         items: [{ to: '/admin/academic-years', label: 'Academic years', icon: GraduationCap, roles: ['admin'] }]
       },
       {
-        title: 'Student',
+        title: 'Etudiant',
         roles: ['admin'],
         items: [
           { to: '/admin/folder-selection', label: 'Nouveau etudians', icon: FolderOpen, roles: ['admin'] },
@@ -95,7 +95,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         ]
       },
       {
-        title: 'User',
+        title: 'Utilisateur',
         roles: ['admin'],
         items: [
           { to: '/admin/users', label: 'Users', icon: Users, roles: ['admin'] },
@@ -137,7 +137,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
   return [
     generalSection,
     {
-      title: 'Student',
+      title: 'Etudiant',
       roles: ['student'],
       items: [
         { to: '/notes', label: 'Notes', icon: NotepadText, roles: ['student'] },
@@ -157,9 +157,28 @@ const academicYears = [
   { value: '2022-2023', label: '2022 / 2023' }
 ];
 
-const normalizeRouteKey = (value: string) => value.trim().toLowerCase().replace(/^\/+/, '');
+const normalizeRouteKey = (value: string) =>
+  value.trim().toLowerCase().replace(/^\/+/, '');
 
-const resolvePermissionKey = (path: string, availableModels: { route_ui: string; route_api: string }[]) => {
+const getPermissionEntry = (
+  permissionMap: Record<string, { get?: boolean }>,
+  key: string
+) => {
+  if (!permissionMap) {
+    return null;
+  }
+  const normalized = normalizeRouteKey(key);
+  return (
+    permissionMap[normalized] ||
+    permissionMap[`/${normalized}`] ||
+    permissionMap[key]
+  );
+};
+
+const resolvePermissionKey = (
+  path: string,
+  availableModels: { route_ui: string; route_api: string; name: string }[]
+) => {
   const match = availableModels.find((model) => {
     const routeUi = model.route_ui?.trim();
     if (!routeUi) {
@@ -232,7 +251,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         if (!permissionKey) {
           return false;
         }
-        return Boolean(permissionMap[permissionKey]?.get);
+        return Boolean(getPermissionEntry(permissionMap, permissionKey)?.get);
       });
       return { ...section, items };
     })
@@ -339,7 +358,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
       return;
     }
     const permissionKey = resolvePermissionKey(location.pathname, availableModels);
-    if (!permissionKey || !permissionMap[permissionKey]?.get) {
+    if (!permissionKey || !getPermissionEntry(permissionMap, permissionKey)?.get) {
       router.navigate({ to: '/' });
     }
   }, [availableModels, location.pathname, permissionMap, router, shouldEnforcePermissions, user]);

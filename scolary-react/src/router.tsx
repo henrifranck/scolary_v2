@@ -166,6 +166,12 @@ const adminConcoursRoute = createRoute({
   component: ConcoursPage
 });
 
+const adminDashboardRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'dashboard',
+  component: DashboardPage
+});
+
 const academicYearsRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'academic-years',
@@ -298,6 +304,7 @@ const routeTree = rootRoute.addChildren([
   dossierSelectionRoute,
   concoursRoute,
   adminRoute.addChildren([
+    adminDashboardRoute,
     adminNotesRoute,
     adminDossierSelectionRoute,
     adminInscriptionRoute,

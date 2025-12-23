@@ -58,11 +58,15 @@ const toPayload = (
   initialValues?: AvailableModelFormValues
 ): AvailableModelPayload => {
   const trimmedName = values.name.trim();
-  const { routeApi, routeUi } = buildRoutes(trimmedName);
+  const normalizedRouteApi = (values.route_api ?? '').trim();
+  const normalizedRouteUi = (values.route_ui ?? '').trim();
+  const fallbackRoutes = buildRoutes(trimmedName);
+  const routeApi = normalizedRouteApi || fallbackRoutes.routeApi;
+  const routeUi = normalizedRouteUi || fallbackRoutes.routeUi;
   return {
     name: trimmedName,
-    route_api: mode === 'create' ? routeApi : initialValues?.route_api ?? routeApi,
-    route_ui: mode === 'create' ? routeUi : initialValues?.route_ui ?? routeUi
+    route_api: routeApi,
+    route_ui: routeUi
   };
 };
 
@@ -84,9 +88,10 @@ const AvailableModelForm = ({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, dirtyFields },
     reset,
-    watch
+    watch,
+    setValue
   } = useForm<AvailableModelFormValues>({
     defaultValues: initialValues ?? defaultFormValues
   });
@@ -96,26 +101,37 @@ const AvailableModelForm = ({
   }, [initialValues, reset]);
 
   const nameValue = watch('name');
-  const routePreview =
-    mode === 'create'
-      ? buildRoutes(nameValue ?? '')
-      : {
-          routeApi: initialValues?.route_api ?? '',
-          routeUi: initialValues?.route_ui ?? ''
-        };
+  const routeApiValue = watch('route_api');
+  const routeUiValue = watch('route_ui');
+
+  useEffect(() => {
+    if (mode !== 'create') {
+      return;
+    }
+    const next = buildRoutes(nameValue ?? '');
+    if (!dirtyFields.route_api) {
+      setValue('route_api', next.routeApi, { shouldDirty: false });
+    }
+    if (!dirtyFields.route_ui) {
+      setValue('route_ui', next.routeUi, { shouldDirty: false });
+    }
+  }, [dirtyFields.route_api, dirtyFields.route_ui, mode, nameValue, setValue]);
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="available-model-name">
-          Name
+          Menu name
         </label>
         <Input
           id="available-model-name"
-          placeholder="Student, Payment, Role..."
+          placeholder="Student/Re-inscription"
           className={cn(errors.name && 'border-destructive text-destructive')}
           {...register('name', { required: 'Name is required' })}
         />
+        <p className="text-xs text-muted-foreground">
+          Utilisez le format Parent/Sous-menu pour l'affichage du menu.
+        </p>
         {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
@@ -125,11 +141,14 @@ const AvailableModelForm = ({
           </label>
           <Input
             id="available-model-route-api"
-            value={routePreview.routeApi}
-            disabled
-            readOnly
+            value={routeApiValue}
             placeholder="/mentions"
+            className={cn(errors.route_api && 'border-destructive text-destructive')}
+            {...register('route_api', { required: 'Route API is required' })}
           />
+          {errors.route_api ? (
+            <p className="text-xs text-destructive">{errors.route_api.message}</p>
+          ) : null}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="available-model-route-ui">
@@ -137,11 +156,14 @@ const AvailableModelForm = ({
           </label>
           <Input
             id="available-model-route-ui"
-            value={routePreview.routeUi}
-            disabled
-            readOnly
+            value={routeUiValue}
             placeholder="/admin/mentions"
+            className={cn(errors.route_ui && 'border-destructive text-destructive')}
+            {...register('route_ui', { required: 'Route UI is required' })}
           />
+          {errors.route_ui ? (
+            <p className="text-xs text-destructive">{errors.route_ui.message}</p>
+          ) : null}
         </div>
       </div>
       <div className="flex items-center justify-end gap-2">
@@ -263,7 +285,7 @@ export const AvailableModelsPage = () => {
     return [
       {
         accessorKey: 'name',
-        header: 'Model'
+        header: 'Menu'
       },
       {
         accessorKey: 'route_api',
