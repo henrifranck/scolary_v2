@@ -36,12 +36,20 @@ type DocumentEditorProps = {
     annual: StudentAnnualProps & { id?: number },
     index: number
   ) => string;
-  handleUploadDocument: (annualIndex: number, file: File | null, id_required_document?: number) => void;
+  handleUploadDocument: (
+    annualIndex: number,
+    file: File | null,
+    id_required_document?: number
+  ) => void;
   onDeleteDocument: (annualIndex: number, documentId: number) => void;
   onUpdateDocument: (
     annualIndex: number,
     documentId: number,
-    payload: { name?: string; description?: string; id_required_document?: number }
+    payload: {
+      name?: string;
+      description?: string;
+      id_required_document?: number;
+    }
   ) => void;
   setDocumentDescriptions: Dispatch<SetStateAction<Record<string, string>>>;
 };
@@ -76,8 +84,9 @@ export const DocumentSummary = ({
                   </div>
                   {doc.id_required_document ? (
                     <span className="absolute left-2 top-2 z-10 rounded-full bg-background/90 px-2 py-1 text-[11px] font-semibold text-foreground shadow">
-                      {requiredDocuments.find((rd) => rd.id === doc.id_required_document)?.name ??
-                        "Document"}
+                      {requiredDocuments.find(
+                        (rd) => rd.id === doc.id_required_document
+                      )?.name ?? "Document"}
                     </span>
                   ) : null}
                   {showBadge ? (
@@ -114,7 +123,9 @@ export const DocumentEditor = ({
   onUpdateDocument,
   setDocumentDescriptions
 }: DocumentEditorProps) => {
-  const [selectedRequiredByAnnual, setSelectedRequiredByAnnual] = useState<Record<string, number | ''>>({});
+  const [selectedRequiredByAnnual, setSelectedRequiredByAnnual] = useState<
+    Record<string, number | "">
+  >({});
   const [editingDoc, setEditingDoc] = useState<{
     annualIndex: number;
     doc: StudentDocumentState;
@@ -126,20 +137,20 @@ export const DocumentEditor = ({
   const [isSaving, setIsSaving] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const [editRequiredId, setEditRequiredId] = useState<number | ''>('');
+  const [editRequiredId, setEditRequiredId] = useState<number | "">("");
 
   const openEdit = (annualIndex: number, doc: StudentDocumentState) => {
     setEditingDoc({ annualIndex, doc });
     setEditName(doc.name ?? "");
     setEditDescription(doc.description ?? "");
-    setEditRequiredId(doc.id_required_document ?? '');
+    setEditRequiredId(doc.id_required_document ?? "");
   };
 
   const closeEdit = () => {
     setEditingDoc(null);
     setEditName("");
     setEditDescription("");
-    setEditRequiredId('');
+    setEditRequiredId("");
   };
 
   const handleSaveEdit = async () => {
@@ -171,7 +182,8 @@ export const DocumentEditor = ({
           const docs = documentDrafts[annualKey] ?? [];
           const selectedRequiredId =
             selectedRequiredByAnnual[annualKey] ??
-            (requiredDocuments[0]?.id ?? "");
+            requiredDocuments[0]?.id ??
+            "";
           return (
             <div
               key={`${annual.id ?? "new"}-${index}`}
@@ -182,45 +194,6 @@ export const DocumentEditor = ({
                   Ajouter les document obligatoires pour l'année{" "}
                   {annual.academic_year?.name || "Année académique"}
                 </label>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Type de document requis
-                </label>
-                <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none"
-                  value={selectedRequiredId}
-                  onChange={(event) =>
-                    setSelectedRequiredByAnnual((previous) => ({
-                      ...previous,
-                      [annualKey]:
-                        event.target.value === "" ? "" : Number(event.target.value)
-                    }))
-                  }
-                  disabled={!requiredDocuments.length}
-                >
-                  <option value="">Aucun</option>
-                  {requiredDocuments.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Description
-                </label>
-                <Textarea
-                  value={documentDescriptions[annualKey] ?? ""}
-                  onChange={(event) =>
-                    setDocumentDescriptions((previous) => ({
-                      ...previous,
-                      [annualKey]: event.target.value
-                    }))
-                  }
-                  placeholder="Description du document"
-                />
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {docs.map((doc, docIndex) => (
@@ -245,8 +218,9 @@ export const DocumentEditor = ({
                     </a>
                     {doc.id_required_document ? (
                       <span className="absolute left-2 top-2 z-10 rounded-full bg-background/90 px-2 py-1 text-[11px] font-semibold text-foreground shadow">
-                        {requiredDocuments.find((rd) => rd.id === doc.id_required_document)?.name ??
-                          'Document'}
+                        {requiredDocuments.find(
+                          (rd) => rd.id === doc.id_required_document
+                        )?.name ?? "Document"}
                       </span>
                     ) : null}
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
