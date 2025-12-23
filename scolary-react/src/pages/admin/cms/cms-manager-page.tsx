@@ -36,10 +36,7 @@ export const CmsManagerPage = () => {
   const [formValues, setFormValues] = useState<CmsPagePayload>(emptyForm);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchIndex, setSearchIndex] = useState(0);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
 
   const { data: pagesResponse, isPending, isError, error } = useCmsPages({ limit: 200 });
@@ -117,29 +114,6 @@ export const CmsManagerPage = () => {
       setFeedback({ type: "error", text: message });
     }
   }, [deletePage, selectedPage, selectPage]);
-
-  const focusSearch = useCallback(() => {
-    searchInputRef.current?.focus();
-    searchInputRef.current?.select();
-  }, []);
-
-  const findNext = useCallback(() => {
-    const target = editorRef.current;
-    const query = searchQuery.trim();
-    if (!target || !query) {
-      return;
-    }
-    const content = target.value;
-    const startIndex = Math.max(target.selectionEnd, searchIndex);
-    const nextIndex = content.indexOf(query, startIndex);
-    const fallbackIndex = content.indexOf(query, 0);
-    const matchIndex = nextIndex !== -1 ? nextIndex : fallbackIndex;
-    if (matchIndex !== -1) {
-      target.focus();
-      target.setSelectionRange(matchIndex, matchIndex + query.length);
-      setSearchIndex(matchIndex + query.length);
-    }
-  }, [searchIndex, searchQuery]);
 
   const highlightHtml = useCallback((value: string) => {
     if (!value) {
@@ -265,7 +239,7 @@ export const CmsManagerPage = () => {
       </div>
 
       <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
-        <DialogContent className="max-h-[95vh] w-[100vw] max-w-none overflow-y-auto">
+        <DialogContent className="flex h-[90vh] w-[100vw] max-w-none flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>{selectedPage ? "Editer la page" : "Nouvelle page CMS"}</DialogTitle>
             <DialogDescription>
@@ -273,27 +247,10 @@ export const CmsManagerPage = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2 justify-between">
-                <p className="text-sm font-semibold">Editeur HTML</p>
-                <div className="flex items-center gap-2">
-                  <Input
-                    ref={searchInputRef}
-                    value={searchQuery}
-                    onChange={(event) => {
-                      setSearchQuery(event.target.value);
-                      setSearchIndex(0);
-                    }}
-                    placeholder="Rechercher (Ctrl+F)"
-                    className="h-8 w-56"
-                  />
-                  <Button variant="outline" size="sm" onClick={findNext}>
-                    Suivant
-                  </Button>
-                </div>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-2">
+            <div className="flex min-h-0 flex-col space-y-4 overflow-hidden">
+              <p className="text-sm font-semibold">Editeur HTML</p>
+            <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Slug</label>
                   <Input
@@ -304,17 +261,17 @@ export const CmsManagerPage = () => {
                     placeholder="home, platform, services"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Statut</label>
-                  <Input
-                    value={formValues.status ?? ""}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({ ...prev, status: event.target.value }))
-                    }
-                    placeholder="published"
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Statut</label>
+                <Input
+                  value={formValues.status ?? ""}
+                  onChange={(event) =>
+                    setFormValues((prev) => ({ ...prev, status: event.target.value }))
+                  }
+                  placeholder="published"
+                />
               </div>
+            </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Titre</label>
                 <Input
@@ -325,7 +282,7 @@ export const CmsManagerPage = () => {
                   placeholder="Titre de la page"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="flex min-h-0 flex-col space-y-2">
                 <label className="text-sm font-medium">Contenu (HTML)</label>
                 <div className="relative min-h-[320px] rounded-md border border-input bg-background">
                   <pre
@@ -341,20 +298,15 @@ export const CmsManagerPage = () => {
                   <Textarea
                     ref={editorRef}
                     value={formValues.content_json ?? ""}
-                    onChange={(event) =>
-                      setFormValues((prev) => ({ ...prev, content_json: event.target.value }))
+                  onChange={(event) =>
+                    setFormValues((prev) => ({ ...prev, content_json: event.target.value }))
+                  }
+                  onKeyDown={(event) => {
+                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
+                      event.preventDefault();
                     }
-                    onKeyDown={(event) => {
-                      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
-                        event.preventDefault();
-                        focusSearch();
-                      }
-                      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "g") {
-                        event.preventDefault();
-                        findNext();
-                      }
-                    }}
-                    onScroll={handleEditorScroll}
+                  }}
+                  onScroll={handleEditorScroll}
                     aria-label="Editeur HTML"
                     spellCheck={false}
                     className="relative z-10 min-h-[320px] border-0 bg-transparent p-3 font-mono text-sm leading-6 text-transparent caret-foreground selection:bg-primary/30 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -384,9 +336,9 @@ export const CmsManagerPage = () => {
               </div>
             </div>
 
-            <div className="rounded-lg border bg-muted/20 p-4">
+            <div className="flex min-h-0 flex-col rounded-lg border bg-muted/20 p-4">
               <p className="text-sm font-semibold">Apercu</p>
-              <div className="mt-4 max-h-[60vh] min-h-[360px] overflow-y-auto rounded-md border bg-background p-4">
+              <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-md border bg-background p-4">
                 {formValues.content_json ? (
                   <div
                     className="w-full"

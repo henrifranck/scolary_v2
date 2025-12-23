@@ -16,7 +16,10 @@ type ApiListResponse<T> = {
   data: T[];
 };
 
-export type CmsPagePayload = Pick<CmsPage, "slug" | "title" | "content_json" | "meta_json" | "status">;
+export type CmsPagePayload = Pick<
+  CmsPage,
+  "slug" | "title" | "content_json" | "meta_json" | "status"
+>;
 export type CmsPageListQuery = Record<string, string | number | boolean | undefined>;
 
 const cmsPagesKey = ["cms-pages"] as const;

@@ -8,6 +8,8 @@ import { DossierSelectionPage } from './pages/user/dossier-selection/dossier-sel
 import { ConcoursPage } from './pages/user/concours/concours-page';
 import { HomePage } from './pages/home/home-page';
 import { CmsPublicPage } from './pages/home/cms-public-page';
+import { PublicationsPage } from './pages/home/publications-page';
+import { WorkingTimePublicPage } from './pages/home/working-time-public-page';
 import { AcademicYearsPage } from './pages/admin/academic-years-page';
 import { WorkingTimePage } from './pages/admin/working-time-page';
 import { UsersPage } from './pages/admin/users-page';
@@ -59,6 +61,18 @@ const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: HomePage
+});
+
+const publicationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'pages/publications',
+  component: PublicationsPage
+});
+
+const workingTimePublicRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'pages/working-time',
+  component: WorkingTimePublicPage
 });
 
 const cmsPublicRoute = createRoute({
@@ -273,6 +287,8 @@ const loginRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
+  publicationsRoute,
+  workingTimePublicRoute,
   cmsPublicRoute,
   dashboardRoute,
   userNotesRoute,
