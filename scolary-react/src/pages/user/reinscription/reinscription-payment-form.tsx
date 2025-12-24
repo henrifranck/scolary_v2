@@ -118,6 +118,9 @@ export const ReinscriptionAnnualRegister = ({
   const [documentStatus, setDocumentStatus] = useState<
     "none" | "missing" | "complete" | "not_applicable"
   >("not_applicable");
+  const [paymentStatus, setPaymentStatus] = useState<
+    "none" | "partial" | "complete" | "not_applicable"
+  >("not_applicable");
   const [documentDescriptions, setDocumentDescriptions] = useState<
     Record<string, string>
   >({});
@@ -177,6 +180,20 @@ export const ReinscriptionAnnualRegister = ({
       status === "complete"
         ? "bg-emerald-500"
         : status === "missing"
+          ? "bg-amber-500"
+          : status === "none"
+            ? "bg-red-500"
+            : "bg-muted-foreground/50";
+    return <span className={`h-2.5 w-2.5 rounded-full ${color}`} />;
+  };
+
+  const renderPaymentStatusBadge = (
+    status: "none" | "partial" | "complete" | "not_applicable"
+  ) => {
+    const color =
+      status === "complete"
+        ? "bg-emerald-500"
+        : status === "partial"
           ? "bg-amber-500"
           : status === "none"
             ? "bg-red-500"
@@ -269,6 +286,32 @@ export const ReinscriptionAnnualRegister = ({
       setDocumentStatus("missing");
     }
   }, [displayAnnualRegisters, requiredDocuments]);
+
+  useEffect(() => {
+    if (!displayAnnualRegisters.length) {
+      setPaymentStatus("not_applicable");
+      return;
+    }
+
+    const statuses = displayAnnualRegisters
+      .map((annual) => annual.payment_status as string | undefined)
+      .filter(Boolean) as Array<"none" | "partial" | "complete" | "not_applicable">;
+
+    if (!statuses.length) {
+      setPaymentStatus("not_applicable");
+      return;
+    }
+
+    if (statuses.includes("none")) {
+      setPaymentStatus("none");
+    } else if (statuses.includes("partial")) {
+      setPaymentStatus("partial");
+    } else if (statuses.every((s) => s === "complete")) {
+      setPaymentStatus("complete");
+    } else {
+      setPaymentStatus("not_applicable");
+    }
+  }, [displayAnnualRegisters]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1321,7 +1364,12 @@ export const ReinscriptionAnnualRegister = ({
       <Tabs defaultValue="registration" className="space-y-3">
         <TabsList className="grid w-full grid-cols-3 md:w-auto">
           <TabsTrigger value="registration">Registration</TabsTrigger>
-          <TabsTrigger value="payment">Payment</TabsTrigger>
+          <TabsTrigger value="payment">
+            <span className="relative inline-flex items-center gap-2">
+              Payment
+              {renderPaymentStatusBadge(paymentStatus)}
+            </span>
+          </TabsTrigger>
           <TabsTrigger value="document">
             <span className="relative inline-flex items-center gap-2">
               Document
@@ -1412,7 +1460,12 @@ export const ReinscriptionAnnualRegister = ({
               <Tabs defaultValue="registration" className="space-y-3">
               <TabsList className="grid w-full grid-cols-3 md:w-auto">
                 <TabsTrigger value="registration">Registration</TabsTrigger>
-                <TabsTrigger value="payment">Payment</TabsTrigger>
+                <TabsTrigger value="payment">
+                  <span className="relative inline-flex items-center gap-2">
+                    Payment
+                    {renderPaymentStatusBadge(paymentStatus)}
+                  </span>
+                </TabsTrigger>
                 <TabsTrigger value="document">
                   <span className="relative inline-flex items-center gap-2">
                     Document

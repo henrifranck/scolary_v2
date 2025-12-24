@@ -15,7 +15,6 @@ class AnnualRegisterBase(BaseModel):
     num_carte: Optional[str] = None
     id_academic_year: Optional[int] = None
     semester_count: Optional[int] = None
-    id_enrollment_fee: Optional[int] = None
 
 
 class AnnualRegisterCreate(AnnualRegisterBase):
@@ -30,7 +29,6 @@ class AnnualRegisterInDBBase(AnnualRegisterBase):
     id: Optional[int]
     num_carte: Optional[str]
     id_academic_year: Optional[int]
-    id_enrollment_fee: Optional[int]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -42,10 +40,14 @@ class AnnualRegister(AnnualRegisterInDBBase):
 class AnnualRegisterWithRelation(AnnualRegisterInDBBase):
     student: Optional[Student] = None
     academic_year: Optional[AcademicYear] = None
-    enrollment_fee: Optional[EnrollmentFee] = None
     register_semester: Optional[Any] = None
     document: Optional[Any] = None
     payment: Optional[Any] = None
+    max_semester_number: Optional[int] = None
+    level_from_semester: Optional[str] = None
+    total_payment: Optional[float] = None
+    enrollment_fee_amount: Optional[float] = None
+    payment_status: Optional[str] = None
 
 
 class AnnualRegisterInDB(AnnualRegisterInDBBase):

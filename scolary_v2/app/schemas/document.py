@@ -11,6 +11,7 @@ class DocumentBase(BaseModel):
     id_annual_register: Optional[int] = None
     id_required_document: Optional[int] = None
     url: Optional[str] = None
+    required_document_name: Optional[str] = None
 
 
 class DocumentCreate(DocumentBase):
@@ -36,6 +37,7 @@ class Document(DocumentInDBBase):
 
 class DocumentWithRelation(DocumentInDBBase):
     annual_register: Optional[AnnualRegister] = None
+    required_document: Optional[Any] = None
 
 
 class DocumentInDB(DocumentInDBBase):

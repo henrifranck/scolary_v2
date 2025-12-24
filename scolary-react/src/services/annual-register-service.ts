@@ -11,7 +11,8 @@ const relations = JSON.stringify([
   "register_semester.journey{id_mention,name}",
   "register_semester.journey.mention{name}",
   "payment{id,payed,num_receipt,date_receipt,description}",
-  "document{id,id_annual_register,name,description,url}"
+  "document{id,id_annual_register,name,description,url,id_required_document,required_document_name}",
+  "document.required_document{id,name}"
 ]);
 const baseColumn = JSON.stringify(["last_name", "first_name"]);
 
