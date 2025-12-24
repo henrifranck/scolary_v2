@@ -1,6 +1,7 @@
 from enum import Enum
 
-class LevelEnum (Enum):
+
+class LevelEnum(Enum):
     L1 = "L1"
     L2 = "L2"
     L3 = "L3"

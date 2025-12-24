@@ -2,24 +2,24 @@
 # ---write your code here--- #
 # end #
 
-from datetime import datetime, time, date
-from typing import Any
 from typing import List, Optional
-from pydantic import BaseModel, ConfigDict, field_validator
-from app.enum.repeat_status import RepeatStatusEnum
-from .mention import Mention
+
+from pydantic import BaseModel, ConfigDict
+
+from app.enum.level import LevelEnum
 from .academic_year import AcademicYear
+from .mention import Mention
 
 
 class EnrollmentFeeBase(BaseModel):
-    level: Optional[RepeatStatusEnum] = None
+    level: Optional[LevelEnum] = None
     price: Optional[float] = None
     id_mention: Optional[int] = None
     id_academic_year: Optional[int] = None
 
 
 class EnrollmentFeeCreate(EnrollmentFeeBase):
-    level: RepeatStatusEnum
+    level: LevelEnum
     price: float
 
 

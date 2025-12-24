@@ -154,7 +154,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_user_id'), 'user', ['id'], unique=True)
     op.create_table('enrollment_fee',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('level', sa.Enum('PASSING', 'REPEATING', 'TRIPLING', name='repeatstatusenum'), nullable=False),
+    sa.Column('levels', sa.Enum('L1', 'L2', 'L3', 'M1', 'M2', name='levelenum'), nullable=False),
     sa.Column('price', sa.Float(), nullable=False),
     sa.Column('id_mention', sa.Integer(), nullable=True),
     sa.Column('id_academic_year', sa.Integer(), nullable=True),

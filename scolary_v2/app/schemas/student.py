@@ -119,6 +119,7 @@ class StudentWithRelation(StudentInDBBase):
     nationality: Optional[Nationality] = None
     baccalaureate_serie: Optional[BaccalaureateSerie] = None
     annual_register: Optional[Any] = None
+    document_status: Optional[Any] = None
 
 
 class StudentInDB(StudentInDBBase):

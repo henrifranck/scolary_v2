@@ -115,6 +115,9 @@ export const ReinscriptionAnnualRegister = ({
   const [requiredDocuments, setRequiredDocuments] = useState<
     RequiredDocument[]
   >([]);
+  const [documentStatus, setDocumentStatus] = useState<
+    "none" | "missing" | "complete" | "not_applicable"
+  >("not_applicable");
   const [documentDescriptions, setDocumentDescriptions] = useState<
     Record<string, string>
   >({});
@@ -151,6 +154,7 @@ export const ReinscriptionAnnualRegister = ({
             ?.map((entry) => entry.required_document)
             .filter((doc): doc is RequiredDocument => Boolean(doc)) ?? [];
         setRequiredDocuments(docs);
+        setDocumentStatus(docs.length ? "missing" : "not_applicable");
       } catch (error) {
         console.error("Unable to fetch required documents", error);
         setRequiredDocuments([]);
@@ -164,6 +168,20 @@ export const ReinscriptionAnnualRegister = ({
     name: "",
     abbreviation: "",
     id_mention: 0
+  };
+
+  const renderDocumentStatusBadge = (
+    status: "none" | "missing" | "complete" | "not_applicable"
+  ) => {
+    const color =
+      status === "complete"
+        ? "bg-emerald-500"
+        : status === "missing"
+          ? "bg-amber-500"
+          : status === "none"
+            ? "bg-red-500"
+            : "bg-muted-foreground/50";
+    return <span className={`h-2.5 w-2.5 rounded-full ${color}`} />;
   };
 
   const createEmptyPayment = () => ({
@@ -225,6 +243,32 @@ export const ReinscriptionAnnualRegister = ({
   const hasPaymentEntries = annualRegisterDrafts.some(
     (annual, index) => (paymentDrafts[getAnnualKey(annual, index)] ?? []).length
   );
+
+  useEffect(() => {
+    if (!requiredDocuments.length) {
+      setDocumentStatus("not_applicable");
+      return;
+    }
+
+    const requiredIds = new Set(requiredDocuments.map((doc) => doc.id));
+    const uploadedIds = new Set<number>();
+
+    displayAnnualRegisters.forEach((annual) => {
+      (annual.document ?? []).forEach((doc) => {
+        if (doc.id_required_document && requiredIds.has(doc.id_required_document)) {
+          uploadedIds.add(doc.id_required_document);
+        }
+      });
+    });
+
+    if (uploadedIds.size === 0) {
+      setDocumentStatus("none");
+    } else if (uploadedIds.size === requiredIds.size) {
+      setDocumentStatus("complete");
+    } else {
+      setDocumentStatus("missing");
+    }
+  }, [displayAnnualRegisters, requiredDocuments]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1278,7 +1322,12 @@ export const ReinscriptionAnnualRegister = ({
         <TabsList className="grid w-full grid-cols-3 md:w-auto">
           <TabsTrigger value="registration">Registration</TabsTrigger>
           <TabsTrigger value="payment">Payment</TabsTrigger>
-          <TabsTrigger value="document">Document</TabsTrigger>
+          <TabsTrigger value="document">
+            <span className="relative inline-flex items-center gap-2">
+              Document
+              {renderDocumentStatusBadge(documentStatus)}
+            </span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -1361,11 +1410,16 @@ export const ReinscriptionAnnualRegister = ({
             ) : null}
             <div className="flex-1 px-6 pb-6 pt-4 space-y-4">
               <Tabs defaultValue="registration" className="space-y-3">
-                <TabsList className="grid w-full grid-cols-3 md:w-auto">
-                  <TabsTrigger value="registration">Registration</TabsTrigger>
-                  <TabsTrigger value="payment">Payment</TabsTrigger>
-                  <TabsTrigger value="document">Document</TabsTrigger>
-                </TabsList>
+              <TabsList className="grid w-full grid-cols-3 md:w-auto">
+                <TabsTrigger value="registration">Registration</TabsTrigger>
+                <TabsTrigger value="payment">Payment</TabsTrigger>
+                <TabsTrigger value="document">
+                  <span className="relative inline-flex items-center gap-2">
+                    Document
+                    {renderDocumentStatusBadge(documentStatus)}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
                 <TabsContent
                   value="registration"
                   className="space-y-4 max-h-[520px] overflow-y-auto"

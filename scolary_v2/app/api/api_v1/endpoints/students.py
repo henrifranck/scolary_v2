@@ -96,6 +96,7 @@ def read_one_student(
         where: str = "[]",
         where_relation: str = "[]",
         base_column: str = "[]",
+        route_ui: str = "re-registration",
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
@@ -123,7 +124,69 @@ def read_one_student(
     if not student:
         raise HTTPException(status_code=404, detail='Student not found')
 
-    return jsonable_encoder(student)
+    # Compute document completion status for the given route_ui
+    document_status = None
+    try:
+        service = crud.available_service.get_by_field(
+            db=db, field="route_ui", value=route_ui
+        )
+        if service:
+            required_ids = [
+                link.id_required_document
+                for link in (service.available_service_required_document or [])
+                if link.id_required_document
+            ]
+            required_ids = [rid for rid in required_ids if rid is not None]
+
+            if required_ids:
+                annual_ids_subquery = (
+                    db.query(models.AnnualRegister.id)
+                    .filter(models.AnnualRegister.num_carte == student.num_carte)
+                    .subquery()
+                )
+                uploaded_required_ids = {
+                    doc.id_required_document
+                    for doc in db.query(models.Document).filter(
+                        models.Document.id_annual_register.in_(annual_ids_subquery)
+                    )
+                    if doc.id_required_document is not None
+                }
+                missing_ids = [
+                    rid for rid in required_ids if rid not in uploaded_required_ids
+                ]
+                status = (
+                    "none"
+                    if not uploaded_required_ids
+                    else "complete"
+                    if not missing_ids
+                    else "missing"
+                )
+                document_status = {
+                    "status": status,
+                    "missing_required_document_ids": missing_ids,
+                    "required_document_ids": required_ids,
+                }
+            else:
+                document_status = {
+                    "status": "not_applicable",
+                    "missing_required_document_ids": [],
+                    "required_document_ids": [],
+                }
+        else:
+            document_status = {
+                "status": "not_applicable",
+                "missing_required_document_ids": [],
+                "required_document_ids": [],
+            }
+    except Exception:
+        # We deliberately swallow errors here to avoid breaking the endpoint
+        document_status = None
+
+    data = jsonable_encoder(student)
+    if document_status is not None:
+        data["document_status"] = document_status
+
+    return data
 
 
 @router.post('/', response_model=schemas.Student)

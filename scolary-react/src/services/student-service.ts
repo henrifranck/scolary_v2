@@ -44,7 +44,7 @@ const relations = JSON.stringify([
   "annual_register.register_semester.journey{id_mention,name}",
   "annual_register.register_semester.journey.mention{name}",
   "annual_register.payment{id,payed,num_receipt,date_receipt}",
-  "annual_register.document{id,name,url,description}"
+  "annual_register.document{id,name,url,description,id_required_document}"
 ]);
 const baseColumn = JSON.stringify([
   "last_name",
@@ -117,7 +117,8 @@ export const fetchStudentByCardNumber = async (
         relation: relations,
         base_column: baseColumn,
         where: buildWhereClause(trimmed),
-        where_relation: buildWhereRelationClause(filtes)
+        where_relation: buildWhereRelationClause(filtes),
+        route_ui: "re-registration"
       }
     }
   );
@@ -146,7 +147,8 @@ export const fetchStudentByNumSelect = async (
         base_column: baseColumn,
         where: JSON.stringify([
           { key: "num_select", operator: "==", value: trimmed }
-        ])
+        ]),
+        route_ui: "re-registration"
       }
     }
   );

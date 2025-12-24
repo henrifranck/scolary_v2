@@ -24,6 +24,7 @@ import { ConstituentElementsPage } from './pages/admin/constituent-elements-page
 import { GroupsPage } from './pages/admin/groups-page';
 import { AvailableServicesPage } from './pages/admin/available-services/available-services-page';
 import { RequiredDocumentsPage } from './pages/admin/required-documents/required-documents-page';
+import { EnrollmentFeesPage } from './pages/admin/enrollment-fees/enrollment-fees-page';
 import { AvailableModelsPage } from './pages/admin/available-models/available-models-page';
 import { FileManagerPage } from './pages/admin/files/files-page';
 import { CmsManagerPage } from './pages/admin/cms/cms-manager-page';
@@ -287,6 +288,12 @@ const requiredDocumentsRoute = createRoute({
   component: RequiredDocumentsPage
 });
 
+const enrollmentFeesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: 'enrollment-fees',
+  component: EnrollmentFeesPage
+});
+
 const availableModelsRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: 'available-models',
@@ -420,6 +427,7 @@ const routeTree = rootRoute.addChildren([
     groupsRoute,
     availableServicesRoute,
     requiredDocumentsRoute,
+    enrollmentFeesRoute,
     availableModelsRoute,
     universityInfoRoute,
     cmsManagerRoute
