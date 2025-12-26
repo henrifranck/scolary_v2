@@ -1,68 +1,77 @@
-import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryKey
+} from "@tanstack/react-query";
 
-import { apiRequest } from './api-client';
-
-type ApiListResponse<T> = {
-  count?: number;
-  data: T[];
-};
-
-export interface Permission {
-  id: number;
-  name: string;
-  model_name: string;
-  method_post?: boolean;
-  method_get?: boolean;
-  method_put?: boolean;
-  method_delete?: boolean;
-}
-
-export type PermissionPayload = Pick<
+import { apiRequest } from "./api-client";
+import {
   Permission,
-  'name' | 'model_name' | 'method_post' | 'method_get' | 'method_put' | 'method_delete'
->;
-export type PermissionListQuery = Record<string, string | number | boolean | undefined>;
+  PermissionListQuery,
+  PermissionPayload
+} from "@/models/permission";
+import { ApiListResponse } from "@/models/shared";
 
-const permissionsKey = ['permissions'] as const;
+const permissionsKey = ["permissions"] as const;
 
 const queryKeys = {
-  permissions: (query?: PermissionListQuery): QueryKey => (query ? [...permissionsKey, query] : permissionsKey),
-  permission: (id: number): QueryKey => ['permission', id]
+  permissions: (query?: PermissionListQuery): QueryKey =>
+    query ? [...permissionsKey, query] : permissionsKey,
+  permission: (id: number): QueryKey => ["permission", id]
 } as const;
 
 const isListResponse = <T>(payload: unknown): payload is ApiListResponse<T> =>
   Boolean(
     payload &&
-      typeof payload === 'object' &&
-      'data' in (payload as Record<string, unknown>) &&
+      typeof payload === "object" &&
+      "data" in (payload as Record<string, unknown>) &&
       Array.isArray((payload as ApiListResponse<T>).data)
   );
 
-const normalizeList = <T>(payload: ApiListResponse<T> | T[]): { data: T[]; count?: number } =>
+const normalizeList = <T>(
+  payload: ApiListResponse<T> | T[]
+): { data: T[]; count?: number } =>
   isListResponse(payload)
     ? { data: payload.data, count: payload.count }
-    : { data: Array.isArray(payload) ? payload : [], count: Array.isArray(payload) ? payload.length : 0 };
+    : {
+        data: Array.isArray(payload) ? payload : [],
+        count: Array.isArray(payload) ? payload.length : 0
+      };
 
-export const fetchPermissions = async (query?: PermissionListQuery): Promise<{ data: Permission[]; count?: number }> =>
-  normalizeList(await apiRequest<ApiListResponse<Permission> | Permission[]>('/permissions/', { query }));
+export const fetchPermissions = async (
+  query?: PermissionListQuery
+): Promise<{ data: Permission[]; count?: number }> =>
+  normalizeList(
+    await apiRequest<ApiListResponse<Permission> | Permission[]>(
+      "/permissions/",
+      { query }
+    )
+  );
 
-export const fetchPermission = (id: number): Promise<Permission> => apiRequest<Permission>(`/permissions/${id}/`);
+export const fetchPermission = (id: number): Promise<Permission> =>
+  apiRequest<Permission>(`/permissions/${id}/`);
 
-export const createPermission = (payload: PermissionPayload): Promise<Permission> =>
-  apiRequest<Permission>('/permissions/', {
-    method: 'POST',
+export const createPermission = (
+  payload: PermissionPayload
+): Promise<Permission> =>
+  apiRequest<Permission>("/permissions/", {
+    method: "POST",
     json: payload
   });
 
-export const updatePermission = (id: number, payload: PermissionPayload): Promise<Permission> =>
+export const updatePermission = (
+  id: number,
+  payload: PermissionPayload
+): Promise<Permission> =>
   apiRequest<Permission>(`/permissions/${id}/`, {
-    method: 'PUT',
+    method: "PUT",
     json: payload
   });
 
 export const deletePermission = (id: number): Promise<void> =>
   apiRequest<void>(`/permissions/${id}/`, {
-    method: 'DELETE'
+    method: "DELETE"
   });
 
 export const usePermissions = (query?: PermissionListQuery) =>
@@ -93,10 +102,13 @@ export const useUpdatePermission = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: PermissionPayload }) => updatePermission(id, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: PermissionPayload }) =>
+      updatePermission(id, payload),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: permissionsKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.permission(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.permission(variables.id)
+      });
     }
   });
 };

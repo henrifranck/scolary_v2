@@ -16,8 +16,9 @@ export const ReinscriptionTrashPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [restoreTarget, setRestoreTarget] =
     useState<ReinscriptionStudent | null>(null);
-  const [deleteTarget, setDeleteTarget] =
-    useState<ReinscriptionStudent | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ReinscriptionStudent | null>(
+    null
+  );
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
@@ -95,7 +96,7 @@ export const ReinscriptionTrashPage = () => {
       },
       {
         id: "actions",
-        header: "",
+        header: "Actions",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <Button
@@ -164,8 +165,7 @@ export const ReinscriptionTrashPage = () => {
         confirmLabel="Restaurer"
         cancelLabel="Annuler"
         isConfirming={
-          Boolean(restoreTarget) &&
-          actionLoadingId === restoreTarget?.recordId
+          Boolean(restoreTarget) && actionLoadingId === restoreTarget?.recordId
         }
         onCancel={() => setRestoreTarget(null)}
         onConfirm={() => {
@@ -188,8 +188,7 @@ export const ReinscriptionTrashPage = () => {
         cancelLabel="Annuler"
         destructive
         isConfirming={
-          Boolean(deleteTarget) &&
-          actionLoadingId === deleteTarget?.recordId
+          Boolean(deleteTarget) && actionLoadingId === deleteTarget?.recordId
         }
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => {

@@ -20,6 +20,7 @@ interface StudentFormItemProps {
   formState: StudentFormState;
   inputComponent: FormItemComponentType;
   classnNames?: string;
+  disabledEditing?: boolean;
 }
 
 export const StudentFormItem = ({
@@ -29,14 +30,16 @@ export const StudentFormItem = ({
   handleFormChange,
   formState,
   inputComponent,
-  classnNames
+  classnNames,
+  disabledEditing = false
 }: StudentFormItemProps) => {
   const toggleSectionEditing = useCallback((section: EditableSection) => {
+    if (disabledEditing) return;
     setEditingSections((previous: any) => ({
       ...previous,
       [section]: !previous[section]
     }));
-  }, []);
+  }, [disabledEditing]);
 
   return (
     <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
@@ -48,6 +51,7 @@ export const StudentFormItem = ({
           size="sm"
           className="h-8 gap-2 px-3"
           onClick={() => toggleSectionEditing(inputComponent.key)}
+          disabled={disabledEditing}
         >
           {editingSections[inputComponent.key] ? (
             <>
@@ -82,11 +86,13 @@ export const StudentFormItem = ({
                           handleFormChange(value.formKey, event.target.value)
                         }
                         placeholder={value.placeHolder}
+                        disabled={disabledEditing}
                       />
                     ) : value.type === "select" && value.options ? (
                       <Select
                         value={formState[value.formKey] as string}
                         onValueChange={(val) => handleFormChange(value.formKey, val)}
+                        disabled={disabledEditing}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={value.placeHolder ?? "Sélectionner"} />
@@ -107,6 +113,7 @@ export const StudentFormItem = ({
                           handleFormChange(value.formKey, event.target.value)
                         }
                         placeholder={value.placeHolder}
+                        disabled={disabledEditing}
                       />
                     )}
                     </div>
@@ -126,6 +133,7 @@ export const StudentFormItem = ({
                       )
                     }
                     placeholder="Saisir l'adresse complète"
+                    disabled={disabledEditing}
                   />
                 ) : (
                   <Input
@@ -138,6 +146,7 @@ export const StudentFormItem = ({
                       )
                     }
                     placeholder="nom@domaine.com"
+                    disabled={disabledEditing}
                   />
                 )}
               </>
@@ -156,11 +165,13 @@ export const StudentFormItem = ({
                           handleFormChange(value.formKey, event.target.value)
                         }
                         placeholder={value.placeHolder}
+                        disabled={disabledEditing}
                       />
                     ) : value.type === "select" && value.options ? (
                       <Select
                         value={formState[value.formKey] as string}
                         onValueChange={(val) => handleFormChange(value.formKey, val)}
+                        disabled={disabledEditing}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={value.placeHolder ?? "Sélectionner"} />
@@ -181,6 +192,7 @@ export const StudentFormItem = ({
                           handleFormChange(value.formKey, event.target.value)
                         }
                         placeholder={value.placeHolder}
+                        disabled={disabledEditing}
                       />
                     )}
                   </div>

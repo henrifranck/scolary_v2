@@ -1,4 +1,4 @@
-import { StudentProfile } from "@/pages/user/reinscription/reinscription-form-type";
+import { StudentProfile } from "@/pages/user/re-registration/re-registration-form-type";
 import { apiRequest } from "./api-client";
 import { ReinscriptionFilters } from "./reinscription-service";
 

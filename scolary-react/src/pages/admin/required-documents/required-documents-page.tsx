@@ -1,28 +1,34 @@
-import { Pencil, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Pencil, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { Button } from '../../../components/ui/button';
-import { DataTable, type ColumnDef } from '../../../components/data-table/data-table';
-import { ConfirmDialog } from '../../../components/confirm-dialog';
-import { Input } from '../../../components/ui/input';
-import { Textarea } from '../../../components/ui/textarea';
+import { Button } from "../../../components/ui/button";
+import {
+  DataTable,
+  type ColumnDef
+} from "../../../components/data-table/data-table";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { Input } from "../../../components/ui/input";
+import { Textarea } from "../../../components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '../../../components/ui/dialog';
-import { cn } from '../../../lib/utils';
+} from "../../../components/ui/dialog";
+import { cn } from "../../../lib/utils";
 import {
-  type RequiredDocument,
-  type RequiredDocumentPayload,
   useRequiredDocuments,
   useCreateRequiredDocument,
   useUpdateRequiredDocument,
   useDeleteRequiredDocument
-} from '../../../services/required-document-service';
+} from "../../../services/required-document-service";
+import { ActionButton } from "@/components/action-button";
+import {
+  RequiredDocument,
+  RequiredDocumentPayload
+} from "@/models/required-document";
 
 type RequiredDocumentFormValues = {
   name: string;
@@ -30,22 +36,26 @@ type RequiredDocumentFormValues = {
 };
 
 const defaultFormValues: RequiredDocumentFormValues = {
-  name: '',
-  description: ''
+  name: "",
+  description: ""
 };
 
-const toFormValues = (document?: RequiredDocument | null): RequiredDocumentFormValues => ({
-  name: document?.name ?? '',
-  description: document?.description ?? ''
+const toFormValues = (
+  document?: RequiredDocument | null
+): RequiredDocumentFormValues => ({
+  name: document?.name ?? "",
+  description: document?.description ?? ""
 });
 
-const toPayload = (values: RequiredDocumentFormValues): RequiredDocumentPayload => ({
+const toPayload = (
+  values: RequiredDocumentFormValues
+): RequiredDocumentPayload => ({
   name: values.name.trim(),
   description: values.description.trim()
 });
 
 interface RequiredDocumentFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialValues?: RequiredDocumentFormValues;
   isSubmitting: boolean;
   onSubmit: (values: RequiredDocumentFormValues) => Promise<void>;
@@ -81,46 +91,66 @@ const RequiredDocumentForm = ({
         <Input
           id="required-document-name"
           placeholder="Proof of payment, ID, transcript..."
-          className={cn(errors.name && 'border-destructive text-destructive')}
-          {...register('name', { required: 'Name is required' })}
+          className={cn(errors.name && "border-destructive text-destructive")}
+          {...register("name", { required: "Name is required" })}
         />
-        {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
+        {errors.name ? (
+          <p className="text-xs text-destructive">{errors.name.message}</p>
+        ) : null}
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="required-document-description">
+        <label
+          className="text-sm font-medium"
+          htmlFor="required-document-description"
+        >
           Description
         </label>
         <Textarea
           id="required-document-description"
           placeholder="Describe the document needed."
-          className={cn(errors.description && 'border-destructive text-destructive')}
-          {...register('description', { required: 'Description is required' })}
+          className={cn(
+            errors.description && "border-destructive text-destructive"
+          )}
+          {...register("description", { required: "Description is required" })}
         />
         {errors.description ? (
-          <p className="text-xs text-destructive">{errors.description.message}</p>
+          <p className="text-xs text-destructive">
+            {errors.description.message}
+          </p>
         ) : null}
       </div>
       <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create document'}
+          {isSubmitting
+            ? "Saving…"
+            : mode === "edit"
+              ? "Save changes"
+              : "Create document"}
         </Button>
       </div>
     </form>
   );
 };
 
-type Feedback = { type: 'success' | 'error'; text: string };
+type Feedback = { type: "success" | "error"; text: string };
 
 export const RequiredDocumentsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<RequiredDocument | null>(null);
+  const [editingDocument, setEditingDocument] =
+    useState<RequiredDocument | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [documentToDelete, setDocumentToDelete] = useState<RequiredDocument | null>(null);
+  const [documentToDelete, setDocumentToDelete] =
+    useState<RequiredDocument | null>(null);
 
   const offset = (page - 1) * pageSize;
   const {
@@ -157,16 +187,24 @@ export const RequiredDocumentsPage = () => {
       try {
         if (editingDocument) {
           await updateDocument.mutateAsync({ id: editingDocument.id, payload });
-          setFeedback({ type: 'success', text: 'Document updated successfully.' });
+          setFeedback({
+            type: "success",
+            text: "Document updated successfully."
+          });
         } else {
           await createDocument.mutateAsync(payload);
-          setFeedback({ type: 'success', text: 'Document created successfully.' });
+          setFeedback({
+            type: "success",
+            text: "Document created successfully."
+          });
         }
         closeForm();
       } catch (mutationError) {
         const message =
-          mutationError instanceof Error ? mutationError.message : 'Unable to save the required document.';
-        setFeedback({ type: 'error', text: message });
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Unable to save the required document.";
+        setFeedback({ type: "error", text: message });
       }
     },
     [closeForm, createDocument, editingDocument, updateDocument]
@@ -178,10 +216,13 @@ export const RequiredDocumentsPage = () => {
     }
     try {
       await deleteDocument.mutateAsync(documentToDelete.id);
-      setFeedback({ type: 'success', text: 'Document deleted successfully.' });
+      setFeedback({ type: "success", text: "Document deleted successfully." });
     } catch (mutationError) {
-      const message = mutationError instanceof Error ? mutationError.message : 'Unable to delete the document.';
-      setFeedback({ type: 'error', text: message });
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete the document.";
+      setFeedback({ type: "error", text: message });
     } finally {
       setDocumentToDelete(null);
     }
@@ -199,32 +240,38 @@ export const RequiredDocumentsPage = () => {
   const columns = useMemo<ColumnDef<RequiredDocument>[]>(() => {
     return [
       {
-        accessorKey: 'name',
-        header: 'Name'
+        accessorKey: "name",
+        header: "Name"
       },
       {
-        id: 'actions',
-        header: 'Actions',
+        id: "actions",
+        header: "Actions",
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleEdit(row.original)}
-              aria-label="Editer"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setDocumentToDelete(row.original)}
-              aria-label="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          // <div className="flex items-center justify-end gap-2">
+          //   <Button
+          //     variant="ghost"
+          //     size="icon"
+          //     onClick={() => handleEdit(row.original)}
+          //     aria-label="Editer"
+          //   >
+          //     <Pencil className="h-4 w-4" />
+          //   </Button>
+          //   <Button
+          //     variant="ghost"
+          //     size="icon"
+          //     className="text-destructive hover:text-destructive"
+          //     onClick={() => setDocumentToDelete(row.original)}
+          //     aria-label="Supprimer"
+          //   >
+          //     <Trash2 className="h-4 w-4" />
+          //   </Button>
+          // </div>
+
+          <ActionButton
+            row={row}
+            setConfirmDelete={setDocumentToDelete}
+            handleEdit={handleEdit}
+          />
         )
       }
     ];
@@ -236,8 +283,12 @@ export const RequiredDocumentsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Required documents</h1>
-          <p className="text-sm text-muted-foreground">Define the documents students must provide for services.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Required documents
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Define the documents students must provide for services.
+          </p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
           Add document
@@ -247,14 +298,17 @@ export const RequiredDocumentsPage = () => {
       {feedback ? (
         <div
           className={cn(
-            'flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm',
-            feedback.type === 'success'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
+            "flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm",
+            feedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-destructive/30 bg-destructive/10 text-destructive"
           )}
         >
           <span>{feedback.text}</span>
-          <button className="text-xs font-medium underline" onClick={() => setFeedback(null)}>
+          <button
+            className="text-xs font-medium underline"
+            onClick={() => setFeedback(null)}
+          >
             Dismiss
           </button>
         </div>
@@ -271,15 +325,17 @@ export const RequiredDocumentsPage = () => {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingDocument ? 'Edit document' : 'Create new document'}</DialogTitle>
+            <DialogTitle>
+              {editingDocument ? "Edit document" : "Create new document"}
+            </DialogTitle>
             <DialogDescription>
               {editingDocument
-                ? 'Update the required document.'
-                : 'Add a required document that can be linked to available services.'}
+                ? "Update the required document."
+                : "Add a required document that can be linked to available services."}
             </DialogDescription>
           </DialogHeader>
           <RequiredDocumentForm
-            mode={editingDocument ? 'edit' : 'create'}
+            mode={editingDocument ? "edit" : "create"}
             initialValues={toFormValues(editingDocument)}
             onSubmit={handleSubmit}
             onCancel={closeForm}
@@ -294,7 +350,9 @@ export const RequiredDocumentsPage = () => {
         description={
           documentToDelete ? (
             <>
-              Are you sure you want to delete <strong>{documentToDelete.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <strong>{documentToDelete.name}</strong>? This action cannot be
+              undone.
             </>
           ) : null
         }
@@ -310,7 +368,11 @@ export const RequiredDocumentsPage = () => {
         data={documents}
         isLoading={isPending}
         searchPlaceholder="Search documents"
-        emptyText={isError ? error?.message ?? 'Unable to load documents' : 'No documents found'}
+        emptyText={
+          isError
+            ? (error?.message ?? "Unable to load documents")
+            : "No documents found"
+        }
         totalItems={totalDocuments}
         page={page}
         pageSize={pageSize}

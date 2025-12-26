@@ -128,7 +128,7 @@ def map_repeat_status(value: Any) -> Optional[str]:
 
 def map_enrollment_status(status: Any, is_selected: Any) -> str:
     val = clean_str(status)
-    if val in {"pending", "selected", "rejected", "registered", "former"}:
+    if val in {"L1", "L2", "L3", "M1", "M2"}:
         return val
     if is_selected:
         return "selected"
@@ -220,7 +220,7 @@ def default_for_column(name: str, fallback_time: dt.datetime) -> Any:
     if name == "repeat_status":
         return "PASSING"
     if name == "level":
-        return "PASSING"
+        return "L1"
     if name in {"job", "address", "place_of_birth", "last_name"}:
         return "UNKNOWN" if name != "job" else ""
     if name in {"name", "slug", "abbreviation", "plugged"}:
@@ -609,8 +609,8 @@ def migrate_student_years(
                     "id": annual_id,
                     "num_carte": num_carte,
                     "id_academic_year": id_year,
-                    "semester_count": semester_count,
                     "register_type":"REGISTRATION",
+                    "semester_count": semester_count,
                     "id_enrollment_fee": None,
                     "created_at": created_at,
                     "updated_at": updated_at,
@@ -802,7 +802,7 @@ def transform_working_time(data: Dict[str, Any], src: Dict[str, Any], fallback_t
 
 
 def transform_enrollment_fee(data: Dict[str, Any], src: Dict[str, Any], fallback_time: dt.datetime) -> Dict[str, Any]:
-    data["level"] = "PASSING"
+    data["level"] = src.get("level")
     data["created_at"] = to_datetime(src.get("created_at"), fallback_time)
     data["updated_at"] = to_datetime(src.get("updated_at"), fallback_time)
     return data

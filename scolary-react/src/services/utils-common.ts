@@ -1,4 +1,4 @@
-import { ApiListResponse } from "@/pages/user/reinscription/reinscription-form-type";
+import { ApiListResponse } from "@/pages/user/re-registration/re-registration-form-type";
 
 export const isListResponse = <T>(
   payload: unknown

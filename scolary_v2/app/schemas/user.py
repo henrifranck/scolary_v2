@@ -16,7 +16,6 @@ class UserBase(BaseModel):
     is_superuser: Optional[bool] = None
     picture: Optional[str] = None
     is_active: Optional[bool] = None
-    permissions: Optional[dict] = None
 
 
 class UserCreate(UserBase):
@@ -43,6 +42,7 @@ class User(UserInDBBase):
 
 
 class UserWithRelation(UserInDBBase):
+    permissions: Optional[dict] = None
     user_role: Optional[Any] = None
     user_mention: Optional[Any] = None
 

@@ -1,3 +1,4 @@
+import { Mention } from "@/models/mentions";
 import { apiRequest } from "./api-client";
 
 type ApiListResponse<T> = {
@@ -24,12 +25,6 @@ const normalizeList = <T>(payload: ApiListResponse<T> | T[]): T[] => {
 export interface Nationality {
   id: number;
   name: string;
-}
-
-export interface Mention {
-  id: number;
-  name: string;
-  abbreviation?: string;
 }
 
 export interface Journey {
@@ -129,7 +124,7 @@ export const fetchNationalities = async () =>
     )
   );
 
-export const fetchMentions = async (
+export const fetchMentions: any = async (
   query?: Record<string, string | number | boolean | undefined>
 ) =>
   normalizeList(

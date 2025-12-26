@@ -1,19 +1,22 @@
-import { Pencil, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Pencil, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { Button } from '../../../components/ui/button';
-import { DataTable, type ColumnDef } from '../../../components/data-table/data-table';
-import { ConfirmDialog } from '../../../components/confirm-dialog';
-import { Input } from '../../../components/ui/input';
+import { Button } from "../../../components/ui/button";
+import {
+  DataTable,
+  type ColumnDef
+} from "../../../components/data-table/data-table";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { Input } from "../../../components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '../../../components/ui/dialog';
-import { cn } from '../../../lib/utils';
+} from "../../../components/ui/dialog";
+import { cn } from "../../../lib/utils";
 import {
   type AvailableService,
   type AvailableServicePayload,
@@ -21,16 +24,15 @@ import {
   useCreateAvailableService,
   useUpdateAvailableService,
   useDeleteAvailableService
-} from '../../../services/available-service';
-import {
-  type RequiredDocument,
-  useRequiredDocuments
-} from '../../../services/required-document-service';
+} from "../../../services/available-service";
+import { useRequiredDocuments } from "../../../services/required-document-service";
 import {
   createAvailableServiceRequiredDocument,
   deleteAvailableServiceRequiredDocument,
   useAvailableServiceRequiredDocuments
-} from '../../../services/available-service-required-document';
+} from "../../../services/available-service-required-document";
+import { ActionButton } from "@/components/action-button";
+import { RequiredDocument } from "@/models/required-document";
 
 type AvailableServiceFormValues = {
   name: string;
@@ -38,16 +40,20 @@ type AvailableServiceFormValues = {
 };
 
 const defaultFormValues: AvailableServiceFormValues = {
-  name: '',
-  routeUi: ''
+  name: "",
+  routeUi: ""
 };
 
-const toFormValues = (service?: AvailableService | null): AvailableServiceFormValues => ({
-  name: service?.name ?? '',
-  routeUi: service?.route_ui ?? ''
+const toFormValues = (
+  service?: AvailableService | null
+): AvailableServiceFormValues => ({
+  name: service?.name ?? "",
+  routeUi: service?.route_ui ?? ""
 });
 
-const toPayload = (values: AvailableServiceFormValues): AvailableServicePayload => {
+const toPayload = (
+  values: AvailableServiceFormValues
+): AvailableServicePayload => {
   const route = values.routeUi.trim();
   return {
     name: values.name.trim(),
@@ -56,7 +62,7 @@ const toPayload = (values: AvailableServiceFormValues): AvailableServicePayload 
 };
 
 interface AvailableServiceFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialValues?: AvailableServiceFormValues;
   isSubmitting: boolean;
   onSubmit: (values: AvailableServiceFormValues) => Promise<void>;
@@ -100,22 +106,31 @@ const AvailableServiceForm = ({
         <Input
           id="available-service-name"
           placeholder="Library card, transcript..."
-          className={cn(errors.name && 'border-destructive text-destructive')}
-          {...register('name', { required: 'Name is required' })}
+          className={cn(errors.name && "border-destructive text-destructive")}
+          {...register("name", { required: "Name is required" })}
         />
-        {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
+        {errors.name ? (
+          <p className="text-xs text-destructive">{errors.name.message}</p>
+        ) : null}
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="available-service-route">
+        <label
+          className="text-sm font-medium"
+          htmlFor="available-service-route"
+        >
           Route UI
         </label>
         <Input
           id="available-service-route"
           placeholder="/student/services"
-          className={cn(errors.routeUi && 'border-destructive text-destructive')}
-          {...register('routeUi')}
+          className={cn(
+            errors.routeUi && "border-destructive text-destructive"
+          )}
+          {...register("routeUi")}
         />
-        {errors.routeUi ? <p className="text-xs text-destructive">{errors.routeUi.message}</p> : null}
+        {errors.routeUi ? (
+          <p className="text-xs text-destructive">{errors.routeUi.message}</p>
+        ) : null}
       </div>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -125,7 +140,8 @@ const AvailableServiceForm = ({
               type="checkbox"
               className="h-4 w-4"
               checked={
-                requiredDocuments.length > 0 && selectedDocuments.length === requiredDocuments.length
+                requiredDocuments.length > 0 &&
+                selectedDocuments.length === requiredDocuments.length
               }
               onChange={onToggleAllDocuments}
               disabled={isSubmitting || requiredDocuments.length === 0}
@@ -152,30 +168,44 @@ const AvailableServiceForm = ({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No required documents available.</p>
+          <p className="text-sm text-muted-foreground">
+            No required documents available.
+          </p>
         )}
       </div>
       <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create service'}
+          {isSubmitting
+            ? "Saving…"
+            : mode === "edit"
+              ? "Save changes"
+              : "Create service"}
         </Button>
       </div>
     </form>
   );
 };
 
-type Feedback = { type: 'success' | 'error'; text: string };
+type Feedback = { type: "success" | "error"; text: string };
 
 export const AvailableServicesPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingService, setEditingService] = useState<AvailableService | null>(null);
+  const [editingService, setEditingService] = useState<AvailableService | null>(
+    null
+  );
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [serviceToDelete, setServiceToDelete] = useState<AvailableService | null>(null);
+  const [serviceToDelete, setServiceToDelete] =
+    useState<AvailableService | null>(null);
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<number[]>([]);
 
   const offset = (page - 1) * pageSize;
@@ -187,17 +217,21 @@ export const AvailableServicesPage = () => {
   } = useAvailableServices({ offset, limit: pageSize });
   const { data: requiredDocsResponse } = useRequiredDocuments({ limit: 1000 });
   const requiredDocuments = requiredDocsResponse?.data ?? [];
-  const {
-    data: serviceRequiredDocsResponse,
-    isPending: isLoadingServiceDocs
-  } = useAvailableServiceRequiredDocuments(
-    editingService
-      ? {
-          where: JSON.stringify([{ key: 'id_available_service', operator: '==', value: editingService.id }])
-        }
-      : undefined,
-    Boolean(editingService)
-  );
+  const { data: serviceRequiredDocsResponse, isPending: isLoadingServiceDocs } =
+    useAvailableServiceRequiredDocuments(
+      editingService
+        ? {
+            where: JSON.stringify([
+              {
+                key: "id_available_service",
+                operator: "==",
+                value: editingService.id
+              }
+            ])
+          }
+        : undefined,
+      Boolean(editingService)
+    );
   const existingServiceDocs = serviceRequiredDocsResponse?.data ?? [];
   const services = servicesResponse?.data ?? [];
   const totalServices = servicesResponse?.count ?? services.length;
@@ -229,20 +263,32 @@ export const AvailableServicesPage = () => {
       try {
         if (editingService) {
           await updateService.mutateAsync({ id: editingService.id, payload });
-          await syncRequiredDocuments(editingService.id, existingServiceDocs, selectedDocumentIds);
-          setFeedback({ type: 'success', text: 'Service updated successfully.' });
+          await syncRequiredDocuments(
+            editingService.id,
+            existingServiceDocs,
+            selectedDocumentIds
+          );
+          setFeedback({
+            type: "success",
+            text: "Service updated successfully."
+          });
         } else {
           const created = await createService.mutateAsync(payload);
           if (created?.id) {
             await syncRequiredDocuments(created.id, [], selectedDocumentIds);
           }
-          setFeedback({ type: 'success', text: 'Service created successfully.' });
+          setFeedback({
+            type: "success",
+            text: "Service created successfully."
+          });
         }
         closeForm();
       } catch (mutationError) {
         const message =
-          mutationError instanceof Error ? mutationError.message : 'Unable to save the available service.';
-        setFeedback({ type: 'error', text: message });
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Unable to save the available service.";
+        setFeedback({ type: "error", text: message });
       }
     },
     [
@@ -261,10 +307,13 @@ export const AvailableServicesPage = () => {
     }
     try {
       await deleteService.mutateAsync(serviceToDelete.id);
-      setFeedback({ type: 'success', text: 'Service deleted successfully.' });
+      setFeedback({ type: "success", text: "Service deleted successfully." });
     } catch (mutationError) {
-      const message = mutationError instanceof Error ? mutationError.message : 'Unable to delete the service.';
-      setFeedback({ type: 'error', text: message });
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete the service.";
+      setFeedback({ type: "error", text: message });
     } finally {
       setServiceToDelete(null);
     }
@@ -282,27 +331,18 @@ export const AvailableServicesPage = () => {
   const columns = useMemo<ColumnDef<AvailableService>[]>(() => {
     return [
       {
-        accessorKey: 'name',
-        header: 'Name'
+        accessorKey: "name",
+        header: "Name"
       },
       {
-        id: 'actions',
-        header: 'Actions',
+        id: "actions",
+        header: "Actions",
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="ghost" size="icon" onClick={() => handleEdit(row.original)} aria-label="Editer">
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setServiceToDelete(row.original)}
-              aria-label="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <ActionButton
+            row={row}
+            setConfirmDelete={setServiceToDelete}
+            handleEdit={handleEdit}
+          />
         )
       }
     ];
@@ -310,11 +350,14 @@ export const AvailableServicesPage = () => {
 
   const isSubmitting = createService.isPending || updateService.isPending;
   const allDocumentsSelected =
-    requiredDocuments.length > 0 && selectedDocumentIds.length === requiredDocuments.length;
+    requiredDocuments.length > 0 &&
+    selectedDocumentIds.length === requiredDocuments.length;
 
   useEffect(() => {
     if (editingService && !isLoadingServiceDocs) {
-      setSelectedDocumentIds(existingServiceDocs.map((doc) => doc.id_required_document));
+      setSelectedDocumentIds(
+        existingServiceDocs.map((doc) => doc.id_required_document)
+      );
     }
   }, [editingService, existingServiceDocs, isLoadingServiceDocs]);
 
@@ -326,7 +369,9 @@ export const AvailableServicesPage = () => {
 
   const toggleDocument = useCallback((documentId: number) => {
     setSelectedDocumentIds((prev) =>
-      prev.includes(documentId) ? prev.filter((id) => id !== documentId) : [...prev, documentId]
+      prev.includes(documentId)
+        ? prev.filter((id) => id !== documentId)
+        : [...prev, documentId]
     );
   }, []);
 
@@ -342,8 +387,12 @@ export const AvailableServicesPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Available services</h1>
-          <p className="text-sm text-muted-foreground">Manage the services students can request.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Available services
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage the services students can request.
+          </p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
           Add service
@@ -353,14 +402,17 @@ export const AvailableServicesPage = () => {
       {feedback ? (
         <div
           className={cn(
-            'flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm',
-            feedback.type === 'success'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
+            "flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm",
+            feedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-destructive/30 bg-destructive/10 text-destructive"
           )}
         >
           <span>{feedback.text}</span>
-          <button className="text-xs font-medium underline" onClick={() => setFeedback(null)}>
+          <button
+            className="text-xs font-medium underline"
+            onClick={() => setFeedback(null)}
+          >
             Dismiss
           </button>
         </div>
@@ -377,15 +429,17 @@ export const AvailableServicesPage = () => {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingService ? 'Edit service' : 'Create new service'}</DialogTitle>
+            <DialogTitle>
+              {editingService ? "Edit service" : "Create new service"}
+            </DialogTitle>
             <DialogDescription>
               {editingService
-                ? 'Update the service information.'
-                : 'Add a service that can be associated with student requests.'}
+                ? "Update the service information."
+                : "Add a service that can be associated with student requests."}
             </DialogDescription>
           </DialogHeader>
           <AvailableServiceForm
-            mode={editingService ? 'edit' : 'create'}
+            mode={editingService ? "edit" : "create"}
             initialValues={toFormValues(editingService)}
             onSubmit={handleSubmit}
             onCancel={closeForm}
@@ -404,7 +458,9 @@ export const AvailableServicesPage = () => {
         description={
           serviceToDelete ? (
             <>
-              Are you sure you want to delete <strong>{serviceToDelete.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <strong>{serviceToDelete.name}</strong>? This action cannot be
+              undone.
             </>
           ) : null
         }
@@ -420,7 +476,11 @@ export const AvailableServicesPage = () => {
         data={services}
         isLoading={isPending}
         searchPlaceholder="Search services"
-        emptyText={isError ? error?.message ?? 'Unable to load services' : 'No services found'}
+        emptyText={
+          isError
+            ? (error?.message ?? "Unable to load services")
+            : "No services found"
+        }
         totalItems={totalServices}
         page={page}
         pageSize={pageSize}
@@ -443,13 +503,22 @@ const syncRequiredDocuments = async (
   if (toAdd.length) {
     await Promise.all(
       toAdd.map((id_required_document) =>
-        createAvailableServiceRequiredDocument({ id_available_service: serviceId, id_required_document })
+        createAvailableServiceRequiredDocument({
+          id_available_service: serviceId,
+          id_required_document
+        })
       )
     );
   }
 
   if (toRemove.length) {
-    const removalTargets = existingDocs.filter((doc) => toRemove.includes(doc.id_required_document));
-    await Promise.all(removalTargets.map((doc) => deleteAvailableServiceRequiredDocument(doc.id)));
+    const removalTargets = existingDocs.filter((doc) =>
+      toRemove.includes(doc.id_required_document)
+    );
+    await Promise.all(
+      removalTargets.map((doc) =>
+        deleteAvailableServiceRequiredDocument(doc.id)
+      )
+    );
   }
 };

@@ -28,6 +28,13 @@ export const studentInformationBirth: FormItemComponentType = {
       inputType: "text",
       formKey: "birthPlace",
       placeHolder: "Saisir le lieu de naissance"
+    },
+    {
+      label: "Profession",
+      type: "input",
+      inputType: "text",
+      formKey: "job",
+      placeHolder: "Profession actuelle"
     }
   ],
   key: "birth",
@@ -61,6 +68,34 @@ export const studentInformationIdentity: FormItemComponentType = {
   style: "mixte"
 };
 
+export const studentInformationPersonnel: FormItemComponentType = {
+  value: [
+    {
+      label: "Nom",
+      type: "input",
+      inputType: "text",
+      formKey: "lastName",
+      placeHolder: "Saisir le nom"
+    },
+    {
+      label: "Prénom",
+      type: "input",
+      inputType: "text",
+      formKey: "firstName",
+      placeHolder: "Saisir le prénom"
+    },
+    {
+      label: "Email",
+      type: "input",
+      inputType: "text",
+      formKey: "email",
+      placeHolder: "Saisir l'Email"
+    }
+  ],
+  key: "identity",
+  style: "mixte"
+};
+
 export const studentInformationBaccalaureate: FormItemComponentType = {
   value: [
     {
@@ -78,11 +113,11 @@ export const studentInformationBaccalaureate: FormItemComponentType = {
       placeHolder: "Centre d'examen"
     },
     {
-      label: "Téléphone",
+      label: "Année du baccalauréat",
       type: "input",
-      inputType: "text",
-      formKey: "phoneNumber",
-      placeHolder: "Numéro de téléphone"
+      inputType: "date",
+      formKey: "baccalaureateYear",
+      placeHolder: "Année du baccalauréat"
     }
   ],
   key: "baccalaureate",
@@ -114,12 +149,13 @@ export const studentInformationSocial: FormItemComponentType = {
       ],
       placeHolder: "Célibataire / Marié(e) ..."
     },
+
     {
-      label: "Profession",
+      label: "Téléphone",
       type: "input",
       inputType: "text",
-      formKey: "job",
-      placeHolder: "Profession actuelle"
+      formKey: "phoneNumber",
+      placeHolder: "Numéro de téléphone"
     }
   ],
   key: "social",

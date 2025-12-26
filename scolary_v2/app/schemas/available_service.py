@@ -31,7 +31,7 @@ class AvailableService(AvailableServiceInDBBase):
 
 
 class AvailableServiceWithRelation(AvailableServiceInDBBase):
-    available_service_required_document: Optional[Any]
+    available_service_required_document: Optional[Any] = None
 
 
 class AvailableServiceInDB(AvailableServiceInDBBase):

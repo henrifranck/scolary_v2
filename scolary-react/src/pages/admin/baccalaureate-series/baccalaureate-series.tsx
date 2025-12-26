@@ -26,63 +26,52 @@ import {
 import { cn } from "../../../lib/utils";
 import { useAvailableModels } from "../../../services/available-model-service";
 import {
-  useCreatePermission,
-  useDeletePermission,
-  usePermissions,
-  useUpdatePermission
-} from "../../../services/permission-service";
+  useCreateBaccalaureateSerie,
+  useDeleteBaccalaureateSerie,
+  useBaccalaureateSeries,
+  useUpdateBaccalaureateSerie
+} from "../../../services/baccalaureate-series-service";
 import { ActionButton } from "@/components/action-button";
-import { Permission, PermissionPayload } from "@/models/permission";
+import {
+  BaccalaureateSerie,
+  BaccalaureateSeriePayload
+} from "@/models/baccalaureate-series";
 
-type PermissionFormValues = {
+type BaccalaureateSerieFormValues = {
   name: string;
-  model_name: string;
-  method_post: boolean;
-  method_get: boolean;
-  method_put: boolean;
-  method_delete: boolean;
+  value: string;
 };
 
-const defaultFormValues: PermissionFormValues = {
+const defaultFormValues: BaccalaureateSerieFormValues = {
   name: "",
-  model_name: "",
-  method_post: false,
-  method_get: false,
-  method_put: false,
-  method_delete: false
+  value: ""
 };
 
 const toFormValues = (
-  permission?: Permission | null
-): PermissionFormValues => ({
-  name: permission?.name ?? "",
-  model_name: permission?.model_name ?? "",
-  method_post: Boolean(permission?.method_post),
-  method_get: Boolean(permission?.method_get),
-  method_put: Boolean(permission?.method_put),
-  method_delete: Boolean(permission?.method_delete)
+  baccalaureateSerie?: BaccalaureateSerie | null
+): BaccalaureateSerieFormValues => ({
+  name: baccalaureateSerie?.name ?? "",
+  value: baccalaureateSerie?.value ?? ""
 });
 
-const toPayload = (values: PermissionFormValues): PermissionPayload => ({
+const toPayload = (
+  values: BaccalaureateSerieFormValues
+): BaccalaureateSeriePayload => ({
   name: values.name.trim(),
-  model_name: values.model_name.trim(),
-  method_post: values.method_post,
-  method_get: values.method_get,
-  method_put: values.method_put,
-  method_delete: values.method_delete
+  value: values.value.trim()
 });
 
-interface PermissionFormProps {
+interface BaccalaureateSerieFormProps {
   mode: "create" | "edit";
-  initialValues?: PermissionFormValues;
+  initialValues?: BaccalaureateSerieFormValues;
   availableModels: Array<{ id: string; name: string }>;
   isModelsLoading: boolean;
   isSubmitting: boolean;
-  onSubmit: (values: PermissionFormValues) => Promise<void>;
+  onSubmit: (values: BaccalaureateSerieFormValues) => Promise<void>;
   onCancel: () => void;
 }
 
-const PermissionForm = ({
+const BaccalaureateSerieForm = ({
   mode,
   initialValues,
   availableModels,
@@ -90,7 +79,7 @@ const PermissionForm = ({
   onSubmit,
   onCancel,
   isSubmitting
-}: PermissionFormProps) => {
+}: BaccalaureateSerieFormProps) => {
   const {
     register,
     handleSubmit,
@@ -98,15 +87,13 @@ const PermissionForm = ({
     reset,
     setValue,
     watch
-  } = useForm<PermissionFormValues>({
+  } = useForm<BaccalaureateSerieFormValues>({
     defaultValues: initialValues ?? defaultFormValues
   });
 
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
   }, [initialValues, reset]);
-
-  const selectedModel = watch("model_name");
 
   const methodOptions = [
     { key: "method_get", label: "Lire" },
@@ -118,11 +105,14 @@ const PermissionForm = ({
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="permission-name">
+        <label
+          className="text-sm font-medium"
+          htmlFor="baccalaureate-serie-name"
+        >
           Name
         </label>
         <Input
-          id="permission-name"
+          id="baccalaureate-serie-name"
           placeholder="e.g. Manage Users"
           className={cn(errors.name && "border-destructive text-destructive")}
           {...register("name", { required: "Name is required" })}
@@ -131,58 +121,23 @@ const PermissionForm = ({
           <p className="text-xs text-destructive">{errors.name.message}</p>
         ) : null}
       </div>
+
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="permission-model">
-          Model name
-        </label>
-        <input
-          type="hidden"
-          {...register("model_name", { required: "Model name is required" })}
-        />
-        <Select
-          value={selectedModel}
-          onValueChange={(value) =>
-            setValue("model_name", value, { shouldDirty: true })
-          }
-          disabled={isModelsLoading || availableModels.length === 0}
+        <label
+          className="text-sm font-medium"
+          htmlFor="baccalaureate-serie-name"
         >
-          <SelectTrigger id="permission-model">
-            <SelectValue
-              placeholder={
-                isModelsLoading ? "Loading models…" : "Select a model"
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {availableModels.map((model) => (
-              <SelectItem key={model.id} value={model.name}>
-                {model.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.model_name ? (
-          <p className="text-xs text-destructive">
-            {errors.model_name.message}
-          </p>
+          Value
+        </label>
+        <Input
+          id="baccalaureate-serie-name"
+          placeholder="Serie A"
+          className={cn(errors.value && "border-destructive text-destructive")}
+          {...register("value", { required: "Value is required" })}
+        />
+        {errors.value ? (
+          <p className="text-xs text-destructive">{errors.value.message}</p>
         ) : null}
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Methods</label>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {methodOptions.map((option) => {
-            const inputId = `permission-${option.key}`;
-            return (
-              <label
-                key={option.key}
-                className="flex items-center gap-2 text-sm"
-              >
-                <input id={inputId} type="checkbox" {...register(option.key)} />
-                {option.label}
-              </label>
-            );
-          })}
-        </div>
       </div>
       <div className="flex items-center justify-end gap-2">
         <Button
@@ -198,7 +153,7 @@ const PermissionForm = ({
             ? "Saving…"
             : mode === "edit"
               ? "Save changes"
-              : "Create permission"}
+              : "Create baccalaureate-serie"}
         </Button>
       </div>
     </form>
@@ -207,29 +162,29 @@ const PermissionForm = ({
 
 type Feedback = { type: "success" | "error"; text: string };
 
-export const PermissionsPage = () => {
+export const BaccalaureateSeriesPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPermission, setEditingPermission] = useState<Permission | null>(
-    null
-  );
+  const [editingBaccalaureateSerie, setEditingBaccalaureateSerie] =
+    useState<BaccalaureateSerie | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [permissionToDelete, setPermissionToDelete] =
-    useState<Permission | null>(null);
+  const [baccalaureateSerieToDelete, setBaccalaureateSerieToDelete] =
+    useState<BaccalaureateSerie | null>(null);
 
   const offset = (page - 1) * pageSize;
   const {
-    data: permissionsResponse,
+    data: baccalaureateSeriesResponse,
     isPending,
     isError,
     error
-  } = usePermissions({ offset, limit: pageSize });
-  const permissions = permissionsResponse?.data ?? [];
-  const totalPermissions = permissionsResponse?.count ?? permissions.length;
-  const createPermission = useCreatePermission();
-  const updatePermission = useUpdatePermission();
-  const deletePermission = useDeletePermission();
+  } = useBaccalaureateSeries({ offset, limit: pageSize });
+  const baccalaureateSeries = baccalaureateSeriesResponse?.data ?? [];
+  const totalBaccalaureateSeries =
+    baccalaureateSeriesResponse?.count ?? baccalaureateSeries.length;
+  const createBaccalaureateSerie = useCreateBaccalaureateSerie();
+  const updateBaccalaureateSerie = useUpdateBaccalaureateSerie();
+  const deleteBaccalaureateSerie = useDeleteBaccalaureateSerie();
   const { data: availableModelsResponse, isPending: areModelsLoading } =
     useAvailableModels({ limit: 1000 });
   const availableModels = useMemo(
@@ -242,38 +197,38 @@ export const PermissionsPage = () => {
   );
 
   const openCreateForm = useCallback(() => {
-    setEditingPermission(null);
+    setEditingBaccalaureateSerie(null);
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((permission: Permission) => {
-    setEditingPermission(permission);
+  const handleEdit = useCallback((baccalaureateSerie: BaccalaureateSerie) => {
+    setEditingBaccalaureateSerie(baccalaureateSerie);
     setIsFormOpen(true);
   }, []);
 
   const closeForm = useCallback(() => {
-    setEditingPermission(null);
+    setEditingBaccalaureateSerie(null);
     setIsFormOpen(false);
   }, []);
 
   const handleSubmit = useCallback(
-    async (values: PermissionFormValues) => {
+    async (values: BaccalaureateSerieFormValues) => {
       const payload = toPayload(values);
       try {
-        if (editingPermission) {
-          await updatePermission.mutateAsync({
-            id: editingPermission.id,
+        if (editingBaccalaureateSerie) {
+          await updateBaccalaureateSerie.mutateAsync({
+            id: editingBaccalaureateSerie.id,
             payload
           });
           setFeedback({
             type: "success",
-            text: "Permission updated successfully."
+            text: "BaccalaureateSerie updated successfully."
           });
         } else {
-          await createPermission.mutateAsync(payload);
+          await createBaccalaureateSerie.mutateAsync(payload);
           setFeedback({
             type: "success",
-            text: "Permission created successfully."
+            text: "BaccalaureateSerie created successfully."
           });
         }
         closeForm();
@@ -281,33 +236,38 @@ export const PermissionsPage = () => {
         const message =
           mutationError instanceof Error
             ? mutationError.message
-            : "Unable to save permission.";
+            : "Unable to save baccalaureate-serie.";
         setFeedback({ type: "error", text: message });
       }
     },
-    [closeForm, createPermission, editingPermission, updatePermission]
+    [
+      closeForm,
+      createBaccalaureateSerie,
+      editingBaccalaureateSerie,
+      updateBaccalaureateSerie
+    ]
   );
 
   const handleDelete = useCallback(async () => {
-    if (!permissionToDelete) {
+    if (!baccalaureateSerieToDelete) {
       return;
     }
     try {
-      await deletePermission.mutateAsync(permissionToDelete.id);
+      await deleteBaccalaureateSerie.mutateAsync(baccalaureateSerieToDelete.id);
       setFeedback({
         type: "success",
-        text: "Permission deleted successfully."
+        text: "BaccalaureateSerie deleted successfully."
       });
     } catch (mutationError) {
       const message =
         mutationError instanceof Error
           ? mutationError.message
-          : "Unable to delete permission.";
+          : "Unable to delete baccalaureate-serie.";
       setFeedback({ type: "error", text: message });
     } finally {
-      setPermissionToDelete(null);
+      setBaccalaureateSerieToDelete(null);
     }
-  }, [deletePermission, permissionToDelete]);
+  }, [deleteBaccalaureateSerie, baccalaureateSerieToDelete]);
 
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -318,76 +278,34 @@ export const PermissionsPage = () => {
     setPage(1);
   }, []);
 
-  const columns = useMemo<ColumnDef<Permission>[]>(() => {
+  const columns = useMemo<ColumnDef<BaccalaureateSerie>[]>(() => {
     return [
       {
         accessorKey: "name",
-        header: "Permission",
+        header: "BaccalaureateSerie",
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{row.original.name}</span>
-            <span className="text-xs text-muted-foreground">
-              {row.original.model_name}
-            </span>
           </div>
         )
       },
       {
-        accessorKey: "model_name",
-        header: "Model",
+        accessorKey: "value",
+        header: "Value",
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.model_name}
+            {row.original.value}
           </span>
         )
       },
-      {
-        id: "methods",
-        header: "Methods",
-        cell: ({ row }) => (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={Boolean(row.original.method_get)}
-                readOnly
-              />
-              Lire
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={Boolean(row.original.method_post)}
-                readOnly
-              />
-              Créer
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={Boolean(row.original.method_put)}
-                readOnly
-              />
-              Modifier
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={Boolean(row.original.method_delete)}
-                readOnly
-              />
-              Supprimer
-            </label>
-          </div>
-        )
-      },
+
       {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
           <ActionButton
             row={row}
-            setConfirmDelete={setPermissionToDelete}
+            setConfirmDelete={setBaccalaureateSerieToDelete}
             handleEdit={handleEdit}
           />
         )
@@ -395,19 +313,22 @@ export const PermissionsPage = () => {
     ];
   }, [handleEdit]);
 
-  const isSubmitting = createPermission.isPending || updatePermission.isPending;
+  const isSubmitting =
+    createBaccalaureateSerie.isPending || updateBaccalaureateSerie.isPending;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Permissions</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            BaccalaureateSeries
+          </h1>
           <p className="text-sm text-muted-foreground">
             Control which roles can access each API resource.
           </p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
-          Add permission
+          Add baccalaureate-serie
         </Button>
       </div>
 
@@ -435,24 +356,26 @@ export const PermissionsPage = () => {
         onOpenChange={(open) => {
           setIsFormOpen(open);
           if (!open) {
-            setEditingPermission(null);
+            setEditingBaccalaureateSerie(null);
           }
         }}
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingPermission ? "Edit permission" : "Create new permission"}
+              {editingBaccalaureateSerie
+                ? "Edit baccalaureate-serie"
+                : "Create new baccalaureate-serie"}
             </DialogTitle>
             <DialogDescription>
-              {editingPermission
-                ? "Update the permission to align access rules."
-                : "Define a permission that can be associated with roles."}
+              {editingBaccalaureateSerie
+                ? "Update the baccalaureate-serie to align access rules."
+                : "Define a baccalaureate-serie that can be associated with roles."}
             </DialogDescription>
           </DialogHeader>
-          <PermissionForm
-            mode={editingPermission ? "edit" : "create"}
-            initialValues={toFormValues(editingPermission)}
+          <BaccalaureateSerieForm
+            mode={editingBaccalaureateSerie ? "edit" : "create"}
+            initialValues={toFormValues(editingBaccalaureateSerie)}
             availableModels={availableModels}
             isModelsLoading={areModelsLoading}
             onSubmit={handleSubmit}
@@ -463,35 +386,35 @@ export const PermissionsPage = () => {
       </Dialog>
 
       <ConfirmDialog
-        open={Boolean(permissionToDelete)}
-        title="Delete permission"
+        open={Boolean(baccalaureateSerieToDelete)}
+        title="Delete baccalaureate-serie"
         description={
-          permissionToDelete ? (
+          baccalaureateSerieToDelete ? (
             <>
               Are you sure you want to delete{" "}
-              <strong>{permissionToDelete.name}</strong>? This action cannot be
-              undone.
+              <strong>{baccalaureateSerieToDelete.name}</strong>? This action
+              cannot be undone.
             </>
           ) : null
         }
         confirmLabel="Delete"
         destructive
-        isConfirming={deletePermission.isPending}
-        onCancel={() => setPermissionToDelete(null)}
+        isConfirming={deleteBaccalaureateSerie.isPending}
+        onCancel={() => setBaccalaureateSerieToDelete(null)}
         onConfirm={handleDelete}
       />
 
       <DataTable
         columns={columns}
-        data={permissions}
+        data={baccalaureateSeries}
         isLoading={isPending}
-        searchPlaceholder="Search permissions"
+        searchPlaceholder="Search baccalaureate-series"
         emptyText={
           isError
-            ? (error?.message ?? "Unable to load permissions")
-            : "No permissions found"
+            ? (error?.message ?? "Unable to load baccalaureate-series")
+            : "No baccalaureate-series found"
         }
-        totalItems={totalPermissions}
+        totalItems={totalBaccalaureateSeries}
         page={page}
         pageSize={pageSize}
         onPageChange={handlePageChange}

@@ -13,7 +13,13 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   type EnrollmentFee,
@@ -25,6 +31,8 @@ import {
 } from "@/services/enrollment-fee-service";
 import { useAcademicYears } from "@/services/academic-year-service";
 import { useMentions } from "@/services/mention-service";
+import { ActionButton } from "@/components/action-button";
+import { Mention, MentionOption } from "@/models/mentions";
 
 type EnrollmentFeeFormValues = {
   level: string;
@@ -47,7 +55,9 @@ const defaultFormValues: EnrollmentFeeFormValues = {
 const toFormValues = (fee?: EnrollmentFee | null): EnrollmentFeeFormValues => ({
   level: fee?.level ?? "",
   price: fee?.price != null ? String(fee.price) : "",
-  id_academic_year: fee?.id_academic_year ? String(fee.id_academic_year) : NONE_VALUE,
+  id_academic_year: fee?.id_academic_year
+    ? String(fee.id_academic_year)
+    : NONE_VALUE,
   id_mention: fee?.id_mention ? String(fee.id_mention) : NONE_VALUE
 });
 
@@ -59,7 +69,9 @@ const toPayload = (values: EnrollmentFeeFormValues): EnrollmentFeePayload => ({
       ? Number(values.id_academic_year)
       : undefined,
   id_mention:
-    values.id_mention && values.id_mention !== NONE_VALUE ? Number(values.id_mention) : undefined
+    values.id_mention && values.id_mention !== NONE_VALUE
+      ? Number(values.id_mention)
+      : undefined
 });
 
 interface EnrollmentFeeFormProps {
@@ -108,10 +120,15 @@ const EnrollmentFeeForm = ({
           <Select
             defaultValue={initialValues?.level || undefined}
             onValueChange={(value) =>
-              reset((prev) => ({ ...prev, level: value }), { keepDefaultValues: false })
+              reset((prev) => ({ ...prev, level: value }), {
+                keepDefaultValues: false
+              })
             }
           >
-            <SelectTrigger id="enrollment-fee-level" className={cn(errors.level && "border-destructive")}>
+            <SelectTrigger
+              id="enrollment-fee-level"
+              className={cn(errors.level && "border-destructive")}
+            >
               <SelectValue placeholder="Select a level" />
             </SelectTrigger>
             <SelectContent>
@@ -122,7 +139,9 @@ const EnrollmentFeeForm = ({
               ))}
             </SelectContent>
           </Select>
-          {errors.level ? <p className="text-xs text-destructive">{errors.level.message}</p> : null}
+          {errors.level ? (
+            <p className="text-xs text-destructive">{errors.level.message}</p>
+          ) : null}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="enrollment-fee-price">
@@ -133,10 +152,14 @@ const EnrollmentFeeForm = ({
             type="number"
             step="0.01"
             placeholder="0.00"
-            className={cn(errors.price && "border-destructive text-destructive")}
+            className={cn(
+              errors.price && "border-destructive text-destructive"
+            )}
             {...register("price", { required: "Price is required" })}
           />
-          {errors.price ? <p className="text-xs text-destructive">{errors.price.message}</p> : null}
+          {errors.price ? (
+            <p className="text-xs text-destructive">{errors.price.message}</p>
+          ) : null}
         </div>
       </div>
 
@@ -147,12 +170,15 @@ const EnrollmentFeeForm = ({
           </label>
           <Select
             defaultValue={
-              initialValues?.id_academic_year && initialValues.id_academic_year !== NONE_VALUE
+              initialValues?.id_academic_year &&
+              initialValues.id_academic_year !== NONE_VALUE
                 ? initialValues.id_academic_year
                 : undefined
             }
             onValueChange={(value) =>
-              reset((prev) => ({ ...prev, id_academic_year: value }), { keepDefaultValues: false })
+              reset((prev) => ({ ...prev, id_academic_year: value }), {
+                keepDefaultValues: false
+              })
             }
           >
             <SelectTrigger id="enrollment-fee-year">
@@ -169,17 +195,23 @@ const EnrollmentFeeForm = ({
           </Select>
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="enrollment-fee-mention">
+          <label
+            className="text-sm font-medium"
+            htmlFor="enrollment-fee-mention"
+          >
             Mention
           </label>
           <Select
             defaultValue={
-              initialValues?.id_mention && initialValues.id_mention !== NONE_VALUE
+              initialValues?.id_mention &&
+              initialValues.id_mention !== NONE_VALUE
                 ? initialValues.id_mention
                 : undefined
             }
             onValueChange={(value) =>
-              reset((prev) => ({ ...prev, id_mention: value }), { keepDefaultValues: false })
+              reset((prev) => ({ ...prev, id_mention: value }), {
+                keepDefaultValues: false
+              })
             }
           >
             <SelectTrigger id="enrollment-fee-mention">
@@ -198,11 +230,20 @@ const EnrollmentFeeForm = ({
       </div>
 
       <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving…" : mode === "edit" ? "Save changes" : "Create fee"}
+          {isSubmitting
+            ? "Saving…"
+            : mode === "edit"
+              ? "Save changes"
+              : "Create fee"}
         </Button>
       </div>
     </form>
@@ -221,37 +262,69 @@ export const EnrollmentFeesPage = () => {
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedMention, setSelectedMention] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
+  const [isMigrating, setIsMigrating] = useState(false);
 
   const offset = (page - 1) * pageSize;
-  const { data: feesResponse, isPending, isError, error } = useEnrollmentFees({
+  const {
+    data: feesResponse,
+    isPending,
+    isError,
+    error
+  } = useEnrollmentFees({
     offset,
     limit: pageSize,
-    relation: JSON.stringify(["mention{id,name,abbreviation}", "academinc_year{id,name}"]),
+    relation: JSON.stringify([
+      "mention{id,name,abbreviation}",
+      "academinc_year{id,name}"
+    ]),
     where: JSON.stringify([
       ...(selectedLevel !== "all"
         ? [{ key: "level", operator: "==", value: selectedLevel }]
         : []),
       ...(selectedYear !== "all"
-        ? [{ key: "id_academic_year", operator: "==", value: Number(selectedYear) }]
+        ? [
+            {
+              key: "id_academic_year",
+              operator: "==",
+              value: Number(selectedYear)
+            }
+          ]
         : []),
       ...(selectedMention !== "all"
-        ? [{ key: "id_mention", operator: "==", value: Number(selectedMention) }]
+        ? [
+            {
+              key: "id_mention",
+              operator: "==",
+              value: Number(selectedMention)
+            }
+          ]
         : [])
+    ])
+  });
+  const { data: allFeesResponse } = useEnrollmentFees({
+    limit: 5000,
+    relation: JSON.stringify([
+      "mention{id,name,abbreviation}",
+      "academinc_year{id,name}"
     ])
   });
   const { data: yearResponse } = useAcademicYears({ limit: 200 });
   const { data: mentionResponse } = useMentions({ limit: 200 });
 
   const academicYearOptions =
-    yearResponse?.data?.map((year) => ({ id: String(year.id), label: year.name ?? `Year ${year.id}` })) ?? [];
+    yearResponse?.data?.map((year) => ({
+      id: String(year.id),
+      label: year.name ?? `Year ${year.id}`
+    })) ?? [];
   const mentionOptions =
-    mentionResponse?.data?.map((mention) => ({
+    mentionResponse?.data?.map((mention: Mention) => ({
       id: String(mention.id),
       label: mention.name ?? mention.abbreviation ?? `Mention ${mention.id}`
     })) ?? [];
 
   const fees = feesResponse?.data ?? [];
   const totalFees = feesResponse?.count ?? fees.length;
+  const allFees = allFeesResponse?.data ?? [];
 
   const createFee = useCreateEnrollmentFee();
   const updateFee = useUpdateEnrollmentFee();
@@ -278,15 +351,23 @@ export const EnrollmentFeesPage = () => {
       try {
         if (editingFee) {
           await updateFee.mutateAsync({ id: editingFee.id, payload });
-          setFeedback({ type: "success", text: "Enrollment fee updated successfully." });
+          setFeedback({
+            type: "success",
+            text: "Enrollment fee updated successfully."
+          });
         } else {
           await createFee.mutateAsync(payload);
-          setFeedback({ type: "success", text: "Enrollment fee created successfully." });
+          setFeedback({
+            type: "success",
+            text: "Enrollment fee created successfully."
+          });
         }
         closeForm();
       } catch (mutationError) {
         const message =
-          mutationError instanceof Error ? mutationError.message : "Unable to save the enrollment fee.";
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Unable to save the enrollment fee.";
         setFeedback({ type: "error", text: message });
       }
     },
@@ -299,10 +380,15 @@ export const EnrollmentFeesPage = () => {
     }
     try {
       await deleteFee.mutateAsync(feeToDelete.id);
-      setFeedback({ type: "success", text: "Enrollment fee deleted successfully." });
+      setFeedback({
+        type: "success",
+        text: "Enrollment fee deleted successfully."
+      });
     } catch (mutationError) {
       const message =
-        mutationError instanceof Error ? mutationError.message : "Unable to delete the enrollment fee.";
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete the enrollment fee.";
       setFeedback({ type: "error", text: message });
     } finally {
       setFeeToDelete(null);
@@ -333,6 +419,31 @@ export const EnrollmentFeesPage = () => {
     setPage(1);
   }, []);
 
+  const feesByYear = useMemo(() => {
+    const map = new Map<string, number>();
+    allFees.forEach((fee) => {
+      const key = fee.id_academic_year ? String(fee.id_academic_year) : "none";
+      map.set(key, (map.get(key) ?? 0) + 1);
+    });
+    return map;
+  }, [allFees]);
+
+  const lastYearWithData = useMemo(() => {
+    const years = [...(yearResponse?.data ?? [])].sort(
+      (a, b) => (b.id ?? 0) - (a.id ?? 0)
+    );
+    return years.find(
+      (year) =>
+        String(year.id) !== selectedYear &&
+        (feesByYear.get(String(year.id)) ?? 0) > 0
+    );
+  }, [feesByYear, yearResponse?.data, selectedYear]);
+
+  const canMigrateFromLastYear =
+    selectedYear !== "all" &&
+    (feesResponse?.count ?? 0) === 0 &&
+    lastYearWithData;
+
   const columns = useMemo<ColumnDef<EnrollmentFee>[]>(() => {
     return [
       {
@@ -342,14 +453,20 @@ export const EnrollmentFeesPage = () => {
       {
         accessorKey: "price",
         header: "Price",
-        cell: ({ row }) => Intl.NumberFormat("fr-FR", { style: "currency", currency: "MGA" }).format(row.original.price)
+        cell: ({ row }) =>
+          Intl.NumberFormat("fr-FR", {
+            style: "currency",
+            currency: "MGA"
+          }).format(row.original.price)
       },
       {
         id: "academic_year",
         header: "Academic year",
         cell: ({ row }) =>
           row.original.academinc_year?.name ??
-          academicYearOptions.find((y) => y.id === String(row.original.id_academic_year))?.label ??
+          academicYearOptions.find(
+            (y) => y.id === String(row.original.id_academic_year)
+          )?.label ??
           "—"
       },
       {
@@ -357,27 +474,20 @@ export const EnrollmentFeesPage = () => {
         header: "Mention",
         cell: ({ row }) =>
           row.original.mention?.name ??
-          mentionOptions.find((m) => m.id === String(row.original.id_mention))?.label ??
+          mentionOptions.find(
+            (m: Mention) => m.id === String(row.original.id_mention)
+          )?.label ??
           "—"
       },
       {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleEdit(row.original)}>
-              <Pencil className="mr-1 h-4 w-4" />
-              Edit
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setFeeToDelete(row.original)}
-            >
-              <Trash2 className="mr-1 h-4 w-4" />
-              Delete
-            </Button>
-          </div>
+          <ActionButton
+            row={row}
+            setConfirmDelete={setFeeToDelete}
+            handleEdit={handleEdit}
+          />
         )
       }
     ];
@@ -385,13 +495,55 @@ export const EnrollmentFeesPage = () => {
 
   const isSubmitting = createFee.isPending || updateFee.isPending;
 
+  const handleMigrateFromLastYear = useCallback(async () => {
+    if (!lastYearWithData || selectedYear === "all") {
+      return;
+    }
+    const sourceFees = allFees.filter(
+      (fee) =>
+        String(fee.id_academic_year ?? "") === String(lastYearWithData.id)
+    );
+    if (!sourceFees.length) {
+      setFeedback({
+        type: "error",
+        text: "Aucune donnée à migrer depuis l'année précédente."
+      });
+      return;
+    }
+    setIsMigrating(true);
+    try {
+      for (const fee of sourceFees) {
+        await createFee.mutateAsync({
+          level: fee.level,
+          price: fee.price,
+          id_academic_year: Number(selectedYear),
+          id_mention: fee.id_mention ?? undefined
+        });
+      }
+      setFeedback({
+        type: "success",
+        text: `Migration effectuée depuis ${lastYearWithData.name}.`
+      });
+    } catch (migrationError) {
+      const message =
+        migrationError instanceof Error
+          ? migrationError.message
+          : "Migration échouée.";
+      setFeedback({ type: "error", text: message });
+    } finally {
+      setIsMigrating(false);
+    }
+  }, [allFees, createFee, lastYearWithData, selectedYear]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-2">
           <Banknote className="h-5 w-5 text-muted-foreground" />
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Enrollment fees</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Enrollment fees
+            </h1>
             <p className="text-sm text-muted-foreground">
               Manage tuition fees by level, mention and academic year.
             </p>
@@ -404,7 +556,9 @@ export const EnrollmentFeesPage = () => {
 
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Filter by level</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            Filter by level
+          </label>
           <Select value={selectedLevel} onValueChange={handleLevelFilterChange}>
             <SelectTrigger className="h-10">
               <SelectValue placeholder="All levels" />
@@ -420,7 +574,9 @@ export const EnrollmentFeesPage = () => {
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Filter by academic year</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            Filter by academic year
+          </label>
           <Select value={selectedYear} onValueChange={handleYearFilterChange}>
             <SelectTrigger className="h-10">
               <SelectValue placeholder="All years" />
@@ -436,14 +592,19 @@ export const EnrollmentFeesPage = () => {
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Filter by mention</label>
-          <Select value={selectedMention} onValueChange={handleMentionFilterChange}>
+          <label className="text-sm font-medium text-muted-foreground">
+            Filter by mention
+          </label>
+          <Select
+            value={selectedMention}
+            onValueChange={handleMentionFilterChange}
+          >
             <SelectTrigger className="h-10">
               <SelectValue placeholder="All mentions" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {mentionOptions.map((mention) => (
+              {mentionOptions.map((mention: MentionOption) => (
                 <SelectItem key={mention.id} value={mention.id}>
                   {mention.label}
                 </SelectItem>
@@ -452,6 +613,31 @@ export const EnrollmentFeesPage = () => {
           </Select>
         </div>
       </div>
+
+      {canMigrateFromLastYear && lastYearWithData ? (
+        <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-4 md:flex-row md:items-center md:justify-between">
+          <div className="text-sm">
+            <p className="font-medium">
+              Aucun frais pour{" "}
+              {academicYearOptions.find((y) => y.id === selectedYear)?.label}
+            </p>
+            <p className="text-muted-foreground">
+              Vous pouvez importer les frais depuis {lastYearWithData.name} (
+              {feesByYear.get(String(lastYearWithData.id)) ?? 0}{" "}
+              enregistrements).
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={handleMigrateFromLastYear}
+            disabled={isMigrating || createFee.isPending}
+          >
+            {isMigrating
+              ? "Migration..."
+              : "Migrer depuis l'année " + lastYearWithData.name}
+          </Button>
+        </div>
+      ) : null}
 
       {feedback ? (
         <div
@@ -463,7 +649,10 @@ export const EnrollmentFeesPage = () => {
           )}
         >
           <span>{feedback.text}</span>
-          <button className="text-xs font-medium underline" onClick={() => setFeedback(null)}>
+          <button
+            className="text-xs font-medium underline"
+            onClick={() => setFeedback(null)}
+          >
             Dismiss
           </button>
         </div>
@@ -480,9 +669,12 @@ export const EnrollmentFeesPage = () => {
       >
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>{editingFee ? "Edit enrollment fee" : "Create new enrollment fee"}</DialogTitle>
+            <DialogTitle>
+              {editingFee ? "Edit enrollment fee" : "Create new enrollment fee"}
+            </DialogTitle>
             <DialogDescription>
-              Define the price of enrollment for a given level, mention, and academic year.
+              Define the price of enrollment for a given level, mention, and
+              academic year.
             </DialogDescription>
           </DialogHeader>
           <EnrollmentFeeForm
@@ -520,7 +712,9 @@ export const EnrollmentFeesPage = () => {
         data={fees}
         isLoading={isPending}
         searchPlaceholder="Search fees"
-        emptyText={isError ? error?.message ?? "Unable to load fees" : "No fees found"}
+        emptyText={
+          isError ? (error?.message ?? "Unable to load fees") : "No fees found"
+        }
         totalItems={totalFees}
         page={page}
         pageSize={pageSize}

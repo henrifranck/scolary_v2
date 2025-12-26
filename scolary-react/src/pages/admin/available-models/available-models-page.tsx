@@ -1,20 +1,23 @@
-import { Pencil, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Pencil, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { Button } from '../../../components/ui/button';
-import { DataTable, type ColumnDef } from '../../../components/data-table/data-table';
-import { ConfirmDialog } from '../../../components/confirm-dialog';
-import { Input } from '../../../components/ui/input';
+import { Button } from "../../../components/ui/button";
+import {
+  DataTable,
+  type ColumnDef
+} from "../../../components/data-table/data-table";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { Input } from "../../../components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '../../../components/ui/dialog';
-import { cn } from '../../../lib/utils';
-import { useAuth } from '../../../providers/auth-provider';
+} from "../../../components/ui/dialog";
+import { cn } from "../../../lib/utils";
+import { useAuth } from "../../../providers/auth-provider";
 import {
   type AvailableModel,
   type AvailableModelPayload,
@@ -22,8 +25,9 @@ import {
   useCreateAvailableModel,
   useUpdateAvailableModel,
   useDeleteAvailableModel
-} from '../../../services/available-model-service';
-import { useCurrentUser } from '../../../services/user-service';
+} from "../../../services/available-model-service";
+import { useCurrentUser } from "../../../services/user-service";
+import { ActionButton } from "@/components/action-button";
 
 type AvailableModelFormValues = {
   name: string;
@@ -32,48 +36,51 @@ type AvailableModelFormValues = {
 };
 
 const defaultFormValues: AvailableModelFormValues = {
-  name: '',
-  route_api: '',
-  route_ui: ''
+  name: "",
+  route_api: "",
+  route_ui: ""
 };
 
-const toFormValues = (model?: AvailableModel | null): AvailableModelFormValues => ({
-  name: model?.name ?? '',
-  route_api: model?.route_api ?? '',
-  route_ui: model?.route_ui ?? ''
+const toFormValues = (
+  model?: AvailableModel | null
+): AvailableModelFormValues => ({
+  name: model?.name ?? "",
+  route_api: model?.route_api ?? "",
+  route_ui: model?.route_ui ?? ""
 });
 
-const normalizeRouteKey = (value: string) => value.trim().toLowerCase().replace(/^\/+/, '');
+const normalizeRouteKey = (value: string) =>
+  value.trim().toLowerCase().replace(/^\/+/, "");
 
 const buildRoutes = (name: string) => {
-  const normalized = normalizeRouteKey(name).replace(/\s+/g, '_');
-  const routeApi = normalized ? `/${normalized}` : '';
-  const routeUi = routeApi ? `/${normalized.replace(/_/g, '-')}` : '';
+  const normalized = normalizeRouteKey(name).replace(/\s+/g, "_");
+  const routeApi = normalized ? `/${normalized}` : "";
+  const routeUi = routeApi ? `/${normalized.replace(/_/g, "-")}` : "";
   return { routeApi, routeUi };
 };
 
 const applyNoPrefix = (value: string, hideFromUser: boolean) => {
   const trimmed = value.trim();
   if (!trimmed) {
-    return hideFromUser ? 'no-' : '';
+    return hideFromUser ? "no-" : "";
   }
-  const hasLeadingSlash = trimmed.startsWith('/');
-  const segments = trimmed.replace(/^\/+/, '').split('/');
-  const lastSegment = segments.pop() ?? '';
-  const baseSegment = lastSegment.replace(/^no-/, '');
+  const hasLeadingSlash = trimmed.startsWith("/");
+  const segments = trimmed.replace(/^\/+/, "").split("/");
+  const lastSegment = segments.pop() ?? "";
+  const baseSegment = lastSegment.replace(/^no-/, "");
   const nextSegment = hideFromUser ? `no-${baseSegment}` : baseSegment;
-  const nextPath = [...segments, nextSegment].filter(Boolean).join('/');
-  return `${hasLeadingSlash ? '/' : ''}${nextPath}`;
+  const nextPath = [...segments, nextSegment].filter(Boolean).join("/");
+  return `${hasLeadingSlash ? "/" : ""}${nextPath}`;
 };
 
 const toPayload = (
   values: AvailableModelFormValues,
-  mode: 'create' | 'edit',
+  mode: "create" | "edit",
   initialValues?: AvailableModelFormValues
 ): AvailableModelPayload => {
   const trimmedName = values.name.trim();
-  const normalizedRouteApi = (values.route_api ?? '').trim();
-  const normalizedRouteUi = (values.route_ui ?? '').trim();
+  const normalizedRouteApi = (values.route_api ?? "").trim();
+  const normalizedRouteUi = (values.route_ui ?? "").trim();
   const fallbackRoutes = buildRoutes(trimmedName);
   const routeApi = normalizedRouteApi || fallbackRoutes.routeApi;
   const routeUi = normalizedRouteUi || fallbackRoutes.routeUi;
@@ -85,7 +92,7 @@ const toPayload = (
 };
 
 interface AvailableModelFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialValues?: AvailableModelFormValues;
   isSubmitting: boolean;
   onSubmit: (values: AvailableModelFormValues) => Promise<void>;
@@ -114,23 +121,23 @@ const AvailableModelForm = ({
     reset(initialValues ?? defaultFormValues);
   }, [initialValues, reset]);
 
-  const nameValue = watch('name');
-  const routeApiValue = watch('route_api');
-  const routeUiValue = watch('route_ui');
+  const nameValue = watch("name");
+  const routeApiValue = watch("route_api");
+  const routeUiValue = watch("route_ui");
   const isHiddenFromUser = routeUiValue
-    ? routeUiValue.trim().replace(/^\/+/, '').startsWith('no-')
+    ? routeUiValue.trim().replace(/^\/+/, "").startsWith("no-")
     : false;
 
   useEffect(() => {
-    if (mode !== 'create') {
+    if (mode !== "create") {
       return;
     }
-    const next = buildRoutes(nameValue ?? '');
+    const next = buildRoutes(nameValue ?? "");
     if (!dirtyFields.route_api) {
-      setValue('route_api', next.routeApi, { shouldDirty: false });
+      setValue("route_api", next.routeApi, { shouldDirty: false });
     }
     if (!dirtyFields.route_ui) {
-      setValue('route_ui', next.routeUi, { shouldDirty: false });
+      setValue("route_ui", next.routeUi, { shouldDirty: false });
     }
   }, [dirtyFields.route_api, dirtyFields.route_ui, mode, nameValue, setValue]);
 
@@ -143,40 +150,54 @@ const AvailableModelForm = ({
         <Input
           id="available-model-name"
           placeholder="Student/Re-inscription"
-          className={cn(errors.name && 'border-destructive text-destructive')}
-          {...register('name', { required: 'Name is required' })}
+          className={cn(errors.name && "border-destructive text-destructive")}
+          {...register("name", { required: "Name is required" })}
         />
         <p className="text-xs text-muted-foreground">
           Utilisez le format Parent/Sous-menu pour l'affichage du menu.
         </p>
-        {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
+        {errors.name ? (
+          <p className="text-xs text-destructive">{errors.name.message}</p>
+        ) : null}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="available-model-route-api">
+          <label
+            className="text-sm font-medium"
+            htmlFor="available-model-route-api"
+          >
             Route API
           </label>
           <Input
             id="available-model-route-api"
             value={routeApiValue}
             placeholder="/mentions"
-            className={cn(errors.route_api && 'border-destructive text-destructive')}
-            {...register('route_api', { required: 'Route API is required' })}
+            className={cn(
+              errors.route_api && "border-destructive text-destructive"
+            )}
+            {...register("route_api", { required: "Route API is required" })}
           />
           {errors.route_api ? (
-            <p className="text-xs text-destructive">{errors.route_api.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.route_api.message}
+            </p>
           ) : null}
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="available-model-route-ui">
+          <label
+            className="text-sm font-medium"
+            htmlFor="available-model-route-ui"
+          >
             Route UI
           </label>
           <Input
             id="available-model-route-ui"
             value={routeUiValue}
             placeholder="/admin/mentions"
-            className={cn(errors.route_ui && 'border-destructive text-destructive')}
-            {...register('route_ui', { required: 'Route UI is required' })}
+            className={cn(
+              errors.route_ui && "border-destructive text-destructive"
+            )}
+            {...register("route_ui", { required: "Route UI is required" })}
           />
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <input
@@ -184,8 +205,8 @@ const AvailableModelForm = ({
               checked={isHiddenFromUser}
               onChange={(event) =>
                 setValue(
-                  'route_ui',
-                  applyNoPrefix(routeUiValue ?? '', event.target.checked),
+                  "route_ui",
+                  applyNoPrefix(routeUiValue ?? "", event.target.checked),
                   { shouldDirty: true }
                 )
               }
@@ -193,23 +214,34 @@ const AvailableModelForm = ({
             Masquer ce menu pour l'utilisateur (ajoute le prefixe no-)
           </label>
           {errors.route_ui ? (
-            <p className="text-xs text-destructive">{errors.route_ui.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.route_ui.message}
+            </p>
           ) : null}
         </div>
       </div>
       <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create model'}
+          {isSubmitting
+            ? "Saving…"
+            : mode === "edit"
+              ? "Save changes"
+              : "Create model"}
         </Button>
       </div>
     </form>
   );
 };
 
-type Feedback = { type: 'success' | 'error'; text: string };
+type Feedback = { type: "success" | "error"; text: string };
 
 export const AvailableModelsPage = () => {
   const {
@@ -220,7 +252,9 @@ export const AvailableModelsPage = () => {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [modelToDelete, setModelToDelete] = useState<AvailableModel | null>(null);
+  const [modelToDelete, setModelToDelete] = useState<AvailableModel | null>(
+    null
+  );
 
   const offset = (page - 1) * pageSize;
   const {
@@ -237,7 +271,7 @@ export const AvailableModelsPage = () => {
   const deleteModel = useDeleteAvailableModel();
   const { data: currentUser } = useCurrentUser(Boolean(user));
   const permissionMap = currentUser?.permissions ?? null;
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   const openCreateForm = useCallback(() => {
     setEditingModel(null);
@@ -256,19 +290,26 @@ export const AvailableModelsPage = () => {
 
   const handleSubmit = useCallback(
     async (values: AvailableModelFormValues) => {
-      const payload = toPayload(values, editingModel ? 'edit' : 'create', toFormValues(editingModel));
+      const payload = toPayload(
+        values,
+        editingModel ? "edit" : "create",
+        toFormValues(editingModel)
+      );
       try {
         if (editingModel) {
           await updateModel.mutateAsync({ id: editingModel.id, payload });
-          setFeedback({ type: 'success', text: 'Model updated successfully.' });
+          setFeedback({ type: "success", text: "Model updated successfully." });
         } else {
           await createModel.mutateAsync(payload);
-          setFeedback({ type: 'success', text: 'Model created successfully.' });
+          setFeedback({ type: "success", text: "Model created successfully." });
         }
         closeForm();
       } catch (mutationError) {
-        const message = mutationError instanceof Error ? mutationError.message : 'Unable to save model.';
-        setFeedback({ type: 'error', text: message });
+        const message =
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Unable to save model.";
+        setFeedback({ type: "error", text: message });
       }
     },
     [closeForm, createModel, editingModel, updateModel]
@@ -280,10 +321,13 @@ export const AvailableModelsPage = () => {
     }
     try {
       await deleteModel.mutateAsync(modelToDelete.id);
-      setFeedback({ type: 'success', text: 'Model deleted successfully.' });
+      setFeedback({ type: "success", text: "Model deleted successfully." });
     } catch (mutationError) {
-      const message = mutationError instanceof Error ? mutationError.message : 'Unable to delete model.';
-      setFeedback({ type: 'error', text: message });
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete model.";
+      setFeedback({ type: "error", text: message });
     } finally {
       setModelToDelete(null);
     }
@@ -315,44 +359,36 @@ export const AvailableModelsPage = () => {
   const columns = useMemo<ColumnDef<AvailableModel>[]>(() => {
     return [
       {
-        accessorKey: 'name',
-        header: 'Menu'
+        accessorKey: "name",
+        header: "Menu"
       },
       {
-        accessorKey: 'route_api',
-        header: 'Route API',
-        cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.route_api}</span>
-      },
-      {
-        accessorKey: 'route_ui',
-        header: 'Route UI',
-        cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.route_ui}</span>
-      },
-      {
-        id: 'actions',
-        header: 'Actions',
+        accessorKey: "route_api",
+        header: "Route API",
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleEdit(row.original)}
-              disabled={!canUpdate}
-              aria-label="Editer"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setModelToDelete(row.original)}
-              disabled={!canDelete}
-              aria-label="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <span className="text-sm text-muted-foreground">
+            {row.original.route_api}
+          </span>
+        )
+      },
+      {
+        accessorKey: "route_ui",
+        header: "Route UI",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.route_ui}
+          </span>
+        )
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <ActionButton
+            row={row}
+            setConfirmDelete={setModelToDelete}
+            handleEdit={handleEdit}
+          />
         )
       }
     ];
@@ -364,8 +400,12 @@ export const AvailableModelsPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Available models</h1>
-          <p className="text-sm text-muted-foreground">Manage model names for permission scoping.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Available models
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage model names for permission scoping.
+          </p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
           Add model
@@ -375,14 +415,17 @@ export const AvailableModelsPage = () => {
       {feedback ? (
         <div
           className={cn(
-            'flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm',
-            feedback.type === 'success'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
+            "flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm",
+            feedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-destructive/30 bg-destructive/10 text-destructive"
           )}
         >
           <span>{feedback.text}</span>
-          <button className="text-xs font-medium underline" onClick={() => setFeedback(null)}>
+          <button
+            className="text-xs font-medium underline"
+            onClick={() => setFeedback(null)}
+          >
             Dismiss
           </button>
         </div>
@@ -399,13 +442,17 @@ export const AvailableModelsPage = () => {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingModel ? 'Edit model' : 'Create new model'}</DialogTitle>
+            <DialogTitle>
+              {editingModel ? "Edit model" : "Create new model"}
+            </DialogTitle>
             <DialogDescription>
-              {editingModel ? 'Update the available model.' : 'Add a model that can be used in permissions.'}
+              {editingModel
+                ? "Update the available model."
+                : "Add a model that can be used in permissions."}
             </DialogDescription>
           </DialogHeader>
           <AvailableModelForm
-            mode={editingModel ? 'edit' : 'create'}
+            mode={editingModel ? "edit" : "create"}
             initialValues={toFormValues(editingModel)}
             onSubmit={handleSubmit}
             onCancel={closeForm}
@@ -420,7 +467,9 @@ export const AvailableModelsPage = () => {
         description={
           modelToDelete ? (
             <>
-              Are you sure you want to delete <strong>{modelToDelete.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <strong>{modelToDelete.name}</strong>? This action cannot be
+              undone.
             </>
           ) : null
         }
@@ -436,7 +485,11 @@ export const AvailableModelsPage = () => {
         data={visibleModels}
         isLoading={isPending}
         searchPlaceholder="Search models"
-        emptyText={isError ? error?.message ?? 'Unable to load models' : 'No models found'}
+        emptyText={
+          isError
+            ? (error?.message ?? "Unable to load models")
+            : "No models found"
+        }
         totalItems={visibleModels.length}
         page={page}
         pageSize={pageSize}

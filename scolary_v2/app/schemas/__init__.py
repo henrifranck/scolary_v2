@@ -216,7 +216,17 @@ from .document import (
     DocumentUpdate,
     ResponseDocument,
 )
-from .dashboard import DashboardStats, MentionCount, AcademicYearCount, MentionEnrollment
+from .dashboard import (
+    DashboardStats,
+    MentionCount,
+    AcademicYearCount,
+    MentionEnrollment,
+    AgeBucket,
+    SexCount,
+    MentionSexCount,
+    NationalityCount,
+    RoleCount
+)
 from .enrollment_fee import (
     EnrollmentFee,
     EnrollmentFeeCreate,

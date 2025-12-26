@@ -2,7 +2,7 @@ import { useQuery, type QueryKey } from "@tanstack/react-query";
 
 import { apiRequest } from "./api-client";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
-import { ApiListResponse } from "@/pages/user/reinscription/reinscription-form-type";
+import { ApiListResponse } from "@/pages/user/re-registration/re-registration-form-type";
 import { isListResponse, normalizeList } from "./utils-common";
 import { Mention } from "./mention-service";
 

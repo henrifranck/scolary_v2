@@ -1,23 +1,25 @@
 # begin #
 # ---write your code here--- #
 # end #
-
 from app.db.base_class import Base
-from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_, Integer, cast
-from sqlalchemy.orm import relationship, column_property, aliased
+from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_, Integer, cast, Enum
+from sqlalchemy.orm import relationship, column_property, aliased, deferred
 from sqlalchemy import String, UniqueConstraint
+from app.enum.register_type import RegisterTypeEnum
 
 
 class AnnualRegister(Base):
     __tablename__ = 'annual_register'
     __table_args__ = (
-        UniqueConstraint('num_carte', 'id_academic_year', 
+        UniqueConstraint('num_carte', 'id_academic_year', 'register_type',
                          name='uq_annual_register_student_year'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     num_carte = Column(String(255), ForeignKey('student.num_carte'))
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
+    register_type = Column(Enum(RegisterTypeEnum), default=RegisterTypeEnum.REGISTRATION)
     semester_count = Column(Integer, nullable=False)
+    registration_code = Column(String(100), nullable=True)
     verified_by = Column(Integer, ForeignKey('user.id'))
     verified_at = Column(DateTime)
 

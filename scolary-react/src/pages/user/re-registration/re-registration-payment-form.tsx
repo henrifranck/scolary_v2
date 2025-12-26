@@ -37,22 +37,26 @@ import {
 } from "@/services/document-service";
 import { fetchAvailableServices } from "@/services/available-service";
 import { fetchAvailableServiceRequiredDocuments } from "@/services/available-service-required-document";
-import { RequiredDocument } from "@/services/required-document-service";
 import {
   DocumentEditor,
   DocumentSummary
-} from "./reinscription-payment-document";
+} from "./re-registration-payment-document";
 import {
   RegistrationEditor,
   RegistrationSummary
-} from "./reinscription-payment-registration";
-import { PaymentEditor, PaymentSummary } from "./reinscription-payment-payment";
+} from "./re-registration-payment-registration";
+import {
+  PaymentEditor,
+  PaymentSummary
+} from "./re-registration-payment-payment";
+import { RequiredDocument } from "@/models/required-document";
 
 interface ReinscriptionAnnualFormProps {
   annualRegister: Array<StudentAnnualProps>;
   editingSections: Record<EditableSection, boolean>;
   cardNumber?: string;
   filters?: any;
+  disabledEditing?: boolean;
 }
 
 export const handleFormSubmit = (e: React.FormEvent) => {};
@@ -61,7 +65,8 @@ export const ReinscriptionAnnualRegister = ({
   annualRegister,
   editingSections,
   cardNumber,
-  filters
+  filters,
+  disabledEditing = false
 }: ReinscriptionAnnualFormProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -272,7 +277,10 @@ export const ReinscriptionAnnualRegister = ({
 
     displayAnnualRegisters.forEach((annual) => {
       (annual.document ?? []).forEach((doc) => {
-        if (doc.id_required_document && requiredIds.has(doc.id_required_document)) {
+        if (
+          doc.id_required_document &&
+          requiredIds.has(doc.id_required_document)
+        ) {
           uploadedIds.add(doc.id_required_document);
         }
       });
@@ -295,7 +303,9 @@ export const ReinscriptionAnnualRegister = ({
 
     const statuses = displayAnnualRegisters
       .map((annual) => annual.payment_status as string | undefined)
-      .filter(Boolean) as Array<"none" | "partial" | "complete" | "not_applicable">;
+      .filter(Boolean) as Array<
+      "none" | "partial" | "complete" | "not_applicable"
+    >;
 
     if (!statuses.length) {
       setPaymentStatus("not_applicable");
@@ -1338,7 +1348,7 @@ export const ReinscriptionAnnualRegister = ({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
+    <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[400px] overflow-y-auto">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-foreground">Scolarité</p>
         <Button
@@ -1347,6 +1357,7 @@ export const ReinscriptionAnnualRegister = ({
           size="sm"
           className="h-8 gap-2 px-3"
           onClick={() => setDialogOpen(true)}
+          disabled={disabledEditing}
         >
           {editingSections.school ? (
             <>
@@ -1458,21 +1469,21 @@ export const ReinscriptionAnnualRegister = ({
             ) : null}
             <div className="flex-1 px-6 pb-6 pt-4 space-y-4">
               <Tabs defaultValue="registration" className="space-y-3">
-              <TabsList className="grid w-full grid-cols-3 md:w-auto">
-                <TabsTrigger value="registration">Registration</TabsTrigger>
-                <TabsTrigger value="payment">
-                  <span className="relative inline-flex items-center gap-2">
-                    Payment
-                    {renderPaymentStatusBadge(paymentStatus)}
-                  </span>
-                </TabsTrigger>
-                <TabsTrigger value="document">
-                  <span className="relative inline-flex items-center gap-2">
-                    Document
-                    {renderDocumentStatusBadge(documentStatus)}
-                  </span>
-                </TabsTrigger>
-              </TabsList>
+                <TabsList className="grid w-full grid-cols-3 md:w-auto">
+                  <TabsTrigger value="registration">Registration</TabsTrigger>
+                  <TabsTrigger value="payment">
+                    <span className="relative inline-flex items-center gap-2">
+                      Payment
+                      {renderPaymentStatusBadge(paymentStatus)}
+                    </span>
+                  </TabsTrigger>
+                  <TabsTrigger value="document">
+                    <span className="relative inline-flex items-center gap-2">
+                      Document
+                      {renderDocumentStatusBadge(documentStatus)}
+                    </span>
+                  </TabsTrigger>
+                </TabsList>
                 <TabsContent
                   value="registration"
                   className="space-y-4 max-h-[520px] overflow-y-auto"
@@ -1569,9 +1580,9 @@ export const ReinscriptionAnnualRegister = ({
             </div>
 
             <DialogFooter className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 px-6 py-4 backdrop-blur">
-              <Button type="submit" disabled={formSubmitting}>
+              {/* <Button type="submit" disabled={formSubmitting}>
                 {"Fermer"}
-              </Button>
+              </Button> */}
             </DialogFooter>
           </form>
         </DialogContent>

@@ -1,65 +1,77 @@
-import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryKey
+} from "@tanstack/react-query";
 
-import { apiRequest } from './api-client';
+import { apiRequest } from "./api-client";
+import {
+  RequiredDocument,
+  RequiredDocumentListQuery,
+  RequiredDocumentPayload
+} from "@/models/required-document";
+import { ApiListResponse } from "@/models/shared";
 
-type ApiListResponse<T> = {
-  count?: number;
-  data: T[];
-};
-
-export interface RequiredDocument {
-  id: number;
-  name: string;
-  description: string;
-}
-
-export type RequiredDocumentPayload = Pick<RequiredDocument, 'name' | 'description'>;
-export type RequiredDocumentListQuery = Record<string, string | number | boolean | undefined>;
-
-const requiredDocumentsKey = ['required-documents'] as const;
+const requiredDocumentsKey = ["required-documents"] as const;
 
 const queryKeys = {
   requiredDocuments: (query?: RequiredDocumentListQuery): QueryKey =>
     query ? [...requiredDocumentsKey, query] : requiredDocumentsKey,
-  requiredDocument: (id: number): QueryKey => ['required-document', id]
+  requiredDocument: (id: number): QueryKey => ["required-document", id]
 } as const;
 
 const isListResponse = <T>(payload: unknown): payload is ApiListResponse<T> =>
   Boolean(
     payload &&
-      typeof payload === 'object' &&
-      'data' in (payload as Record<string, unknown>) &&
+      typeof payload === "object" &&
+      "data" in (payload as Record<string, unknown>) &&
       Array.isArray((payload as ApiListResponse<T>).data)
   );
 
-const normalizeList = <T>(payload: ApiListResponse<T> | T[]): { data: T[]; count?: number } =>
+const normalizeList = <T>(
+  payload: ApiListResponse<T> | T[]
+): { data: T[]; count?: number } =>
   isListResponse(payload)
     ? { data: payload.data, count: payload.count }
-    : { data: Array.isArray(payload) ? payload : [], count: Array.isArray(payload) ? payload.length : 0 };
+    : {
+        data: Array.isArray(payload) ? payload : [],
+        count: Array.isArray(payload) ? payload.length : 0
+      };
 
 export const fetchRequiredDocuments = async (
   query?: RequiredDocumentListQuery
 ): Promise<{ data: RequiredDocument[]; count?: number }> =>
-  normalizeList(await apiRequest<ApiListResponse<RequiredDocument> | RequiredDocument[]>('/required_documents/', { query }));
+  normalizeList(
+    await apiRequest<ApiListResponse<RequiredDocument> | RequiredDocument[]>(
+      "/required_documents/",
+      { query }
+    )
+  );
 
 export const fetchRequiredDocument = (id: number): Promise<RequiredDocument> =>
   apiRequest<RequiredDocument>(`/required_documents/${id}/`);
 
-export const createRequiredDocument = (payload: RequiredDocumentPayload): Promise<RequiredDocument> =>
-  apiRequest<RequiredDocument>('/required_documents/', {
-    method: 'POST',
+export const createRequiredDocument = (
+  payload: RequiredDocumentPayload
+): Promise<RequiredDocument> =>
+  apiRequest<RequiredDocument>("/required_documents/", {
+    method: "POST",
     json: payload
   });
 
-export const updateRequiredDocument = (id: number, payload: RequiredDocumentPayload): Promise<RequiredDocument> =>
+export const updateRequiredDocument = (
+  id: number,
+  payload: RequiredDocumentPayload
+): Promise<RequiredDocument> =>
   apiRequest<RequiredDocument>(`/required_documents/${id}/`, {
-    method: 'PUT',
+    method: "PUT",
     json: payload
   });
 
 export const deleteRequiredDocument = (id: number): Promise<void> =>
   apiRequest<void>(`/required_documents/${id}/`, {
-    method: 'DELETE'
+    method: "DELETE"
   });
 
 export const useRequiredDocuments = (query?: RequiredDocumentListQuery) =>
@@ -90,11 +102,18 @@ export const useUpdateRequiredDocument = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: RequiredDocumentPayload }) =>
-      updateRequiredDocument(id, payload),
+    mutationFn: ({
+      id,
+      payload
+    }: {
+      id: number;
+      payload: RequiredDocumentPayload;
+    }) => updateRequiredDocument(id, payload),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: requiredDocumentsKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.requiredDocument(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.requiredDocument(variables.id)
+      });
     }
   });
 };

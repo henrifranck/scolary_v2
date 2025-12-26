@@ -17,14 +17,14 @@ import {
 } from "../../../components/ui/dialog";
 import { cn } from "../../../lib/utils";
 import {
-  type Role,
-  type RolePayload,
   useCreateRole,
   useDeleteRole,
   useRoles,
   useUpdateRole
 } from "../../../services/role-service";
 import { usePermissions } from "../../../services/permission-service";
+import { Role, RolePayload } from "@/models/role";
+import { ActionButton } from "@/components/action-button";
 
 type RoleFormValues = {
   name: string;
@@ -218,7 +218,8 @@ const RoleForm = ({
             Use this role as card signer
           </label>
           <p className="text-xs text-muted-foreground">
-            First active user with this role will be shown as signer on generated cards.
+            First active user with this role will be shown as signer on
+            generated cards.
           </p>
         </div>
       </div>
@@ -311,26 +312,23 @@ export const RolesPage = () => {
     [closeForm, createRole, editingRole, updateRole]
   );
 
-  const handleDelete = useCallback(
-    async () => {
-      if (!roleToDelete) {
-        return;
-      }
-      try {
-        await deleteRole.mutateAsync(roleToDelete.id);
-        setFeedback({ type: "success", text: "Role deleted successfully." });
-      } catch (mutationError) {
-        const message =
-          mutationError instanceof Error
-            ? mutationError.message
-            : "Unable to delete role.";
-        setFeedback({ type: "error", text: message });
-      } finally {
-        setRoleToDelete(null);
-      }
-    },
-    [deleteRole, roleToDelete]
-  );
+  const handleDelete = useCallback(async () => {
+    if (!roleToDelete) {
+      return;
+    }
+    try {
+      await deleteRole.mutateAsync(roleToDelete.id);
+      setFeedback({ type: "success", text: "Role deleted successfully." });
+    } catch (mutationError) {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete role.";
+      setFeedback({ type: "error", text: message });
+    } finally {
+      setRoleToDelete(null);
+    }
+  }, [deleteRole, roleToDelete]);
 
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -449,23 +447,28 @@ export const RolesPage = () => {
         id: "actions",
         header: "",
         cell: ({ row }) => (
-          <div className="flex justify-end gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleEdit(row.original)}
-            >
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setRoleToDelete(row.original)}
-            >
-              Delete
-            </Button>
-          </div>
+          // <div className="flex justify-end gap-2">
+          //   <Button
+          //     size="sm"
+          //     variant="outline"
+          //     onClick={() => handleEdit(row.original)}
+          //   >
+          //     Edit
+          //   </Button>
+          //   <Button
+          //     size="sm"
+          //     variant="ghost"
+          //     className="text-destructive hover:text-destructive"
+          //     onClick={() => setRoleToDelete(row.original)}
+          //   >
+          //     Delete
+          //   </Button>
+          // </div>
+          <ActionButton
+            row={row}
+            handleEdit={handleEdit}
+            setConfirmDelete={setRoleToDelete}
+          />
         )
       }
     ];
@@ -557,7 +560,9 @@ export const RolesPage = () => {
         description={
           roleToDelete ? (
             <>
-              Are you sure you want to delete <strong>{roleToDelete.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <strong>{roleToDelete.name}</strong>? This action cannot be
+              undone.
             </>
           ) : null
         }

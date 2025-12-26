@@ -24,14 +24,15 @@ import {
 } from "../../../components/ui/dialog";
 import { cn } from "../../../lib/utils";
 import {
-  Journey,
-  JourneyPayload,
   useCreateJourney,
   useDeleteJourney,
   useJourneys,
   useUpdateJourney
 } from "@/services/journey-service";
-import { Mention, useMentions } from "@/services/mention-service";
+import { ActionButton } from "@/components/action-button";
+import { Journey, JourneyPayload } from "@/models/journey";
+import { Mention } from "@/models/mentions";
+import { useMentions } from "@/services/mention-service";
 
 type JourneyFormValues = {
   name: string;
@@ -51,7 +52,7 @@ const toFormValues = (journey?: Journey | null): JourneyFormValues => {
   const semesterList = Array.isArray(journey?.semester_list)
     ? journey.semester_list
         .map((entry) =>
-          typeof entry === "string" ? entry : entry?.semester ?? null
+          typeof entry === "string" ? entry : (entry?.semester ?? null)
         )
         .filter((value): value is string => Boolean(value))
     : [];
@@ -64,7 +65,10 @@ const toFormValues = (journey?: Journey | null): JourneyFormValues => {
   };
 };
 
-const semesterOptions = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
+const semesterOptions = Array.from(
+  { length: 10 },
+  (_, index) => `S${index + 1}`
+);
 
 const toPayload = (values: JourneyFormValues): JourneyPayload => {
   const mentionId = Number(values.mentionId);
@@ -171,11 +175,17 @@ const JourneyForm = ({
           <Input
             id="journey-abbreviation"
             placeholder="GL"
-            className={cn(errors.abbreviation && "border-destructive text-destructive")}
-            {...register("abbreviation", { required: "Abbreviation is required" })}
+            className={cn(
+              errors.abbreviation && "border-destructive text-destructive"
+            )}
+            {...register("abbreviation", {
+              required: "Abbreviation is required"
+            })}
           />
           {errors.abbreviation ? (
-            <p className="text-xs text-destructive">{errors.abbreviation.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.abbreviation.message}
+            </p>
           ) : null}
         </div>
         <div className="space-y-2">
@@ -272,7 +282,11 @@ const JourneyForm = ({
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving…" : mode === "edit" ? "Save changes" : "Create journey"}
+          {isSubmitting
+            ? "Saving…"
+            : mode === "edit"
+              ? "Save changes"
+              : "Create journey"}
         </Button>
       </div>
     </form>
@@ -287,7 +301,9 @@ export const JourneysPage = () => {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [journeyToArchive, setJourneyToArchive] = useState<Journey | null>(null);
+  const [journeyToArchive, setJourneyToArchive] = useState<Journey | null>(
+    null
+  );
 
   const offset = (page - 1) * pageSize;
   const {
@@ -296,10 +312,8 @@ export const JourneysPage = () => {
     isError,
     error
   } = useJourneys({ offset, limit: pageSize });
-  const {
-    data: mentionsResponse,
-    isPending: isMentionsPending
-  } = useMentions();
+  const { data: mentionsResponse, isPending: isMentionsPending } =
+    useMentions();
   const mentions = mentionsResponse?.data ?? [];
   const createJourney = useCreateJourney();
   const updateJourney = useUpdateJourney();
@@ -353,29 +367,26 @@ export const JourneysPage = () => {
     [createJourney, updateJourney, editingJourney, closeForm]
   );
 
-  const handleDelete = useCallback(
-    async () => {
-      if (!journeyToArchive) {
-        return;
-      }
-      try {
-        await deleteJourney.mutateAsync(journeyToArchive.id);
-        setFeedback({
-          type: "success",
-          text: "Journey archived successfully."
-        });
-      } catch (mutationError) {
-        const message =
-          mutationError instanceof Error
-            ? mutationError.message
-            : "Unable to archive journey.";
-        setFeedback({ type: "error", text: message });
-      } finally {
-        setJourneyToArchive(null);
-      }
-    },
-    [deleteJourney, journeyToArchive]
-  );
+  const handleDelete = useCallback(async () => {
+    if (!journeyToArchive) {
+      return;
+    }
+    try {
+      await deleteJourney.mutateAsync(journeyToArchive.id);
+      setFeedback({
+        type: "success",
+        text: "Journey archived successfully."
+      });
+    } catch (mutationError) {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to archive journey.";
+      setFeedback({ type: "error", text: message });
+    } finally {
+      setJourneyToArchive(null);
+    }
+  }, [deleteJourney, journeyToArchive]);
 
   const handlePageChange = (nextPage: number) => {
     setPage(Math.max(1, nextPage));
@@ -411,25 +422,13 @@ export const JourneysPage = () => {
       },
       {
         id: "actions",
-        header: "",
+        header: "Actions",
         cell: ({ row }) => (
-          <div className="flex justify-end gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleEdit(row.original)}
-            >
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setJourneyToArchive(row.original)}
-            >
-              Archive
-            </Button>
-          </div>
+          <ActionButton
+            row={row}
+            setConfirmDelete={setJourneyToArchive}
+            handleEdit={handleEdit}
+          />
         )
       }
     ];
@@ -441,7 +440,7 @@ export const JourneysPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Journeys</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Parcours</h1>
           <p className="text-sm text-muted-foreground">
             Manage academic journeys and keep them aligned with their mentions.
           </p>
@@ -508,7 +507,9 @@ export const JourneysPage = () => {
         description={
           journeyToArchive ? (
             <>
-              Are you sure you want to archive <strong>{journeyToArchive.name}</strong>? This action cannot be undone.
+              Are you sure you want to archive{" "}
+              <strong>{journeyToArchive.name}</strong>? This action cannot be
+              undone.
             </>
           ) : null
         }

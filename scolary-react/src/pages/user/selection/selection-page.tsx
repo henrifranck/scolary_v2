@@ -17,8 +17,7 @@ import {
   AcademicFilters,
   AcademicYearOption,
   type AcademicFilterValue,
-  type JourneyOption,
-  type MentionOption
+  type JourneyOption
 } from "../../../components/filters/academic-filters";
 import {
   useSelectionStudents,
@@ -39,6 +38,7 @@ import {
   updateStudentProfile
 } from "@/services/student-service";
 import { Pencil, Trash2 } from "lucide-react";
+import { Mention, MentionOption } from "@/models/mentions";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -63,6 +63,7 @@ const createEmptyFormState = (): StudentFormState => ({
   birthPlace: "",
   baccalaureateNumber: "",
   baccalaureateCenter: "",
+  baccalaureateYear: "",
   job: "",
   enrollmentStatus: "",
   level: "",
@@ -127,7 +128,7 @@ export const DossierSelectionPage = () => {
 
   const mentionOptions: MentionOption[] = useMemo(
     () =>
-      mentionData.map((mention) => ({
+      mentionData.map((mention: Mention) => ({
         id: String(mention.id),
         label: mention.name ?? mention.abbreviation ?? `Mention ${mention.id}`
       })),
@@ -489,6 +490,7 @@ export const DossierSelectionPage = () => {
           showLevel={true}
           showResetButton={true}
           showActiveFilters={true}
+          filterClassname="grid gap-4 lg:grid-cols-3"
           summarySlot={
             <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground">
               <div className="grid gap-2 md:grid-cols-2">

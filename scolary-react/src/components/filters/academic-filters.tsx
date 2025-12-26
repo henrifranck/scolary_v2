@@ -26,11 +26,7 @@ import {
   fetchJourneys as fetchJourneyOptions,
   fetchCollegeYears
 } from "../../services/inscription-service";
-
-export interface MentionOption {
-  id: string;
-  label: string;
-}
+import { MentionOption } from "@/models/mentions";
 
 export interface JourneyOption {
   id: string;
@@ -79,6 +75,7 @@ interface AcademicFiltersProps {
   showJourney?: boolean;
   showSemester?: boolean;
   showLevel?: boolean;
+  filterClassname?: string;
 }
 
 export const AcademicFilters = ({
@@ -98,7 +95,8 @@ export const AcademicFilters = ({
   onCollapsedChange,
   showJourney = true,
   showSemester: showSemesterProp,
-  showLevel = true
+  showLevel = true,
+  filterClassname = "grid gap-6 lg:grid-cols-4"
 }: AcademicFiltersProps) => {
   const showSemester = showSemesterProp ?? showJourney;
   const [internalCollapsed, setInternalCollapsed] = useState(false);
@@ -111,19 +109,18 @@ export const AcademicFilters = ({
     onCollapsedChange?.(next);
   };
   const shouldFetchMentions = mentionOptionsProp.length === 0;
-  const { data: fetchedMentions = [], isFetching: mentionsFetching } = useQuery(
-    {
+  const { data: fetchedMentions = [], isFetching: mentionsFetching }: any =
+    useQuery({
       queryKey: ["academic-filters", "mentions"],
       queryFn: fetchMentionOptions,
       enabled: shouldFetchMentions
-    }
-  );
+    });
 
   const resolvedMentionOptions = useMemo<MentionOption[]>(
     () =>
       mentionOptionsProp.length
         ? mentionOptionsProp
-        : fetchedMentions.map((mention) => ({
+        : fetchedMentions.map((mention: any) => ({
             id: String(mention.id),
             label:
               mention.name?.trim() ||
@@ -322,6 +319,7 @@ export const AcademicFilters = ({
     if (value.id_mention) count++;
     if (showJourney && value.id_journey) count++;
     if (showSemester && value.semester) count++;
+    if (showLevel && value.level) count++;
     if (value.id_year) count++;
     return count;
   };
@@ -411,14 +409,13 @@ export const AcademicFilters = ({
                   {getSelectedMentionLabel()}
                 </Badge>
               )}
-              {showJourney &&
-                getSelectedJourneyLabel() && (
-                  <Badge variant="outline" className="gap-1">
-                    <BookOpen className="h-3 w-3" />
-                    {getSelectedJourneyLabel()}
-                  </Badge>
-                )}
-              {value.level && (
+              {showJourney && getSelectedJourneyLabel() && (
+                <Badge variant="outline" className="gap-1">
+                  <BookOpen className="h-3 w-3" />
+                  {getSelectedJourneyLabel()}
+                </Badge>
+              )}
+              {showLevel && value.level && (
                 <Badge variant="outline" className="gap-1">
                   <Layers className="h-3 w-3" />
                   {value.level}
@@ -440,7 +437,7 @@ export const AcademicFilters = ({
           )}
 
           {/* Filter controls */}
-          <div className="grid gap-6 lg:grid-cols-4">
+          <div className={filterClassname}>
             {/* Mention Selection */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">

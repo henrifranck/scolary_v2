@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudentByCardNumber } from "@/services/student-service";
-import { Check, Pencil, Layers } from "lucide-react";
+import { Check, Pencil, Layers, Eye, EyeOff } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   EditableSection,
@@ -28,13 +28,14 @@ import {
   studentInformationIdentity,
   studentInformationBaccalaureate,
   studentInformationSocial,
-  studentInformationRegistration
+  studentInformationRegistration,
+  studentInformationPersonnel
 } from "./student-form-data";
 import { ReinscriptionFilters } from "@/services/reinscription-service";
-import { ReinscriptionAnnualRegister } from "@/pages/user/reinscription/reinscription-payment-form";
+import { ReinscriptionAnnualRegister } from "@/pages/user/re-registration/re-registration-payment-form";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
-import { MentionOption } from "@/components/filters/academic-filters";
-import { fetchMentions } from "@/services/inscription-service";
+import { Mention, MentionOption } from "@/models/mentions";
+import { fetchMentions } from "@/services/mention-service";
 
 type dialogMode = "edit" | "create";
 
@@ -85,6 +86,7 @@ interface StudentFormProps {
   enableLookup?: boolean;
   enablePicture?: boolean;
   mentionOptions?: MentionOption[];
+  disabledEditing?: boolean;
 }
 
 export const StudentForm = ({
@@ -95,17 +97,20 @@ export const StudentForm = ({
   filters,
   enableLookup = true,
   enablePicture = true,
-  mentionOptions = []
+  mentionOptions = [],
+  disabledEditing = false
 }: StudentFormProps) => {
-  const { data: fetchedMentions = [], isLoading: isLoadingMentions } = useQuery({
-    queryKey: ["student-form", "mentions"],
-    queryFn: () => fetchMentions({ user_only: true }),
-    enabled: mentionOptions.length === 0
-  });
+  const { data: fetchedMentions = [], isLoading: isLoadingMentions } = useQuery(
+    {
+      queryKey: ["student-form", "mentions"],
+      queryFn: () => fetchMentions({ user_only: true }),
+      enabled: mentionOptions.length === 0
+    }
+  );
   const effectiveMentionOptions =
     mentionOptions.length > 0
       ? mentionOptions
-      : fetchedMentions.map((mention) => ({
+      : fetchedMentions.map((mention: Mention) => ({
           id: String(mention.id),
           label: mention.name ?? mention.abbreviation ?? `Mention ${mention.id}`
         }));
@@ -127,16 +132,27 @@ export const StudentForm = ({
   const [inputIdentity] = useState<FormItemComponentType>(
     studentInformationIdentity
   );
+
+  const [inputPersonal] = useState<FormItemComponentType>(
+    studentInformationPersonnel
+  );
+
+  const [collapsed, setCollapsed] = useState(true);
+
   useEffect(() => {
     console.log("STATE annualRegister =", annualRegister);
   }, [annualRegister]);
 
-  const toggleSectionEditing = useCallback((section: EditableSection) => {
-    setEditingSections((previous) => ({
-      ...previous,
-      [section]: !previous[section]
-    }));
-  }, []);
+  const toggleSectionEditing = useCallback(
+    (section: EditableSection) => {
+      if (disabledEditing) return;
+      setEditingSections((previous) => ({
+        ...previous,
+        [section]: !previous[section]
+      }));
+    },
+    [disabledEditing]
+  );
 
   const [editingSections, setEditingSections] = useState<
     Record<EditableSection, boolean>
@@ -257,8 +273,7 @@ export const StudentForm = ({
           : [];
         const normalizedAnnual = rawAnnual
           .map((entry: any) => {
-            const payment =
-              entry?.payment ?? entry?.payments ?? [];
+            const payment = entry?.payment ?? entry?.payments ?? [];
             return { ...entry, payment };
           })
           .filter(
@@ -369,87 +384,52 @@ export const StudentForm = ({
                 )}
               </div>
             )}
+
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-              <div className="grid gap-4 lg:grid-cols-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-foreground">
-                    Informations personnelles
-                  </p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-2 px-3"
-                    onClick={() => toggleSectionEditing("personal")}
-                  >
-                    {editingSections.personal ? (
-                      <>
-                        <Check className="h-4 w-4" />
-                        Terminer
-                      </>
-                    ) : (
-                      <>
-                        <Pencil className="h-4 w-4" />
-                        Modifier
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {editingSections.personal ? (
-                  <>
-                    <div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Nom
-                        </label>
-                        <Input
-                          value={formState.lastName}
-                          onChange={(event) =>
-                            handleFormChange("lastName", event.target.value)
-                          }
-                          placeholder="Nom de famille"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Prenom
-                        </label>
-                        <Input
-                          value={formState.firstName}
-                          onChange={(event) =>
-                            handleFormChange("firstName", event.target.value)
-                          }
-                          placeholder="Prénom(s)"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Email
-                        </label>
-                        <Input
-                          value={formState.email}
-                          onChange={(event) =>
-                            handleFormChange("email", event.target.value)
-                          }
-                          placeholder="Adresse email"
-                        />
-                      </div>
+              <div className="space-y-4">
+                <StudentFormItem
+                  name={"Informations personnelles"}
+                  editingSections={editingSections}
+                  setEditingSections={setEditingSections}
+                  handleFormChange={handleFormChange}
+                  formState={formState}
+                  inputComponent={inputPersonal}
+                  classnNames="grid gap-4 sm:grid-cols-2"
+                  disabledEditing={disabledEditing}
+                />
+
+                {effectiveMentionOptions.length > 0 && (
+                  <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-muted-foreground" />
+                      <label className="text-sm font-medium">Mention</label>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <StudentFormInfoItem
-                      label="Nom complet"
-                      value={`${formState.lastName} ${formState.firstName}`}
-                    />
-                    <StudentFormInfoItem
-                      label="Email"
-                      value={formState.email}
-                    />
-                  </>
+                    <Select
+                      value={formState.mentionId}
+                      onValueChange={(value) =>
+                        handleFormChange("mentionId", value)
+                      }
+                      disabled={isLoadingMentions}
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Sélectionner la mention" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {effectiveMentionOptions.map(
+                          (mention: MentionOption) => (
+                            <SelectItem
+                              key={mention.id}
+                              value={mention.id.toString()}
+                            >
+                              {mention.label}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
-              </div>
-              {enablePicture && (
+                {/* {enablePicture && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-foreground">
@@ -471,7 +451,11 @@ export const StudentForm = ({
                       )}
                       <label
                         htmlFor={pictureInputId}
-                        className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-muted/50 cursor-pointer"
+                        className={`absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm ${
+                          disabledEditing
+                            ? "cursor-not-allowed opacity-50"
+                            : "hover:bg-muted/50 cursor-pointer"
+                        }`}
                       >
                         <Pencil className="h-4 w-4" />
                       </label>
@@ -481,6 +465,7 @@ export const StudentForm = ({
                         accept="image/*"
                         onChange={handlePictureUpload}
                         className="hidden"
+                        disabled={disabledEditing}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -488,177 +473,115 @@ export const StudentForm = ({
                     </p>
                   </div>
                 </div>
+              )} */}
+              </div>
+              <ReinscriptionAnnualRegister
+                annualRegister={annualRegister}
+                editingSections={editingSections}
+                cardNumber={formState.cardNumber}
+                filters={filters}
+                disabledEditing={disabledEditing}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCollapsed(!collapsed)}
+              className="gap-2"
+            >
+              {collapsed ? (
+                <>
+                  <Eye className="h-4 w-4" />
+                  Voir plus d'informations
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-4 w-4" />
+                  Voir moins informations
+                </>
               )}
-            </div>
+            </Button>
           </div>
+          {!collapsed && (
+            <>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <StudentFormItem
+                  name={"Informations sur le baccalauréat et Téléphone"}
+                  editingSections={editingSections}
+                  setEditingSections={setEditingSections}
+                  handleFormChange={handleFormChange}
+                  formState={formState}
+                  inputComponent={studentInformationBaccalaureate}
+                  classnNames="grid gap-4 sm:grid-cols-2"
+                  disabledEditing={disabledEditing}
+                />
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <StudentFormItem
-              name={"Informations sur le baccalauréat et Téléphone"}
-              editingSections={editingSections}
-              setEditingSections={setEditingSections}
-              handleFormChange={handleFormChange}
-              formState={formState}
-              inputComponent={studentInformationBaccalaureate}
-              classnNames="grid gap-4 sm:grid-cols-2"
-            />
-
-            <StudentFormItem
-              name={"Statut social"}
-              editingSections={editingSections}
-              setEditingSections={setEditingSections}
-              handleFormChange={handleFormChange}
-              formState={formState}
-              inputComponent={studentInformationSocial}
-              classnNames="grid gap-4 sm:grid-cols-2"
-            />
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <StudentFormItem
-              name={"Statut d'inscription"}
-              editingSections={editingSections}
-              setEditingSections={setEditingSections}
-              handleFormChange={handleFormChange}
-              formState={formState}
-              inputComponent={studentInformationRegistration}
-              classnNames="grid gap-4"
-            />
-
-            {effectiveMentionOptions.length > 0 && (
-              <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-muted-foreground" />
-                  <label className="text-sm font-medium">Mention</label>
-                </div>
-                <Select
-                  value={formState.mentionId}
-                  onValueChange={(value) =>
-                    handleFormChange("mentionId", value)
-                  }
-                  disabled={isLoadingMentions}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionner la mention" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {effectiveMentionOptions.map((mention) => (
-                      <SelectItem key={mention.id} value={mention.id}>
-                        {mention.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <StudentFormItem
+                  name={"Statut social"}
+                  editingSections={editingSections}
+                  setEditingSections={setEditingSections}
+                  handleFormChange={handleFormChange}
+                  formState={formState}
+                  inputComponent={studentInformationSocial}
+                  classnNames="grid gap-4 sm:grid-cols-2"
+                  disabledEditing={disabledEditing}
+                />
               </div>
-            )}
-          </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <StudentFormItem
-              name={"Coordonnées"}
-              editingSections={editingSections}
-              setEditingSections={setEditingSections}
-              handleFormChange={handleFormChange}
-              formState={formState}
-              inputComponent={inputContact}
-              classnNames="grid gap-4"
-            />
+              <div className="grid gap-6 lg:grid-cols-2">
+                <StudentFormItem
+                  name={"Statut d'inscription"}
+                  editingSections={editingSections}
+                  setEditingSections={setEditingSections}
+                  handleFormChange={handleFormChange}
+                  formState={formState}
+                  inputComponent={studentInformationRegistration}
+                  classnNames="grid gap-4"
+                  disabledEditing={disabledEditing}
+                />
 
-            <StudentFormItem
-              name={"Informations sur la naissance"}
-              editingSections={editingSections}
-              setEditingSections={setEditingSections}
-              handleFormChange={handleFormChange}
-              formState={formState}
-              inputComponent={inputBirth}
-              classnNames="grid gap-4 sm:grid-cols-2"
-            />
-
-            {/* <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-foreground">
-                  Informations sur la naissance
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-2 px-3"
-                  onClick={() => toggleSectionEditing("birth")}
-                >
-                  {editingSections.birth ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Terminer
-                    </>
-                  ) : (
-                    <>
-                      <Pencil className="h-4 w-4" />
-                      Modifier
-                    </>
-                  )}
-                </Button>
+                <StudentFormItem
+                  name={"Coordonnées"}
+                  editingSections={editingSections}
+                  setEditingSections={setEditingSections}
+                  handleFormChange={handleFormChange}
+                  formState={formState}
+                  inputComponent={inputContact}
+                  classnNames="grid gap-4"
+                  disabledEditing={disabledEditing}
+                />
               </div>
-              {editingSections.birth ? (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Date de naissance
-                    </label>
-                    <Input
-                      type="date"
-                      value={formState.birthDate}
-                      onChange={(event) =>
-                        handleFormChange("birthDate", event.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Lieu de naissance
-                    </label>
-                    <Input
-                      value={formState.birthPlace}
-                      onChange={(event) =>
-                        handleFormChange("birthPlace", event.target.value)
-                      }
-                      placeholder="Ville ou district"
-                    />
-                  </div>
-                </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <StudentFormInfoItem
-                label="Date de naissance"
-                value={formState.birthDate}
-              />
-              <StudentFormInfoItem
-                label="Lieu de naissance"
-                value={formState.birthPlace}
-              />
-            </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <StudentFormItem
+                  name={"Informations sur la naissance et Proféssion"}
+                  editingSections={editingSections}
+                  setEditingSections={setEditingSections}
+                  handleFormChange={handleFormChange}
+                  formState={formState}
+                  inputComponent={inputBirth}
+                  classnNames="grid gap-4 sm:grid-cols-2"
+                  disabledEditing={disabledEditing}
+                />
+
+                <StudentFormItem
+                  name={"Carte d'identité"}
+                  editingSections={editingSections}
+                  setEditingSections={setEditingSections}
+                  handleFormChange={handleFormChange}
+                  formState={formState}
+                  inputComponent={inputIdentity}
+                  classnNames="grid gap-4 sm:grid-cols-2"
+                  disabledEditing={disabledEditing}
+                />
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2"></div>
+            </>
           )}
-            </div> */}
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <StudentFormItem
-              name={"Carte d'identité"}
-              editingSections={editingSections}
-              setEditingSections={setEditingSections}
-              handleFormChange={handleFormChange}
-              formState={formState}
-              inputComponent={inputIdentity}
-              classnNames="grid gap-4 sm:grid-cols-2"
-            />
-
-            <ReinscriptionAnnualRegister
-              annualRegister={annualRegister}
-              editingSections={editingSections}
-              cardNumber={formState.cardNumber}
-              filters={filters}
-            />
-          </div>
         </div>
       </div>
     </div>

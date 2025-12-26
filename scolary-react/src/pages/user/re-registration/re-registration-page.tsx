@@ -11,8 +11,7 @@ import {
   AcademicFilters,
   AcademicYearOption,
   type AcademicFilterValue,
-  type JourneyOption,
-  type MentionOption
+  type JourneyOption
 } from "../../../components/filters/academic-filters";
 import {
   fetchReinscriptionsWithMeta,
@@ -44,6 +43,8 @@ import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { printStudentCards, printStudentsList } from "@/services/print-service";
 import { PdfViewerModal } from "@/components/pdf-viewer-modal";
+import { Mention, MentionOption } from "@/models/mentions";
+import { ActionButton } from "@/components/action-button";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -91,6 +92,7 @@ const createFormState = (
   birthPlace: "",
   baccalaureateNumber: "",
   baccalaureateCenter: "",
+  baccalaureateYear: "",
   job: "",
   enrollmentStatus: "",
   mentionId: "",
@@ -187,7 +189,7 @@ export const ReinscriptionPage = () => {
 
   const mentionOptions: MentionOption[] = useMemo(
     () =>
-      mentionData.map((mention) => ({
+      mentionData.map((mention: Mention) => ({
         id: String(mention.id),
         label: mention.name ?? mention.name ?? `Mention ${mention.id}`
       })),
@@ -442,28 +444,6 @@ export const ReinscriptionPage = () => {
     title?: string;
   }>({ open: false });
 
-  const selectedMentionLabel = useMemo(() => {
-    if (!formState.mentionId) {
-      return "";
-    }
-
-    return (
-      mentionOptions.find((mention) => mention.id === formState.mentionId)
-        ?.label ?? formState.mentionId
-    );
-  }, [formState.mentionId, mentionOptions]);
-
-  const selectedJourneyLabel = useMemo(() => {
-    if (!formState.journeyId) {
-      return "";
-    }
-
-    return (
-      journeyOptions.find((journey) => journey.id === formState.journeyId)
-        ?.label ?? formState.journeyId
-    );
-  }, [formState.journeyId, journeyOptions]);
-
   useEffect(() => {
     if (!dialogOpen) {
       setEditingSections(createEditingSectionsState());
@@ -700,25 +680,31 @@ export const ReinscriptionPage = () => {
       },
       {
         id: "actions",
-        header: "",
+        header: "Actions",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleEditStudent(row.original)}
-            >
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => setConfirmDeleteStudent(row.original)}
-              disabled={deletingId === row.original.recordId}
-            >
-              Delete
-            </Button>
-          </div>
+          // <div className="flex justify-end gap-2">
+          //   <Button
+          //     size="sm"
+          //     variant="outline"
+          //     onClick={() => handleEditStudent(row.original)}
+          //   >
+          //     Edit
+          //   </Button>
+          //   <Button
+          //     size="sm"
+          //     variant="destructive"
+          //     onClick={() => setConfirmDeleteStudent(row.original)}
+          //     disabled={deletingId === row.original.recordId}
+          //   >
+          //     Delete
+          //   </Button>
+          // </div>
+          <ActionButton
+            deletingId={deletingId}
+            row={row}
+            handleEdit={handleEditStudent}
+            setConfirmDelete={setConfirmDeleteStudent}
+          />
         )
       }
     ],
@@ -946,6 +932,8 @@ export const ReinscriptionPage = () => {
           showActiveFilters={true}
           collapsed={filtersCollapsed}
           onCollapsedChange={setFiltersCollapsed}
+          showLevel={false}
+          filterClassname="grid gap-4 lg:grid-cols-3"
           summarySlot={
             <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground">
               <div className="grid gap-2 md:grid-cols-3">
@@ -1088,6 +1076,7 @@ export const ReinscriptionPage = () => {
               dialogMode={dialogMode}
               filters={filters}
               mentionOptions={mentionOptions}
+              disabledEditing={!formState.studentRecordId}
             />
 
             <DialogFooter className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 px-6 py-4 backdrop-blur">

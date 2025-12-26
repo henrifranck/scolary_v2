@@ -3,7 +3,10 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { Button } from "../../../components/ui/button";
-import { DataTable, type ColumnDef } from "../../../components/data-table/data-table";
+import {
+  DataTable,
+  type ColumnDef
+} from "../../../components/data-table/data-table";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
 import {
@@ -22,6 +25,7 @@ import {
   useDeleteCmsPage,
   useUpdateCmsPage
 } from "../../../services/cms-page-service";
+import { ActionButton } from "@/components/action-button";
 
 const emptyForm: CmsPagePayload = {
   slug: "",
@@ -44,7 +48,12 @@ export const CmsManagerPage = () => {
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const highlightRef = useRef<HTMLPreElement | null>(null);
 
-  const { data: pagesResponse, isPending, isError, error } = useCmsPages({ limit: 200 });
+  const {
+    data: pagesResponse,
+    isPending,
+    isError,
+    error
+  } = useCmsPages({ limit: 200 });
   const pages = pagesResponse?.data ?? [];
 
   const createPage = useCreateCmsPage();
@@ -129,7 +138,10 @@ export const CmsManagerPage = () => {
 
     try {
       if (selectedPage?.id) {
-        const updated = await updatePage.mutateAsync({ id: selectedPage.id, payload: basePayload });
+        const updated = await updatePage.mutateAsync({
+          id: selectedPage.id,
+          payload: basePayload
+        });
         selectPage(updated);
         setFeedback({ type: "success", text: "Page publiee." });
       } else {
@@ -207,13 +219,26 @@ export const CmsManagerPage = () => {
     [formValues.draft_content, highlightHtml]
   );
 
-  const handleEditorScroll = useCallback((event: React.UIEvent<HTMLTextAreaElement>) => {
-    if (!highlightRef.current) {
-      return;
-    }
-    highlightRef.current.scrollTop = event.currentTarget.scrollTop;
-    highlightRef.current.scrollLeft = event.currentTarget.scrollLeft;
-  }, []);
+  const handleEdit = (row: any) => {
+    selectPage(row.original);
+    setIsEditorOpen(true);
+  };
+
+  const handleConfirmDelete = (row: any) => {
+    setDeleteTarget(row.original);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleEditorScroll = useCallback(
+    (event: React.UIEvent<HTMLTextAreaElement>) => {
+      if (!highlightRef.current) {
+        return;
+      }
+      highlightRef.current.scrollTop = event.currentTarget.scrollTop;
+      highlightRef.current.scrollLeft = event.currentTarget.scrollLeft;
+    },
+    []
+  );
 
   const columns = useMemo<ColumnDef<CmsPage>[]>(() => {
     return [
@@ -244,8 +269,8 @@ export const CmsManagerPage = () => {
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-2">
             <Button
-              size="icon"
-              variant="ghost"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 selectPage(row.original);
                 setIsEditorOpen(true);
@@ -255,8 +280,9 @@ export const CmsManagerPage = () => {
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
-              size="icon"
-              variant="destructive"
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
               onClick={() => {
                 setDeleteTarget(row.original);
                 setIsDeleteConfirmOpen(true);
@@ -266,6 +292,11 @@ export const CmsManagerPage = () => {
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
+          // <ActionButton
+          //   row={row}
+          //   setConfirmDelete={handleConfirmDelete}
+          //   handleEdit={handleEdit}
+          // />
         )
       }
     ];
@@ -296,7 +327,10 @@ export const CmsManagerPage = () => {
           )}
         >
           <span>{feedback.text}</span>
-          <button className="text-xs font-medium underline" onClick={() => setFeedback(null)}>
+          <button
+            className="text-xs font-medium underline"
+            onClick={() => setFeedback(null)}
+          >
             Fermer
           </button>
         </div>
@@ -308,7 +342,11 @@ export const CmsManagerPage = () => {
           data={pages}
           isLoading={isPending}
           searchPlaceholder="Rechercher une page"
-          emptyText={isError ? error?.message ?? "Impossible de charger" : "Aucune page"}
+          emptyText={
+            isError
+              ? (error?.message ?? "Impossible de charger")
+              : "Aucune page"
+          }
           totalItems={pages.length}
           page={1}
           pageSize={pages.length || 1}
@@ -320,84 +358,105 @@ export const CmsManagerPage = () => {
       <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
         <DialogContent className="flex h-[90vh] w-[100vw] max-w-none flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>{selectedPage ? "Editer la page" : "Nouvelle page CMS"}</DialogTitle>
+            <DialogTitle>
+              {selectedPage ? "Editer la page" : "Nouvelle page CMS"}
+            </DialogTitle>
             <DialogDescription>
-              Le contenu doit etre un div HTML avec des classes Tailwind pour le style.
+              Le contenu doit etre un div HTML avec des classes Tailwind pour le
+              style.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-2">
             <div className="flex min-h-0 flex-col space-y-4 overflow-hidden">
               <p className="text-sm font-semibold">Editeur HTML</p>
-            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Slug</label>
                   <Input
                     value={formValues.slug}
                     onChange={(event) =>
-                      setFormValues((prev) => ({ ...prev, slug: event.target.value }))
+                      setFormValues((prev) => ({
+                        ...prev,
+                        slug: event.target.value
+                      }))
                     }
                     placeholder="home, platform, services"
                   />
                 </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Statut</label>
-                <Input
-                  value={formValues.status ?? ""}
-                  onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, status: event.target.value }))
-                  }
-                  placeholder="published"
-                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Statut</label>
+                  <Input
+                    value={formValues.status ?? ""}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        status: event.target.value
+                      }))
+                    }
+                    placeholder="published"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Titre</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Titre</label>
                 <Input
                   value={formValues.title ?? ""}
                   onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, title: event.target.value }))
+                    setFormValues((prev) => ({
+                      ...prev,
+                      title: event.target.value
+                    }))
                   }
                   placeholder="Titre de la page"
                 />
               </div>
-            <div className="flex min-h-0 flex-col space-y-2">
-              <label className="text-sm font-medium">Brouillon (HTML)</label>
-              <div className="relative min-h-[320px] rounded-md border border-input bg-background">
+              <div className="flex min-h-0 flex-col space-y-2">
+                <label className="text-sm font-medium">Brouillon (HTML)</label>
+                <div className="relative min-h-[320px] rounded-md border border-input bg-background">
                   <pre
                     ref={highlightRef}
                     className="pointer-events-none absolute inset-0 overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-sm leading-6"
                     dangerouslySetInnerHTML={{ __html: highlightedHtml }}
                   />
-                {formValues.draft_content ? null : (
-                  <div className="pointer-events-none absolute left-3 top-2 text-sm text-muted-foreground">
-                    &lt;div class='space-y-8'&gt;...&lt;/div&gt;
-                  </div>
-                )}
-                <Textarea
-                  ref={editorRef}
-                  value={formValues.draft_content ?? ""}
-                  onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, draft_content: event.target.value }))
-                  }
-                  onKeyDown={(event) => {
-                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
-                      event.preventDefault();
+                  {formValues.draft_content ? null : (
+                    <div className="pointer-events-none absolute left-3 top-2 text-sm text-muted-foreground">
+                      &lt;div class='space-y-8'&gt;...&lt;/div&gt;
+                    </div>
+                  )}
+                  <Textarea
+                    ref={editorRef}
+                    value={formValues.draft_content ?? ""}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        draft_content: event.target.value
+                      }))
                     }
-                  }}
-                  onScroll={handleEditorScroll}
-                  aria-label="Editeur HTML"
-                  spellCheck={false}
-                  className="relative z-10 min-h-[320px] border-0 bg-transparent p-3 font-mono text-sm leading-6 text-transparent caret-foreground selection:bg-primary/30 focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
+                    onKeyDown={(event) => {
+                      if (
+                        (event.ctrlKey || event.metaKey) &&
+                        event.key.toLowerCase() === "f"
+                      ) {
+                        event.preventDefault();
+                      }
+                    }}
+                    onScroll={handleEditorScroll}
+                    aria-label="Editeur HTML"
+                    spellCheck={false}
+                    className="relative z-10 min-h-[320px] border-0 bg-transparent p-3 font-mono text-sm leading-6 text-transparent caret-foreground selection:bg-primary/30 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
                 </div>
               </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Meta (JSON)</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Meta (JSON)</label>
                 <Textarea
                   value={formValues.meta_json ?? ""}
                   onChange={(event) =>
-                    setFormValues((prev) => ({ ...prev, meta_json: event.target.value }))
+                    setFormValues((prev) => ({
+                      ...prev,
+                      meta_json: event.target.value
+                    }))
                   }
                   placeholder='{"description":"..."}'
                   className="min-h-[120px]"
@@ -430,7 +489,10 @@ export const CmsManagerPage = () => {
                   >
                     Publier
                   </Button>
-                  <Button onClick={handleSave} disabled={createPage.isPending || updatePage.isPending}>
+                  <Button
+                    onClick={handleSave}
+                    disabled={createPage.isPending || updatePage.isPending}
+                  >
                     Enregistrer
                   </Button>
                 </div>
@@ -443,7 +505,9 @@ export const CmsManagerPage = () => {
                 {formValues.draft_content ? (
                   <div
                     className="w-full"
-                    dangerouslySetInnerHTML={{ __html: formValues.draft_content }}
+                    dangerouslySetInnerHTML={{
+                      __html: formValues.draft_content
+                    }}
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground">

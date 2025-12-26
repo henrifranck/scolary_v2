@@ -36,6 +36,7 @@ class Student(Base):
     center_of_baccalaureate = Column(String(255), nullable=False)
     year_of_baccalaureate = Column(Date)
     job = Column(String(255), nullable=False)
+    #---------------------------------
     father_name = Column(String(255))
     father_job = Column(String(255))
     mother_name = Column(String(255))

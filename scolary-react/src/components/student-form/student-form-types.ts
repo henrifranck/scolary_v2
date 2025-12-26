@@ -1,5 +1,5 @@
-import { AcademicYear } from "@/services/academic-year-service";
-import { Journey } from "@/services/journey-service";
+import { AcademicYear } from "@/models/academic-year";
+import { Journey } from "@/models/journey";
 
 export type StudentFormState = {
   studentRecordId: string;
@@ -19,6 +19,7 @@ export type StudentFormState = {
   birthPlace: string;
   baccalaureateNumber: string;
   baccalaureateCenter: string;
+  baccalaureateYear: string;
   job: string;
   enrollmentStatus: string;
   mentionId: string;
@@ -69,6 +70,7 @@ export type StudentAnnualProps = {
   academic_year?: AcademicYear;
   payment: Array<StudentPaymentState>;
   register_semester: Array<StudentSemesterState>;
+  payment_status?: string;
   document?: Array<StudentDocumentState>;
 };
 

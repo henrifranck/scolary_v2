@@ -42,6 +42,7 @@ import {
 } from "../../services/user-service";
 import { useRoles } from "../../services/role-service";
 import { useMentions } from "../../services/mention-service";
+import { ActionButton } from "@/components/action-button";
 
 type UserFormValues = {
   first_name: string;
@@ -480,8 +481,8 @@ const UserForm = ({
                       />
                       <span
                         className={cn(
-                          'flex-1',
-                          !checked && 'text-muted-foreground'
+                          "flex-1",
+                          !checked && "text-muted-foreground"
                         )}
                       >
                         {role.label}
@@ -525,8 +526,8 @@ const UserForm = ({
                       />
                       <span
                         className={cn(
-                          'flex-1',
-                          !checked && 'text-muted-foreground'
+                          "flex-1",
+                          !checked && "text-muted-foreground"
                         )}
                       >
                         {mention.label}
@@ -542,7 +543,8 @@ const UserForm = ({
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Mention selection is optional. Leave empty to keep current assignment.
+            Mention selection is optional. Leave empty to keep current
+            assignment.
           </p>
         </TabsContent>
       </Tabs>
@@ -690,26 +692,23 @@ export const UsersPage = () => {
     [closeForm, createUser, editingUser, updateUser, uploadUserPicture]
   );
 
-  const handleDelete = useCallback(
-    async () => {
-      if (!userToDelete) {
-        return;
-      }
-      try {
-        await deleteUser.mutateAsync(userToDelete.id);
-        setFeedback({ type: "success", text: "User deleted successfully." });
-      } catch (mutationError) {
-        const message =
-          mutationError instanceof Error
-            ? mutationError.message
-            : "Unable to delete user.";
-        setFeedback({ type: "error", text: message });
-      } finally {
-        setUserToDelete(null);
-      }
-    },
-    [deleteUser, userToDelete]
-  );
+  const handleDelete = useCallback(async () => {
+    if (!userToDelete) {
+      return;
+    }
+    try {
+      await deleteUser.mutateAsync(userToDelete.id);
+      setFeedback({ type: "success", text: "User deleted successfully." });
+    } catch (mutationError) {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete user.";
+      setFeedback({ type: "error", text: message });
+    } finally {
+      setUserToDelete(null);
+    }
+  }, [deleteUser, userToDelete]);
 
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -740,7 +739,11 @@ export const UsersPage = () => {
         ? "Unable to load roles"
         : null;
   const mentionOptions = useMemo(
-    () => mentionsData.map((mention) => ({ id: String(mention.id), label: mention.name })),
+    () =>
+      mentionsData.map((mention) => ({
+        id: String(mention.id),
+        label: mention.name
+      })),
     [mentionsData]
   );
   const mentionNameMap = useMemo(() => {
@@ -826,7 +829,7 @@ export const UsersPage = () => {
       };
       const idSet = new Set<number>();
       const addId = (id?: number | null) => {
-        if (typeof id === 'number' && Number.isFinite(id) && id > 0) {
+        if (typeof id === "number" && Number.isFinite(id) && id > 0) {
           idSet.add(id);
         }
       };
@@ -838,14 +841,16 @@ export const UsersPage = () => {
       user.user_mention?.forEach((assignment) => {
         const mentionId = assignment.mention?.id ?? assignment.id_mention;
         addId(mentionId);
-        if (assignment.mention && 'name' in assignment.mention) {
+        if (assignment.mention && "name" in assignment.mention) {
           addLabel(assignment.mention.name ?? null);
         }
       });
       user.mention_ids?.forEach(addId);
 
       if (labels.length === 0) {
-        Array.from(idSet).forEach((id) => addLabel(mentionNameMap.get(id) ?? `#${id}`));
+        Array.from(idSet).forEach((id) =>
+          addLabel(mentionNameMap.get(id) ?? `#${id}`)
+        );
       } else {
         Array.from(idSet).forEach((id) => {
           const resolved = mentionNameMap.get(id);
@@ -934,23 +939,28 @@ export const UsersPage = () => {
         id: "actions",
         header: "",
         cell: ({ row }) => (
-          <div className="flex justify-end gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleEdit(row.original)}
-            >
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setUserToDelete(row.original)}
-            >
-              Delete
-            </Button>
-          </div>
+          // <div className="flex justify-end gap-2">
+          //   <Button
+          //     size="sm"
+          //     variant="outline"
+          //     onClick={() => handleEdit(row.original)}
+          //   >
+          //     Edit
+          //   </Button>
+          //   <Button
+          //     size="sm"
+          //     variant="ghost"
+          //     className="text-destructive hover:text-destructive"
+          //     onClick={() => setUserToDelete(row.original)}
+          //   >
+          //     Delete
+          //   </Button>
+          // </div>
+          <ActionButton
+            row={row}
+            handleEdit={handleEdit}
+            setConfirmDelete={setUserToDelete}
+          />
         )
       }
     ];
@@ -1040,7 +1050,6 @@ export const UsersPage = () => {
     [handleEdit, resolveRoleLabels, resolveMentionLabels]
   );
 
-
   const isSubmitting = createUser.isPending || updateUser.isPending;
 
   return (
@@ -1072,7 +1081,9 @@ export const UsersPage = () => {
           {mentionsErrorMessage}
         </div>
       ) : null}
-      {!mentionsErrorMessage && !areMentionsLoading && mentionOptions.length === 0 ? (
+      {!mentionsErrorMessage &&
+      !areMentionsLoading &&
+      mentionOptions.length === 0 ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
           Create at least one mention before inviting users.
         </div>

@@ -88,7 +88,9 @@ export const UniversityInfoPage = () => {
   >(null);
   const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [departmentLogoFile, setDepartmentLogoFile] = useState<File | null>(null);
+  const [departmentLogoFile, setDepartmentLogoFile] = useState<File | null>(
+    null
+  );
   const [signatureDirty, setSignatureDirty] = useState(false);
   const [showSignature, setShowSignature] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -273,7 +275,9 @@ export const UniversityInfoPage = () => {
         });
         preparedValues.logo_university = normalizeStoredPath(uploadedLogo.path);
         setLogoPreview(resolveFileUrl(uploadedLogo.path));
-        setValue("logo_university", preparedValues.logo_university, { shouldDirty: false });
+        setValue("logo_university", preparedValues.logo_university, {
+          shouldDirty: false
+        });
       }
 
       if (departmentLogoFile) {
@@ -281,9 +285,13 @@ export const UniversityInfoPage = () => {
           file: departmentLogoFile,
           payload: { type: "image", name: departmentLogoFile.name }
         });
-        preparedValues.logo_departement = normalizeStoredPath(uploadedDeptLogo.path);
+        preparedValues.logo_departement = normalizeStoredPath(
+          uploadedDeptLogo.path
+        );
         setDepartmentLogoPreview(resolveFileUrl(uploadedDeptLogo.path));
-        setValue("logo_departement", preparedValues.logo_departement, { shouldDirty: false });
+        setValue("logo_departement", preparedValues.logo_departement, {
+          shouldDirty: false
+        });
       }
 
       if (signatureDirty) {
@@ -291,14 +299,20 @@ export const UniversityInfoPage = () => {
         if (!blob) {
           throw new Error("Unable to read signature.");
         }
-        const sigFile = new File([blob], "signature.png", { type: "image/png" });
+        const sigFile = new File([blob], "signature.png", {
+          type: "image/png"
+        });
         const uploadedSignature = await uploadFile.mutateAsync({
           file: sigFile,
           payload: { type: "image", name: "signature.png" }
         });
-        preparedValues.admin_signature = normalizeStoredPath(uploadedSignature.path);
+        preparedValues.admin_signature = normalizeStoredPath(
+          uploadedSignature.path
+        );
         setSignaturePreview(resolveFileUrl(uploadedSignature.path));
-        setValue("admin_signature", preparedValues.admin_signature, { shouldDirty: false });
+        setValue("admin_signature", preparedValues.admin_signature, {
+          shouldDirty: false
+        });
       }
 
       await saveUniversity.mutateAsync({
@@ -429,7 +443,9 @@ export const UniversityInfoPage = () => {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(event) => handleDepartmentLogoUpload(event.target.files)}
+                onChange={(event) =>
+                  handleDepartmentLogoUpload(event.target.files)
+                }
               />
               <Button
                 type="button"
@@ -542,11 +558,16 @@ export const UniversityInfoPage = () => {
             <div>
               <p className="text-sm font-medium">Admin signature</p>
               <p className="text-xs text-muted-foreground">
-                Draw the signature. It will be uploaded when you click "Save changes".
+                Draw the signature. It will be uploaded when you click "Save
+                changes".
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={() => setShowSignature((prev) => !prev)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowSignature((prev) => !prev)}
+              >
                 {showSignature ? (
                   <>
                     <EyeOff className="mr-2 h-4 w-4" />
@@ -565,11 +586,11 @@ export const UniversityInfoPage = () => {
             </div>
           </div>
           {showSignature ? (
-            <>
+            <div className="flex items-center gap-2">
               <div className="rounded-md border bg-white">
                 <canvas
                   ref={canvasRef}
-                  className="h-[200px] w-full touch-none"
+                  className="h-[250px] w-[250px] touch-none"
                   onPointerDown={handlePointerDown}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
@@ -578,8 +599,8 @@ export const UniversityInfoPage = () => {
               </div>
               <div className="space-y-2">
                 {signaturePreview ? (
-                  <div className="flex items-start gap-3 rounded-md border bg-muted/30 p-3">
-                    <div className="h-16 w-32 overflow-hidden rounded bg-background">
+                  <div className="flex items-start gap-3 rounded-md border bg-muted/30">
+                    <div className="h-[250px] w-[300px] overflow-hidden rounded bg-background">
                       <img
                         src={signaturePreview}
                         alt="Signature preview"
@@ -598,7 +619,7 @@ export const UniversityInfoPage = () => {
                   </p>
                 )}
               </div>
-            </>
+            </div>
           ) : null}
         </div>
 

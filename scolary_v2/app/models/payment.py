@@ -15,7 +15,7 @@ class Payment(Base):
     payed = Column(Float, nullable=False)
     num_receipt = Column(String(255), nullable=False, unique=True)
     date_receipt = Column(Date, nullable=False)
-    description = Column(Text, nullable=False, server_default="Droit d'inscription")
+    description = Column(Text)
 
     # default column
     created_at = Column(DateTime, nullable=False, default=func.now())

@@ -1,27 +1,30 @@
-import { Pencil, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Pencil, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { Button } from '../../components/ui/button';
-import { DataTable, type ColumnDef } from '../../components/data-table/data-table';
-import { ConfirmDialog } from '../../components/confirm-dialog';
-import { Input } from '../../components/ui/input';
+import { Button } from "../../components/ui/button";
+import {
+  DataTable,
+  type ColumnDef
+} from "../../components/data-table/data-table";
+import { ConfirmDialog } from "../../components/confirm-dialog";
+import { Input } from "../../components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '../../components/ui/dialog';
-import { cn } from '../../lib/utils';
+} from "../../components/ui/dialog";
+import { cn } from "../../lib/utils";
 import {
-  type AcademicYear,
-  type AcademicYearPayload,
   useAcademicYears,
   useCreateAcademicYear,
   useUpdateAcademicYear,
   useDeleteAcademicYear
-} from '../../services/academic-year-service';
+} from "../../services/academic-year-service";
+import { AcademicYear, AcademicYearPayload } from "@/models/academic-year";
+import { ActionButton } from "@/components/action-button";
 
 type AcademicYearFormValues = {
   name: string;
@@ -29,13 +32,13 @@ type AcademicYearFormValues = {
 };
 
 const defaultFormValues: AcademicYearFormValues = {
-  name: '',
-  code: ''
+  name: "",
+  code: ""
 };
 
 const toFormValues = (year?: AcademicYear | null): AcademicYearFormValues => ({
-  name: year?.name ?? '',
-  code: year?.code ?? ''
+  name: year?.name ?? "",
+  code: year?.code ?? ""
 });
 
 const toPayload = (values: AcademicYearFormValues): AcademicYearPayload => ({
@@ -44,7 +47,7 @@ const toPayload = (values: AcademicYearFormValues): AcademicYearPayload => ({
 });
 
 interface AcademicYearFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialValues?: AcademicYearFormValues;
   isSubmitting: boolean;
   onSubmit: (values: AcademicYearFormValues) => Promise<void>;
@@ -52,13 +55,19 @@ interface AcademicYearFormProps {
 }
 
 const generateAcademicYearCode = () => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_@#';
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_@#";
   return Array.from({ length: 8 })
     .map(() => characters[Math.floor(Math.random() * characters.length)])
-    .join('');
+    .join("");
 };
 
-const AcademicYearForm = ({ mode, initialValues, onSubmit, onCancel, isSubmitting }: AcademicYearFormProps) => {
+const AcademicYearForm = ({
+  mode,
+  initialValues,
+  onSubmit,
+  onCancel,
+  isSubmitting
+}: AcademicYearFormProps) => {
   const {
     register,
     handleSubmit,
@@ -77,15 +86,15 @@ const AcademicYearForm = ({ mode, initialValues, onSubmit, onCancel, isSubmittin
   useEffect(() => {
     if (!initialValues?.code) {
       const generated = generateAcademicYearCode();
-      setValue('code', generated, { shouldDirty: false, shouldValidate: true });
+      setValue("code", generated, { shouldDirty: false, shouldValidate: true });
     }
   }, [initialValues, setValue]);
 
-  const codeValue = watch('code');
+  const codeValue = watch("code");
 
   const handleRegenerate = useCallback(() => {
     const generated = generateAcademicYearCode();
-    setValue('code', generated, { shouldDirty: true, shouldValidate: true });
+    setValue("code", generated, { shouldDirty: true, shouldValidate: true });
   }, [setValue]);
 
   return (
@@ -97,10 +106,12 @@ const AcademicYearForm = ({ mode, initialValues, onSubmit, onCancel, isSubmittin
         <Input
           id="year-name"
           placeholder="2024 / 2025"
-          className={cn(errors.name && 'border-destructive text-destructive')}
-          {...register('name', { required: 'Name is required' })}
+          className={cn(errors.name && "border-destructive text-destructive")}
+          {...register("name", { required: "Name is required" })}
         />
-        {errors.name ? <p className="text-xs text-destructive">{errors.name.message}</p> : null}
+        {errors.name ? (
+          <p className="text-xs text-destructive">{errors.name.message}</p>
+        ) : null}
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="year-code">
@@ -110,30 +121,47 @@ const AcademicYearForm = ({ mode, initialValues, onSubmit, onCancel, isSubmittin
           <Input
             id="year-code"
             placeholder="2024-2025"
-            className={cn(errors.code && 'border-destructive text-destructive')}
+            className={cn(errors.code && "border-destructive text-destructive")}
             disabled
-            value={codeValue || ''}
-            {...register('code', { required: 'Code is required' })}
+            value={codeValue || ""}
+            {...register("code", { required: "Code is required" })}
           />
-          <Button type="button" variant="outline" size="sm" onClick={handleRegenerate} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleRegenerate}
+            disabled={isSubmitting}
+          >
             Regenerate
           </Button>
         </div>
-        {errors.code ? <p className="text-xs text-destructive">{errors.code.message}</p> : null}
+        {errors.code ? (
+          <p className="text-xs text-destructive">{errors.code.message}</p>
+        ) : null}
       </div>
       <div className="flex items-center justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Create academic year'}
+          {isSubmitting
+            ? "Saving…"
+            : mode === "edit"
+              ? "Save changes"
+              : "Create academic year"}
         </Button>
       </div>
     </form>
   );
 };
 
-type Feedback = { type: 'success' | 'error'; text: string };
+type Feedback = { type: "success" | "error"; text: string };
 
 export const AcademicYearsPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -151,7 +179,8 @@ export const AcademicYearsPage = () => {
     error
   } = useAcademicYears({ offset, limit: pageSize });
   const academicYears = academicYearsResponse?.data ?? [];
-  const totalAcademicYears = academicYearsResponse?.count ?? academicYears.length;
+  const totalAcademicYears =
+    academicYearsResponse?.count ?? academicYears.length;
   const createAcademicYear = useCreateAcademicYear();
   const updateAcademicYear = useUpdateAcademicYear();
   const deleteAcademicYear = useDeleteAcademicYear();
@@ -177,37 +206,49 @@ export const AcademicYearsPage = () => {
       try {
         if (editingYear) {
           await updateAcademicYear.mutateAsync({ id: editingYear.id, payload });
-          setFeedback({ type: 'success', text: 'Academic year updated successfully.' });
+          setFeedback({
+            type: "success",
+            text: "Academic year updated successfully."
+          });
         } else {
           await createAcademicYear.mutateAsync(payload);
-          setFeedback({ type: 'success', text: 'Academic year created successfully.' });
+          setFeedback({
+            type: "success",
+            text: "Academic year created successfully."
+          });
         }
         closeForm();
       } catch (mutationError) {
-        const message = mutationError instanceof Error ? mutationError.message : 'Unable to save academic year.';
-        setFeedback({ type: 'error', text: message });
+        const message =
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Unable to save academic year.";
+        setFeedback({ type: "error", text: message });
       }
     },
     [closeForm, createAcademicYear, editingYear, updateAcademicYear]
   );
 
-  const handleDelete = useCallback(
-    async () => {
-      if (!yearToDelete) {
-        return;
-      }
-      try {
-        await deleteAcademicYear.mutateAsync(yearToDelete.id);
-        setFeedback({ type: 'success', text: 'Academic year deleted successfully.' });
-      } catch (mutationError) {
-        const message = mutationError instanceof Error ? mutationError.message : 'Unable to delete academic year.';
-        setFeedback({ type: 'error', text: message });
-      } finally {
-        setYearToDelete(null);
-      }
-    },
-    [deleteAcademicYear, yearToDelete]
-  );
+  const handleDelete = useCallback(async () => {
+    if (!yearToDelete) {
+      return;
+    }
+    try {
+      await deleteAcademicYear.mutateAsync(yearToDelete.id);
+      setFeedback({
+        type: "success",
+        text: "Academic year deleted successfully."
+      });
+    } catch (mutationError) {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Unable to delete academic year.";
+      setFeedback({ type: "error", text: message });
+    } finally {
+      setYearToDelete(null);
+    }
+  }, [deleteAcademicYear, yearToDelete]);
 
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -221,56 +262,72 @@ export const AcademicYearsPage = () => {
   const columns = useMemo<ColumnDef<AcademicYear>[]>(() => {
     return [
       {
-        accessorKey: 'name',
-        header: 'Academic year',
+        accessorKey: "name",
+        header: "Academic year",
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium">{row.original.name}</span>
-            <span className="text-xs text-muted-foreground">{row.original.code}</span>
+            <span className="text-xs text-muted-foreground">
+              {row.original.code}
+            </span>
           </div>
         )
       },
       {
-        accessorKey: 'code',
-        header: 'Code',
-        cell: ({ row }) => <span className="text-sm text-muted-foreground">{row.original.code}</span>
+        accessorKey: "code",
+        header: "Code",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.code}
+          </span>
+        )
       },
       {
-        id: 'actions',
-        header: '',
+        id: "actions",
+        header: "",
         cell: ({ row }) => (
-          <div className="flex justify-end gap-2">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => handleEdit(row.original)}
-              aria-label="Editer"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setYearToDelete(row.original)}
-              aria-label="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          // <div className="flex justify-end gap-2">
+          //   <Button
+          //     size="icon"
+          //     variant="ghost"
+          //     onClick={() => handleEdit(row.original)}
+          //     aria-label="Editer"
+          //   >
+          //     <Pencil className="h-4 w-4" />
+          //   </Button>
+          //   <Button
+          //     size="icon"
+          //     variant="ghost"
+          //     className="text-destructive hover:text-destructive"
+          //     onClick={() => setYearToDelete(row.original)}
+          //     aria-label="Supprimer"
+          //   >
+          //     <Trash2 className="h-4 w-4" />
+          //   </Button>
+          // </div>
+          <ActionButton
+            row={row}
+            handleEdit={handleEdit}
+            setConfirmDelete={setYearToDelete}
+          />
         )
       }
     ];
   }, [handleEdit]);
 
-  const isSubmitting = createAcademicYear.isPending || updateAcademicYear.isPending;
+  const isSubmitting =
+    createAcademicYear.isPending || updateAcademicYear.isPending;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Academic years</h1>
-          <p className="text-sm text-muted-foreground">Manage academic years available across the platform.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Academic years
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage academic years available across the platform.
+          </p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
           Add academic year
@@ -280,14 +337,17 @@ export const AcademicYearsPage = () => {
       {feedback ? (
         <div
           className={cn(
-            'flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm',
-            feedback.type === 'success'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
+            "flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm",
+            feedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-destructive/30 bg-destructive/10 text-destructive"
           )}
         >
           <span>{feedback.text}</span>
-          <button className="text-xs font-medium underline" onClick={() => setFeedback(null)}>
+          <button
+            className="text-xs font-medium underline"
+            onClick={() => setFeedback(null)}
+          >
             Dismiss
           </button>
         </div>
@@ -304,15 +364,17 @@ export const AcademicYearsPage = () => {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingYear ? 'Edit academic year' : 'Create new academic year'}</DialogTitle>
+            <DialogTitle>
+              {editingYear ? "Edit academic year" : "Create new academic year"}
+            </DialogTitle>
             <DialogDescription>
               {editingYear
-                ? 'Update the academic year to keep both panels aligned.'
-                : 'Create an academic year that will be available across the platform.'}
+                ? "Update the academic year to keep both panels aligned."
+                : "Create an academic year that will be available across the platform."}
             </DialogDescription>
           </DialogHeader>
           <AcademicYearForm
-            mode={editingYear ? 'edit' : 'create'}
+            mode={editingYear ? "edit" : "create"}
             initialValues={toFormValues(editingYear)}
             onSubmit={handleSubmit}
             onCancel={closeForm}
@@ -327,7 +389,9 @@ export const AcademicYearsPage = () => {
         description={
           yearToDelete ? (
             <>
-              Are you sure you want to delete <strong>{yearToDelete.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <strong>{yearToDelete.name}</strong>? This action cannot be
+              undone.
             </>
           ) : null
         }
@@ -343,7 +407,11 @@ export const AcademicYearsPage = () => {
         data={academicYears}
         isLoading={isPending}
         searchPlaceholder="Search academic years"
-        emptyText={isError ? error?.message ?? 'Unable to load academic years' : 'No academic years found'}
+        emptyText={
+          isError
+            ? (error?.message ?? "Unable to load academic years")
+            : "No academic years found"
+        }
         totalItems={totalAcademicYears}
         page={page}
         pageSize={pageSize}
