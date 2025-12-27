@@ -39,6 +39,7 @@ import type { AppRouterContext } from "./router-context";
 import { Route as rootRoute } from "./routes/__root";
 import { BaccalaureateSeriesPage } from "./pages/admin/baccalaureate-series/baccalaureate-series";
 import { NationalitysPage } from "./pages/admin/nationality/nationality";
+import { ClassroomsPage } from "./pages/admin/classroom/classroom";
 
 const ensureAuthenticated = ({ context }: { context: AppRouterContext }) => {
   const { status } = context.authStore.getState();
@@ -398,6 +399,19 @@ const nationalityManagerUserRoute = createRoute({
   beforeLoad: ensureAuthenticated
 });
 
+const classroomManagerRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "classroom",
+  component: ClassroomsPage
+});
+
+const classroomManagerUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "classroom",
+  component: ClassroomsPage,
+  beforeLoad: ensureAuthenticated
+});
+
 const authRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "auth",
@@ -441,6 +455,7 @@ const routeTree = rootRoute.addChildren([
   cmsManagerUserRoute,
   baccalaureateSerieUserRoute,
   nationalityManagerUserRoute,
+  classroomManagerUserRoute,
   adminRoute.addChildren([
     adminDashboardRoute,
     adminNotesRoute,
@@ -468,7 +483,8 @@ const routeTree = rootRoute.addChildren([
     universityInfoRoute,
     cmsManagerRoute,
     baccalaureateSerieRoute,
-    nationalityManagerRoute
+    nationalityManagerRoute,
+    classroomManagerRoute
   ]),
   authRoute.addChildren([loginRoute])
 ]);

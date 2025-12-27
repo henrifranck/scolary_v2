@@ -8,6 +8,8 @@ import ast
 
 router = APIRouter()
 from app.api import deps
+
+
 @router.get('/', response_model=schemas.ResponseClassroom)
 def read_classrooms(
         *,
@@ -23,14 +25,14 @@ def read_classrooms(
     """
     relations = []
     if relation is not None and relation != "" and relation != []:
-       relations += ast.literal_eval(relation)
+        relations += ast.literal_eval(relation)
 
     wheres = []
     if where is not None and where != "" and where != []:
-       wheres += ast.literal_eval(where)
+        wheres += ast.literal_eval(where)
 
     classrooms = crud.classroom.get_multi_where_array(
-      db=db, relations=relations, skip=offset, limit=limit, where=wheres)
+        db=db, relations=relations, skip=offset, limit=limit, where=wheres)
     count = crud.classroom.get_count_where_array(db=db, where=wheres)
     response = schemas.ResponseClassroom(**{'count': count, 'data': jsonable_encoder(classrooms)})
     return response
@@ -82,11 +84,11 @@ def read_classroom(
     """
     relations = []
     if relation is not None and relation != "" and relation != [] and relation != "[]":
-       relations += ast.literal_eval(relation)
+        relations += ast.literal_eval(relation)
 
     wheres = []
     if where is not None and where != "" and where != []:
-       wheres += ast.literal_eval(where)
+        wheres += ast.literal_eval(where)
 
     classroom = crud.classroom.get(db=db, id=classroom_id, relations=relations, where=wheres)
     if not classroom:
