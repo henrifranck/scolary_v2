@@ -15,7 +15,6 @@ import {
 } from "../../../components/filters/academic-filters";
 import {
   fetchReinscriptionsWithMeta,
-  type ReinscriptionStudent,
   type ReinscriptionStatus
 } from "../../../services/reinscription-service";
 import {
@@ -34,11 +33,13 @@ import {
 import {
   updateStudentProfile,
   uploadStudentPicture,
-  softDeleteStudent,
-  type StudentUpdatePayload
+  softDeleteStudent
 } from "../../../services/student-service";
 import { StudentForm } from "@/components/student-form/student-form";
-import { StudentFormState } from "@/components/student-form/student-form-types";
+import {
+  StudentFormState,
+  StudentProfile
+} from "@/components/student-form/student-form-types";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { printStudentCards, printStudentsList } from "@/services/print-service";
@@ -79,6 +80,7 @@ const createFormState = (
   studentId: "",
   cardNumber: "",
   firstName: "",
+  fullName: "",
   phoneNumber: "",
   lastName: "",
   email: "",
@@ -93,15 +95,19 @@ const createFormState = (
   baccalaureateNumber: "",
   baccalaureateCenter: "",
   baccalaureateYear: "",
+  baccalaureateSerieId: "",
   job: "",
   enrollmentStatus: "",
   mentionId: "",
   journeyId: "",
   semester: "",
   status: "",
-  notes: "",
+  mean: 0,
   picture: "",
   pictureFile: null,
+  journeyLabel: "",
+  mentionLabel: "",
+  lastUpdate: "",
   annualRegister: [],
   ...overrides
 });
@@ -113,10 +119,8 @@ const createEditingSectionsState = (): Record<EditableSection, boolean> => ({
   school: false
 });
 
-const buildStudentUpdatePayload = (
-  state: StudentFormState
-): StudentUpdatePayload => {
-  const payload: StudentUpdatePayload = {
+const buildStudentUpdatePayload = (state: StudentFormState): StudentProfile => {
+  const payload: StudentProfile = {
     id: state.studentRecordId || undefined,
     num_select: state.studentId || undefined,
     num_carte: state.cardNumber || undefined,
@@ -133,20 +137,23 @@ const buildStudentUpdatePayload = (
     place_of_birth: state.birthPlace || undefined,
     num_of_baccalaureate: state.baccalaureateNumber || undefined,
     center_of_baccalaureate: state.baccalaureateCenter || undefined,
+    year_of_baccalaureate: state.baccalaureateYear || undefined,
+    id_baccalaureate_series: state.baccalaureateSerieId || undefined,
     job: state.job || undefined,
     picture: state.picture || undefined,
     id_mention: state.mentionId || undefined,
     id_journey: state.journeyId || undefined,
     active_semester: state.semester || undefined,
+    id_nationality: state.nationalityId,
     enrollment_status: state.enrollmentStatus || state.status || undefined,
-    notes: state.notes || undefined
+    mean: state.mean || 0
   };
 
   return Object.fromEntries(
     Object.entries(payload).filter(
       ([, value]) => value !== undefined && value !== ""
     )
-  ) as StudentUpdatePayload;
+  ) as StudentProfile;
 };
 
 const getAvatarUrl = (fullName: string) => {
@@ -420,9 +427,7 @@ export const ReinscriptionPage = () => {
   );
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<ReinscriptionStudent[]>(
-    []
-  );
+  const [searchResults, setSearchResults] = useState<StudentFormState[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [editingSections, setEditingSections] = useState<
@@ -433,7 +438,7 @@ export const ReinscriptionPage = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteStudent, setConfirmDeleteStudent] =
-    useState<ReinscriptionStudent | null>(null);
+    useState<StudentFormState | null>(null);
   const [printError, setPrintError] = useState<string | null>(null);
   const [printingList, setPrintingList] = useState(false);
   const [printingCards, setPrintingCards] = useState(false);
@@ -536,13 +541,13 @@ export const ReinscriptionPage = () => {
     setDialogOpen(true);
   }, [filters]);
 
-  const handleEditStudent = useCallback((student: ReinscriptionStudent) => {
+  const handleEditStudent = useCallback((student: StudentFormState) => {
     setDialogMode("edit");
     setFormState(
       createFormState({
-        studentRecordId: student.recordId,
-        studentId: student.id,
-        cardNumber: student.id,
+        studentRecordId: student.studentRecordId,
+        studentId: student.studentId,
+        cardNumber: student.cardNumber,
         firstName: student.firstName,
         lastName: student.lastName,
         email: "",
@@ -554,7 +559,10 @@ export const ReinscriptionPage = () => {
         birthPlace: "",
         mentionId: student.mentionId,
         journeyId: student.journeyId,
-        semester: student.semester
+        semester: student.semester,
+        baccalaureateSerieId: String(student.baccalaureateSerieId),
+        baccalaureateYear: student.baccalaureateYear,
+        baccalaureateCenter: student.baccalaureateCenter
       })
     );
     setDialogOpen(true);
@@ -612,11 +620,11 @@ export const ReinscriptionPage = () => {
   };
 
   const handleSoftDelete = useCallback(
-    async (student: ReinscriptionStudent) => {
+    async (student: StudentFormState) => {
       setDeleteError(null);
-      setDeletingId(student.recordId);
+      setDeletingId(student.studentRecordId);
       try {
-        await softDeleteStudent(student.recordId);
+        await softDeleteStudent(student.studentRecordId);
         void reinscriptionQuery.refetch();
       } catch (error) {
         setDeleteError(
@@ -640,7 +648,7 @@ export const ReinscriptionPage = () => {
     setPage(1);
   };
 
-  const studentColumns = useMemo<ColumnDef<ReinscriptionStudent>[]>(
+  const studentColumns = useMemo<ColumnDef<StudentFormState>[]>(
     () => [
       {
         accessorKey: "fullName",
@@ -649,7 +657,7 @@ export const ReinscriptionPage = () => {
           <div className="flex flex-col">
             <span className="font-medium">{row.original.fullName}</span>
             <span className="text-xs text-muted-foreground">
-              {row.original.id}
+              {row.original.studentRecordId}
             </span>
           </div>
         )
@@ -682,23 +690,6 @@ export const ReinscriptionPage = () => {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          // <div className="flex justify-end gap-2">
-          //   <Button
-          //     size="sm"
-          //     variant="outline"
-          //     onClick={() => handleEditStudent(row.original)}
-          //   >
-          //     Edit
-          //   </Button>
-          //   <Button
-          //     size="sm"
-          //     variant="destructive"
-          //     onClick={() => setConfirmDeleteStudent(row.original)}
-          //     disabled={deletingId === row.original.recordId}
-          //   >
-          //     Delete
-          //   </Button>
-          // </div>
           <ActionButton
             deletingId={deletingId}
             row={row}
@@ -712,13 +703,13 @@ export const ReinscriptionPage = () => {
   );
 
   const renderStudentCard = useCallback(
-    (row: Row<ReinscriptionStudent>) => {
+    (row: Row<StudentFormState>) => {
       const student = row.original;
       const statusStyle =
         statusStyles[student.status as ReinscriptionStatus] ??
         statusStyles.Pending;
       const avatarUrl =
-        resolveAssetUrl(student.photoUrl) || getAvatarUrl(student.fullName);
+        resolveAssetUrl(student.picture) || getAvatarUrl(student.fullName);
 
       return (
         <div className="flex h-full flex-col gap-4 rounded-lg border bg-background p-5 shadow-sm">
@@ -733,7 +724,9 @@ export const ReinscriptionPage = () => {
                 <p className="text-sm font-semibold leading-tight text-foreground">
                   {student.fullName}
                 </p>
-                <p className="text-xs text-muted-foreground">{student.id}</p>
+                <p className="text-xs text-muted-foreground">
+                  {student.studentRecordId}
+                </p>
               </div>
             </div>
             <span
@@ -1019,7 +1012,7 @@ export const ReinscriptionPage = () => {
               <div className="space-y-2">
                 {searchResults.map((student) => (
                   <Button
-                    key={`${student.recordId}-${student.id}`}
+                    key={`${student.studentRecordId}-${student.studentId}`}
                     type="button"
                     variant="ghost"
                     className="w-full justify-between border border-transparent hover:border-border"
@@ -1033,7 +1026,7 @@ export const ReinscriptionPage = () => {
                         {student.fullName}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {student.id} · {student.journeyLabel}
+                        {student.studentId} · {student.journeyLabel}
                       </span>
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -1113,7 +1106,7 @@ export const ReinscriptionPage = () => {
         destructive
         isConfirming={
           Boolean(confirmDeleteStudent) &&
-          deletingId === confirmDeleteStudent?.recordId
+          deletingId === confirmDeleteStudent?.studentRecordId
         }
         onCancel={() => setConfirmDeleteStudent(null)}
         onConfirm={() => {

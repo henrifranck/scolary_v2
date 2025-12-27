@@ -51,6 +51,7 @@ const createEmptyFormState = (): StudentFormState => ({
   cardNumber: "",
   firstName: "",
   lastName: "",
+  fullName: "",
   email: "",
   address: "",
   sex: "",
@@ -64,6 +65,7 @@ const createEmptyFormState = (): StudentFormState => ({
   baccalaureateNumber: "",
   baccalaureateCenter: "",
   baccalaureateYear: "",
+  baccalaureateSerieId: "",
   job: "",
   enrollmentStatus: "",
   level: "",
@@ -71,9 +73,11 @@ const createEmptyFormState = (): StudentFormState => ({
   journeyId: "",
   semester: "",
   status: "",
-  notes: "",
+  mean: 0,
   picture: "",
   pictureFile: null,
+  lastUpdate: "",
+  mentionLabel: "",
   annualRegister: []
 });
 
@@ -230,6 +234,8 @@ export const DossierSelectionPage = () => {
           birthPlace: profile.place_of_birth ?? "",
           baccalaureateNumber: profile.num_of_baccalaureate ?? "",
           baccalaureateCenter: profile.center_of_baccalaureate ?? "",
+          baccalaureateSerieId: profile.id_baccalaureate_series ?? "",
+          baccalaureateYear: profile.year_of_baccalaureate ?? "",
           job: profile.job ?? "",
           enrollmentStatus: profile.enrollment_status ?? "",
           mentionId: profile.id_mention
@@ -239,7 +245,7 @@ export const DossierSelectionPage = () => {
           semester: profile.active_semester ?? "",
           status: profile.enrollment_status ?? "",
           level: profile.level ?? filters.level ?? "",
-          notes: ""
+          mean: 0
         });
         setDialogOpen(true);
       } catch (error) {

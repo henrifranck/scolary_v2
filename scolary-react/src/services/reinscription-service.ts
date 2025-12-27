@@ -2,28 +2,15 @@ import { useQuery, type QueryKey } from "@tanstack/react-query";
 
 import { apiRequest } from "./api-client";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
-import { ApiListResponse } from "@/pages/user/re-registration/re-registration-form-type";
 import { isListResponse, normalizeList } from "./utils-common";
+import {
+  ApiListResponse,
+  StudentFormState,
+  StudentProfile,
+  StudentSemesterState
+} from "@/components/student-form/student-form-types";
 
 export type ReinscriptionStatus = "Pending" | "In progress" | "Validated";
-
-export interface ReinscriptionStudent {
-  id: string;
-  recordId: string;
-  fullName: string;
-  firstName: string;
-  lastName: string;
-  semester: string;
-  journeyId: string;
-  journeyLabel: string;
-  mentionId: string;
-  mentionLabel: string;
-  status: ReinscriptionStatus;
-  lastUpdate: string;
-  photoUrl: string;
-  deletedAt?: string;
-  annualRegister?: any;
-}
 
 export interface ReinscriptionFilters {
   mentionId?: string;
@@ -49,45 +36,7 @@ const queryKeys = {
   ]
 } as const;
 
-type ApiRegisterSemester = {
-  semester?: string | null;
-  repeat_status?: string | null;
-  id_journey?: number | string | null;
-  journey?: {
-    id: number;
-    name?: string | null;
-    abbreviation?: string | null;
-    id_mention?: number | null;
-    mention?: {
-      id: number;
-      name?: string | null;
-      abbreviation?: string | null;
-    };
-  };
-};
-
-type ApiAnnualRegister = {
-  register_semester?: ApiRegisterSemester[];
-};
-
-type ApiReinscriptionStudent = {
-  id: number | string;
-  num_carte?: string;
-  first_name?: string | null;
-  last_name?: string | null;
-  status?: string | null;
-  id_journey?: number | string | null;
-  id_mention?: number | string | null;
-  annual_register?: ApiAnnualRegister[];
-  photo_url?: string | null;
-  photo?: string | null;
-  picture?: string | null;
-  deleted_at?: string | null;
-  updated_at?: string | null;
-  last_update?: string | null;
-};
-
-const pickSemester = (registerSemester?: ApiRegisterSemester) =>
+const pickSemester = (registerSemester?: StudentSemesterState) =>
   registerSemester?.semester ?? "";
 
 const resolveStatus = (raw?: string | null): ReinscriptionStatus => {
@@ -106,7 +55,7 @@ const resolveStatus = (raw?: string | null): ReinscriptionStatus => {
   return "Pending";
 };
 
-const buildFullName = (student: ApiReinscriptionStudent) => {
+const buildFullName = (student: StudentProfile) => {
   const parts = [student.first_name, student.last_name].filter(Boolean);
   if (parts.length) {
     return parts.join(" ");
@@ -115,9 +64,7 @@ const buildFullName = (student: ApiReinscriptionStudent) => {
   return String(student.id);
 };
 
-const normalizeStudent = (
-  student: ApiReinscriptionStudent
-): ReinscriptionStudent => {
+const normalizeStudent = (student: StudentProfile): StudentFormState => {
   const annualRegister = student.annual_register?.[0];
   const registerSemester = annualRegister?.register_semester?.[0];
   const journeyId =
@@ -144,9 +91,11 @@ const normalizeStudent = (
   const lastName = student.last_name ?? "";
 
   return {
-    id: student.num_carte ?? String(student.id),
-    recordId: String(student.id ?? student.num_carte ?? ""),
+    studentRecordId: student.num_carte ?? String(student.id),
+    studentId: String(student.id ?? student.num_carte ?? ""),
     fullName: buildFullName(student),
+    email: student.email,
+    cardNumber: student.num_carte,
     firstName,
     lastName,
     semester: pickSemester(registerSemester),
@@ -154,12 +103,25 @@ const normalizeStudent = (
     journeyLabel,
     mentionId: String(mentionId ?? ""),
     mentionLabel,
-    status: resolveStatus(student.status),
-    lastUpdate: student.last_update ?? student.updated_at ?? "",
-    photoUrl: resolveAssetUrl(
-      student.photo_url ?? student.photo ?? student.picture ?? ""
-    ),
-    deletedAt: student.deleted_at ?? ""
+    sex: student.sex,
+    address: student.address,
+    maritalStatus: student.martial_status,
+    phoneNumber: student.phone_number,
+    cinNumber: student.num_cin,
+    status: resolveStatus(student.enrollment_status),
+    lastUpdate: student.updated_at ?? "",
+    picture: resolveAssetUrl(student.photo_url ?? student.picture ?? ""),
+    deletedAt: student.deleted_at ?? "",
+    cinIssueDate: student.date_of_cin,
+    cinIssuePlace: student.place_of_cin,
+    birthDate: student.date_of_birth,
+    birthPlace: student.place_of_birth,
+    baccalaureateCenter: student.center_of_baccalaureate,
+    baccalaureateSerieId: student.id_baccalaureate_series,
+    baccalaureateYear: student.year_of_baccalaureate,
+    job: student.job,
+    enrollmentStatus: student.enrollment_status,
+    mean: student.mean
   };
 };
 
@@ -259,12 +221,12 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
 };
 
 type ApiReinscriptionPayload =
-  | ApiListResponse<ApiReinscriptionStudent>
-  | ApiReinscriptionStudent[];
+  | ApiListResponse<StudentProfile>
+  | StudentProfile[];
 
 const toReinscriptionList = (
   payload: ApiReinscriptionPayload
-): { data: ReinscriptionStudent[]; count: number } => {
+): { data: StudentFormState[]; count: number } => {
   const list = normalizeList(payload).map(normalizeStudent);
   const count =
     (isListResponse(payload) && typeof payload.count === "number"
@@ -276,7 +238,7 @@ const toReinscriptionList = (
 
 export async function fetchReinscriptionsWithMeta(
   filters: ReinscriptionFilters = {}
-): Promise<{ data: ReinscriptionStudent[]; count: number }> {
+): Promise<{ data: StudentFormState[]; count: number }> {
   const payload = await apiRequest<ApiReinscriptionPayload>("/students/", {
     query: buildQueryParams(filters)
   });
@@ -286,7 +248,7 @@ export async function fetchReinscriptionsWithMeta(
 
 export async function fetchReinscriptions(
   filters: ReinscriptionFilters = {}
-): Promise<ReinscriptionStudent[]> {
+): Promise<StudentFormState[]> {
   const response = await fetchReinscriptionsWithMeta(filters);
   return response.data;
 }

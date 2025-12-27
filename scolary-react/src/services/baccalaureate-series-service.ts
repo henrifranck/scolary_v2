@@ -39,7 +39,7 @@ const normalizeList = <T>(
         count: Array.isArray(payload) ? payload.length : 0
       };
 
-export const fetchBaccalaureateSeries = async (
+export const fetchBaccalaureateSeries: any = async (
   query?: BaccalaureateSerieListQuery
 ): Promise<{ data: BaccalaureateSerie[]; count?: number }> =>
   normalizeList(

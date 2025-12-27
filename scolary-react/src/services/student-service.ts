@@ -1,4 +1,4 @@
-import { StudentProfile } from "@/pages/user/re-registration/re-registration-form-type";
+import { StudentProfile } from "@/components/student-form/student-form-types";
 import { apiRequest } from "./api-client";
 import { ReinscriptionFilters } from "./reinscription-service";
 
@@ -8,35 +8,7 @@ type OneStudentApiResponse =
       data?: StudentProfile | null;
     };
 
-export interface StudentUpdatePayload {
-  id?: number | string | null;
-  num_select?: string;
-  num_carte?: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  address?: string;
-  num_of_cin?: string;
-  date_of_cin?: string;
-  place_of_cin?: string;
-  date_of_birth?: string;
-  place_of_birth?: string;
-  phone_number?: string;
-  sex?: string;
-  martial_status?: string;
-  num_of_baccalaureate?: string;
-  center_of_baccalaureate?: string;
-  job?: string;
-  level?: string;
-  picture?: string | null;
-  id_mention?: string | number;
-  id_journey?: string | number;
-  active_semester?: string;
-  enrollment_status?: string;
-  notes?: string;
-  id_enter_year?: string | number;
-}
-export type StudentCreatePayload = Omit<StudentUpdatePayload, "id">;
+export type StudentCreatePayload = Omit<StudentProfile, "id">;
 
 const relations = JSON.stringify([
   "annual_register.register_semester",
@@ -45,7 +17,9 @@ const relations = JSON.stringify([
   "annual_register.register_semester.journey.mention{name}",
   "annual_register.payment{id,payed,num_receipt,date_receipt}",
   "annual_register.document{id,name,url,description,id_required_document}",
-  "annual_register{max_semester_number,level_from_semester,total_payment,enrollment_fee_amount,payment_status}"
+  "annual_register{max_semester_number,level_from_semester,total_payment,enrollment_fee_amount,payment_status}",
+  "nationality{id,name}",
+  "baccalaureate_serie{id,name}"
 ]);
 const baseColumn = JSON.stringify([
   "last_name",
@@ -68,7 +42,18 @@ const baseColumn = JSON.stringify([
   "num_of_baccalaureate",
   "center_of_baccalaureate",
   "job",
-  "enrollment_status"
+  "enrollment_status",
+  "year_of_baccalaureate",
+  "center_of_baccalaureate",
+  "id_baccalaureate_series",
+  "num_of_baccalaureate",
+  "center_of_baccalaureate",
+  "id_nationality",
+  "mother_name",
+  "mother_job",
+  "father_name",
+  "father_job",
+  "parent_address"
 ]);
 
 const buildWhereClause = (cardNumber: string) =>
@@ -164,7 +149,7 @@ export const fetchStudentByNumSelect = async (
 
 export const updateStudentProfile = async (
   studentId: string | number,
-  payload: StudentUpdatePayload
+  payload: StudentProfile
 ): Promise<StudentProfile> => {
   if (!studentId) {
     throw new Error("Missing student identifier for update.");

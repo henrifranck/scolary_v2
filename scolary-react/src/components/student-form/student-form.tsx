@@ -12,7 +12,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { fetchStudentByCardNumber } from "@/services/student-service";
 import { Check, Pencil, Layers, Eye, EyeOff } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   EditableSection,
   FormItemComponentType,
@@ -21,21 +21,27 @@ import {
   StudentProfile
 } from "./student-form-types";
 import { StudentFormItem } from "./student-form-item";
-import { StudentFormInfoItem } from "./student-form-info-item";
 import {
   studentInformationBirth,
-  studentInformationContact,
   studentInformationIdentity,
-  studentInformationBaccalaureate,
   studentInformationSocial,
-  studentInformationRegistration,
-  studentInformationPersonnel
+  studentInformationPersonnel,
+  enrollementFees,
+  studentFatherInformation
 } from "./student-form-data";
 import { ReinscriptionFilters } from "@/services/reinscription-service";
 import { ReinscriptionAnnualRegister } from "@/pages/user/re-registration/re-registration-payment-form";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { Mention, MentionOption } from "@/models/mentions";
 import { fetchMentions } from "@/services/mention-service";
+import {
+  BaccalaureateSerie,
+  BaccalaureateSerieOption
+} from "@/models/baccalaureate-series";
+import {
+  fetchBaccalaureateSerie,
+  fetchBaccalaureateSeries
+} from "@/services/baccalaureate-series-service";
 
 type dialogMode = "edit" | "create";
 
@@ -74,7 +80,8 @@ const createEditingSectionsState = (): Record<EditableSection, boolean> => ({
   personal: false,
   baccalaureate: false,
   social: false,
-  registration: false
+  registration: false,
+  parentInfo: false
 });
 
 interface StudentFormProps {
@@ -86,6 +93,7 @@ interface StudentFormProps {
   enableLookup?: boolean;
   enablePicture?: boolean;
   mentionOptions?: MentionOption[];
+  baccalaureateOptions?: BaccalaureateSerieOption[];
   disabledEditing?: boolean;
 }
 
@@ -98,6 +106,7 @@ export const StudentForm = ({
   enableLookup = true,
   enablePicture = true,
   mentionOptions = [],
+  baccalaureateOptions = [],
   disabledEditing = false
 }: StudentFormProps) => {
   const { data: fetchedMentions = [], isLoading: isLoadingMentions } = useQuery(
@@ -114,6 +123,26 @@ export const StudentForm = ({
           id: String(mention.id),
           label: mention.name ?? mention.abbreviation ?? `Mention ${mention.id}`
         }));
+
+  const {
+    data: baccalaureateSerieData = [],
+    isLoading: isLoadingBaccalaureateSerie
+  } = useQuery({
+    queryKey: ["student-form", "baccalaureateSeries"],
+    queryFn: () => fetchBaccalaureateSeries(),
+    enabled: baccalaureateOptions.length === 0
+  });
+
+  const baccalaureateSerieOptions: any[] = useMemo(
+    () =>
+      baccalaureateOptions
+        ? baccalaureateSerieData?.data?.map((serie: BaccalaureateSerie) => ({
+            value: String(serie.id),
+            label: serie.name ?? serie.value ?? `Serie ${serie.id}`
+          }))
+        : [],
+    [baccalaureateSerieData?.data]
+  );
   const lastLookupKeyRef = useRef<string>("");
   const [studentLookupLoading, setStudentLookupLoading] = useState(false);
   const [annualRegister, setAnnualRegister] = useState<StudentAnnualProps[]>(
@@ -125,9 +154,6 @@ export const StudentForm = ({
   const [picturePreview, setPicturePreview] = useState<string | null>(null);
   const pictureInputId = "student-picture-upload";
 
-  const [inputContact] = useState<FormItemComponentType>(
-    studentInformationContact
-  );
   const [inputBirth] = useState<FormItemComponentType>(studentInformationBirth);
   const [inputIdentity] = useState<FormItemComponentType>(
     studentInformationIdentity
@@ -136,6 +162,83 @@ export const StudentForm = ({
   const [inputPersonal] = useState<FormItemComponentType>(
     studentInformationPersonnel
   );
+  const [inputFather] = useState<FormItemComponentType>(
+    studentFatherInformation
+  );
+
+  const studentInformationBaccalaureate: FormItemComponentType = {
+    value: [
+      {
+        label: "Numéro baccalauréat",
+        type: "input",
+        inputType: "text",
+        formKey: "baccalaureateNumber",
+        placeHolder: "Numéro baccalauréat"
+      },
+      {
+        label: "Centre baccalauréat",
+        type: "input",
+        inputType: "text",
+        formKey: "baccalaureateCenter",
+        placeHolder: "Centre d'examen"
+      },
+      {
+        label: "Année du baccalauréat",
+        type: "input",
+        inputType: "date",
+        formKey: "baccalaureateYear",
+        placeHolder: "Année du baccalauréat"
+      },
+      {
+        label: "Serie du baccalauréat",
+        type: "select",
+        inputType: "text",
+        formKey: "baccalaureateSerieId",
+        selectValue: "baccakaureateSerieLabel",
+        options: baccalaureateSerieOptions
+      }
+    ],
+    key: "baccalaureate",
+    style: "row"
+  };
+
+  const studentInformationRegistration: FormItemComponentType = {
+    value: [
+      {
+        label: "Statut d'inscription",
+        type: "select",
+        inputType: "text",
+        formKey: "enrollmentStatus",
+        options: [
+          { value: "pending", label: "En attente" },
+          { value: "selected", label: "Sélectionné(e)" },
+          { value: "rejected", label: "Rejeté(e)" },
+          { value: "registered", label: "Inscrit(e)" },
+          { value: "former", label: "Ancien(ne)" }
+        ],
+        selectValue:
+          formState.enrollmentStatus &&
+          enrollementFees[formState.enrollmentStatus],
+        placeHolder: "En attente / Sélectionné(e) / Inscrit(e)"
+      },
+      {
+        label: "Adresse",
+        type: "input",
+        inputType: "text",
+        formKey: "address",
+        placeHolder: "Saisir l'adresse complète"
+      },
+      {
+        label: "Addresse des parent",
+        type: "input",
+        inputType: "text",
+        formKey: "parentAdress",
+        placeHolder: "Saisir l'adresse des parents"
+      }
+    ],
+    key: "registration",
+    style: "mixte"
+  };
 
   const [collapsed, setCollapsed] = useState(true);
 
@@ -191,7 +294,7 @@ export const StudentForm = ({
         student.active_semester ??
         studentYear?.register_semester[0]?.semester ??
         "";
-      setFormState((previous: any) => ({
+      setFormState((previous: StudentFormState) => ({
         ...previous,
         studentRecordId: student.id
           ? String(student.id)
@@ -211,6 +314,14 @@ export const StudentForm = ({
           student.num_of_baccalaureate ?? previous.baccalaureateNumber,
         baccalaureateCenter:
           student.center_of_baccalaureate ?? previous.baccalaureateCenter,
+        baccakaureateYear:
+          student.year_of_baccalaureate ?? previous.baccalaureateYear,
+        baccakaureateSerieId:
+          student.id_baccalaureate_series ?? previous.baccalaureateSerieId,
+        baccakaureateSerieLabel:
+          student.baccalaureate_serie?.name ?? previous.baccakaureateSerieLabel,
+        nationalityLabel:
+          student.nationality?.name ?? previous.nationalityLabel,
         job: student.job ?? previous.job,
         cinNumber: student.num_of_cin ?? student.num_cin ?? previous.cinNumber,
         cinIssueDate: student.date_of_cin ?? previous.cinIssueDate,
@@ -228,7 +339,13 @@ export const StudentForm = ({
         semester: resolvedSemester || previous.semester,
         status: student.enrollment_status ?? previous.status,
         level: student.level ?? previous.level,
-        enrollmentStatus: student.enrollment_status ?? previous.enrollmentStatus
+        enrollmentStatus:
+          student.enrollment_status ?? previous.enrollmentStatus,
+        motherName: student.mother_name ?? previous.motherName,
+        fatherName: student.father_name ?? previous.fatherName,
+        motherJob: student.mother_job ?? previous.motherJob,
+        fatherJob: student.father_job ?? previous.fatherJob,
+        parentAdress: student.parent_address ?? previous.parentAdress
       }));
       setStudentLookupError(null);
     },
@@ -237,7 +354,7 @@ export const StudentForm = ({
 
   const handleStudentLookup = useCallback(
     async (force = false) => {
-      const trimmed = formState.cardNumber.trim();
+      const trimmed = formState.cardNumber?.trim();
       if (!trimmed) {
         setStudentLookupError("Veuillez saisir un numéro de carte.");
         return;
@@ -253,7 +370,6 @@ export const StudentForm = ({
       setStudentLookupError(null);
       try {
         const profile = await fetchStudentByCardNumber(filters, trimmed);
-
         console.log("PROFILE =", profile);
         console.log(
           "profile.annual_register =",
@@ -329,7 +445,7 @@ export const StudentForm = ({
       return;
     }
 
-    const trimmed = formState.cardNumber.trim();
+    const trimmed = formState.cardNumber?.trim();
     if (!trimmed) {
       return;
     }
@@ -367,7 +483,7 @@ export const StudentForm = ({
                     onClick={() => handleStudentLookup(true)}
                     disabled={
                       studentLookupLoading ||
-                      !formState.cardNumber.trim().length
+                      !formState.cardNumber?.trim().length
                     }
                   >
                     {studentLookupLoading ? "Recherche..." : "Rechercher"}
@@ -533,24 +649,24 @@ export const StudentForm = ({
 
               <div className="grid gap-6 lg:grid-cols-2">
                 <StudentFormItem
-                  name={"Statut d'inscription"}
+                  name={"Statut d'inscription et Adresse"}
                   editingSections={editingSections}
                   setEditingSections={setEditingSections}
                   handleFormChange={handleFormChange}
                   formState={formState}
                   inputComponent={studentInformationRegistration}
-                  classnNames="grid gap-4"
+                  classnNames="grid gap-4 sm:grid-cols-2"
                   disabledEditing={disabledEditing}
                 />
 
                 <StudentFormItem
-                  name={"Coordonnées"}
+                  name={"Informations sur les parents"}
                   editingSections={editingSections}
                   setEditingSections={setEditingSections}
                   handleFormChange={handleFormChange}
                   formState={formState}
-                  inputComponent={inputContact}
-                  classnNames="grid gap-4"
+                  inputComponent={inputFather}
+                  classnNames="grid gap-4 sm:grid-cols-2"
                   disabledEditing={disabledEditing}
                 />
               </div>
@@ -578,7 +694,6 @@ export const StudentForm = ({
                   disabledEditing={disabledEditing}
                 />
               </div>
-
               <div className="grid gap-6 lg:grid-cols-2"></div>
             </>
           )}

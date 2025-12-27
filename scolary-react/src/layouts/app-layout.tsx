@@ -31,7 +31,8 @@ import {
   Users,
   Waypoints,
   X,
-  HopOff
+  HopOff,
+  Flag
 } from "lucide-react";
 import {
   type ReactNode,
@@ -207,6 +208,13 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
             label: "Serie du Baccalaureat",
             icon: HopOff,
             roles: ["admin"]
+          },
+
+          {
+            to: "/admin/nationality",
+            label: "Nationalité",
+            icon: Flag,
+            roles: ["admin"]
           }
         ]
       },
@@ -329,6 +337,12 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
           to: "/baccalaureate-serie",
           label: "Serie du Baccalaureat",
           icon: HopOff,
+          roles: ["user"]
+        },
+        {
+          to: "/nationality",
+          label: "Nationalité",
+          icon: Flag,
           roles: ["user"]
         }
       ]

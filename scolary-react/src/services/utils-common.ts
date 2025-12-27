@@ -1,4 +1,4 @@
-import { ApiListResponse } from "@/pages/user/re-registration/re-registration-form-type";
+import { ApiListResponse } from "@/models/shared";
 
 export const isListResponse = <T>(
   payload: unknown

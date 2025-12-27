@@ -1,10 +1,9 @@
 import { useQuery, type QueryKey } from "@tanstack/react-query";
 
 import { apiRequest } from "./api-client";
-import { resolveAssetUrl } from "@/lib/resolve-asset-url";
-import { ApiListResponse } from "@/pages/user/re-registration/re-registration-form-type";
 import { isListResponse, normalizeList } from "./utils-common";
-import { Mention } from "./mention-service";
+import { Mention } from "@/models/mentions";
+import { ApiListResponse } from "@/models/shared";
 
 export type SelectionStatus =
   | "Pending"

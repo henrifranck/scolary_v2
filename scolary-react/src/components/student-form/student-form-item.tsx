@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { Check, Pencil } from "lucide-react";
 import { useCallback } from "react";
 import {
@@ -33,13 +39,16 @@ export const StudentFormItem = ({
   classnNames,
   disabledEditing = false
 }: StudentFormItemProps) => {
-  const toggleSectionEditing = useCallback((section: EditableSection) => {
-    if (disabledEditing) return;
-    setEditingSections((previous: any) => ({
-      ...previous,
-      [section]: !previous[section]
-    }));
-  }, [disabledEditing]);
+  const toggleSectionEditing = useCallback(
+    (section: EditableSection) => {
+      if (disabledEditing) return;
+      setEditingSections((previous: any) => ({
+        ...previous,
+        [section]: !previous[section]
+      }));
+    },
+    [disabledEditing]
+  );
 
   return (
     <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
@@ -69,86 +78,108 @@ export const StudentFormItem = ({
 
       {editingSections[inputComponent.key] ? (
         <div className="space-y-3">
-          <div className="space-y-1.5">
+          <div className="space-y-4">
             {inputComponent.value.length === 3 ? (
               <>
                 <div className={classnNames}>
-                  {inputComponent.value.slice(0, 2).map((value: FormItemType) => (
-                    <div className="space-y-1.5" key={value.formKey as string}>
-                      <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {value.label}
-                      </label>
-                    {value.type === "textarea" ? (
-                      <Textarea
-                        rows={3}
-                        value={formState.address}
-                        onChange={(event) =>
-                          handleFormChange(value.formKey, event.target.value)
-                        }
-                        placeholder={value.placeHolder}
-                        disabled={disabledEditing}
-                      />
-                    ) : value.type === "select" && value.options ? (
-                      <Select
-                        value={formState[value.formKey] as string}
-                        onValueChange={(val) => handleFormChange(value.formKey, val)}
-                        disabled={disabledEditing}
+                  {inputComponent.value
+                    .slice(0, 2)
+                    .map((value: FormItemType) => (
+                      <div
+                        className="space-y-1.5"
+                        key={value.formKey as string}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder={value.placeHolder ?? "Sélectionner"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {value.options.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        type={value.inputType}
-                        value={formState[value.formKey]}
-                        onChange={(event) =>
-                          handleFormChange(value.formKey, event.target.value)
-                        }
-                        placeholder={value.placeHolder}
-                        disabled={disabledEditing}
-                      />
-                    )}
-                    </div>
-                  ))}
+                        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {value.label}
+                        </label>
+                        {value.type === "textarea" ? (
+                          <Textarea
+                            rows={3}
+                            value={formState.address}
+                            onChange={(event) =>
+                              handleFormChange(
+                                value.formKey,
+                                event.target.value
+                              )
+                            }
+                            placeholder={value.placeHolder}
+                            disabled={disabledEditing}
+                          />
+                        ) : value.type === "select" && value.options ? (
+                          <Select
+                            value={formState[value.formKey] as string}
+                            onValueChange={(val) =>
+                              handleFormChange(value.formKey, val)
+                            }
+                            disabled={disabledEditing}
+                          >
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  value.placeHolder ?? "Sélectionner"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {value.options.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            type={value.inputType}
+                            value={formState[value.formKey]}
+                            onChange={(event) =>
+                              handleFormChange(
+                                value.formKey,
+                                event.target.value
+                              )
+                            }
+                            placeholder={value.placeHolder}
+                            disabled={disabledEditing}
+                          />
+                        )}
+                      </div>
+                    ))}
                 </div>
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {inputComponent.value[2].label}
-                </label>
-                {inputComponent.value[2].type === "textarea" ? (
-                  <Textarea
-                    rows={3}
-                    value={formState[inputComponent.value[2].formKey]}
-                    onChange={(event) =>
-                      handleFormChange(
-                        inputComponent.value[2].formKey,
-                        event.target.value
-                      )
-                    }
-                    placeholder="Saisir l'adresse complète"
-                    disabled={disabledEditing}
-                  />
-                ) : (
-                  <Input
-                    type={inputComponent.value[2].inputType}
-                    value={formState[inputComponent.value[2].formKey]}
-                    onChange={(event) =>
-                      handleFormChange(
-                        inputComponent.value[2].formKey,
-                        event.target.value
-                      )
-                    }
-                    placeholder="nom@domaine.com"
-                    disabled={disabledEditing}
-                  />
-                )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {inputComponent.value[2].label}
+                  </label>
+                  {inputComponent.value[2].type === "textarea" ? (
+                    <Textarea
+                      rows={3}
+                      value={formState[inputComponent.value[2].formKey]}
+                      onChange={(event) =>
+                        handleFormChange(
+                          inputComponent.value[2].formKey,
+                          event.target.value
+                        )
+                      }
+                      placeholder="Saisir l'adresse complète"
+                      disabled={disabledEditing}
+                    />
+                  ) : (
+                    <Input
+                      type={inputComponent.value[2].inputType}
+                      value={formState[inputComponent.value[2].formKey]}
+                      onChange={(event) =>
+                        handleFormChange(
+                          inputComponent.value[2].formKey,
+                          event.target.value
+                        )
+                      }
+                      placeholder="nom@domaine.com"
+                      disabled={disabledEditing}
+                    />
+                  )}
+                </div>
               </>
             ) : (
               <div className={classnNames}>
@@ -170,11 +201,15 @@ export const StudentFormItem = ({
                     ) : value.type === "select" && value.options ? (
                       <Select
                         value={formState[value.formKey] as string}
-                        onValueChange={(val) => handleFormChange(value.formKey, val)}
+                        onValueChange={(val) =>
+                          handleFormChange(value.formKey, val)
+                        }
                         disabled={disabledEditing}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={value.placeHolder ?? "Sélectionner"} />
+                          <SelectValue
+                            placeholder={value.placeHolder ?? "Sélectionner"}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {value.options.map((option) => (
@@ -226,6 +261,9 @@ export const StudentFormItem = ({
                   key={value.formKey}
                   label={value.label}
                   value={formState[value.formKey]}
+                  selectValue={
+                    value.selectValue && formState[value.selectValue]
+                  }
                 />
               ))}
             </div>

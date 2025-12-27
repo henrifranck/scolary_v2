@@ -4,6 +4,11 @@ export interface BaccalaureateSerie {
   value: string;
 }
 
+export interface BaccalaureateSerieOption {
+  id: string;
+  label: string;
+}
+
 export type BaccalaureateSeriePayload = Pick<
   BaccalaureateSerie,
   "name" | "value"

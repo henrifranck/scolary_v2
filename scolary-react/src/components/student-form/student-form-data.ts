@@ -1,19 +1,5 @@
 import { FormItemComponentType } from "./student-form-types";
 
-export const studentInformationContact: FormItemComponentType = {
-  value: [
-    {
-      label: "Adresse",
-      type: "textarea",
-      inputType: "text",
-      formKey: "address",
-      placeHolder: "Saisir l'adresse complète"
-    }
-  ],
-  key: "contact",
-  style: "row"
-};
-
 export const studentInformationBirth: FormItemComponentType = {
   value: [
     {
@@ -68,6 +54,41 @@ export const studentInformationIdentity: FormItemComponentType = {
   style: "mixte"
 };
 
+export const studentFatherInformation: FormItemComponentType = {
+  value: [
+    {
+      label: "Nom du père",
+      type: "input",
+      inputType: "text",
+      formKey: "fatherName",
+      placeHolder: "Saisir le du père"
+    },
+    {
+      label: "Proffession",
+      type: "input",
+      inputType: "text",
+      formKey: "fatherJob",
+      placeHolder: "Saisir la proffession"
+    },
+    {
+      label: "Nom de la mère",
+      type: "input",
+      inputType: "text",
+      formKey: "motherName",
+      placeHolder: "Saisir le nom de la mèere"
+    },
+    {
+      label: "Proffession",
+      type: "input",
+      inputType: "text",
+      formKey: "motherJob",
+      placeHolder: "Saisir la proffession"
+    }
+  ],
+  key: "parentInfo",
+  style: "row"
+};
+
 export const studentInformationPersonnel: FormItemComponentType = {
   value: [
     {
@@ -94,34 +115,6 @@ export const studentInformationPersonnel: FormItemComponentType = {
   ],
   key: "identity",
   style: "mixte"
-};
-
-export const studentInformationBaccalaureate: FormItemComponentType = {
-  value: [
-    {
-      label: "Numéro baccalauréat",
-      type: "input",
-      inputType: "text",
-      formKey: "baccalaureateNumber",
-      placeHolder: "Numéro baccalauréat"
-    },
-    {
-      label: "Centre baccalauréat",
-      type: "input",
-      inputType: "text",
-      formKey: "baccalaureateCenter",
-      placeHolder: "Centre d'examen"
-    },
-    {
-      label: "Année du baccalauréat",
-      type: "input",
-      inputType: "date",
-      formKey: "baccalaureateYear",
-      placeHolder: "Année du baccalauréat"
-    }
-  ],
-  key: "baccalaureate",
-  style: "row"
 };
 
 export const studentInformationSocial: FormItemComponentType = {
@@ -161,24 +154,10 @@ export const studentInformationSocial: FormItemComponentType = {
   key: "social",
   style: "mixte"
 };
-
-export const studentInformationRegistration: FormItemComponentType = {
-  value: [
-    {
-      label: "Statut d'inscription",
-      type: "select",
-      inputType: "text",
-      formKey: "enrollmentStatus",
-      options: [
-        { value: "pending", label: "En attente" },
-        { value: "selected", label: "Sélectionné(e)" },
-        { value: "rejected", label: "Rejeté(e)" },
-        { value: "registered", label: "Inscrit(e)" },
-        { value: "former", label: "Ancien(ne)" }
-      ],
-      placeHolder: "En attente / Sélectionné(e) / Inscrit(e)"
-    }
-  ],
-  key: "registration",
-  style: "row"
+export const enrollementFees: any = {
+  pending: "En attente",
+  selected: "Sélectionné(e)",
+  rejected: "Rejeté(e)",
+  registered: "Inscrit(e)",
+  former: "Ancien(ne)"
 };
