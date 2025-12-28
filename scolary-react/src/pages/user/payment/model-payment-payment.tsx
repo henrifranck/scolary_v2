@@ -1,16 +1,16 @@
-import {
-  StudentAnnualProps
-} from "@/components/student-form/student-form-types";
+import { StudentAnnualProps } from "@/components/student-form/student-form-types";
 import { StudentFormInfoItem } from "@/components/student-form/student-form-info-item";
 
-import { PaymentForm } from "../payment/payment-form";
+import { PaymentForm } from "./payment-form";
 
 type PaymentSummaryProps = {
   displayAnnualRegisters: Array<StudentAnnualProps>;
 };
 
 type PaymentEditorProps = {
-  annualRegisterDrafts: Array<StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }>;
+  annualRegisterDrafts: Array<
+    StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }
+  >;
   hasPaymentEntries: boolean;
   mergeAnnualWithDrafts: (
     annual: StudentAnnualProps & { isEditing?: boolean; isNew?: boolean },

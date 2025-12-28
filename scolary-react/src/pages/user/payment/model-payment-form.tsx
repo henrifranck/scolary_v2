@@ -37,18 +37,12 @@ import {
 } from "@/services/document-service";
 import { fetchAvailableServices } from "@/services/available-service";
 import { fetchAvailableServiceRequiredDocuments } from "@/services/available-service-required-document";
-import {
-  DocumentEditor,
-  DocumentSummary
-} from "./re-registration-payment-document";
+import { DocumentEditor, DocumentSummary } from "./model-payment-document";
 import {
   RegistrationEditor,
   RegistrationSummary
-} from "./re-registration-payment-registration";
-import {
-  PaymentEditor,
-  PaymentSummary
-} from "./re-registration-payment-payment";
+} from "./model-payment-registration";
+import { PaymentEditor, PaymentSummary } from "./model-payment-payment";
 import { RequiredDocument } from "@/models/required-document";
 
 interface ReinscriptionAnnualFormProps {
@@ -57,6 +51,7 @@ interface ReinscriptionAnnualFormProps {
   cardNumber?: string;
   filters?: any;
   disabledEditing?: boolean;
+  registerType: string;
 }
 
 export const handleFormSubmit = (e: React.FormEvent) => {};
@@ -66,10 +61,10 @@ export const ReinscriptionAnnualRegister = ({
   editingSections,
   cardNumber,
   filters,
-  disabledEditing = false
+  disabledEditing = false,
+  registerType
 }: ReinscriptionAnnualFormProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formSubmitting, setFormSubmitting] = useState(false);
   const [annualRegisterDrafts, setAnnualRegisterDrafts] = useState<
     Array<StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }>
   >([]);
@@ -433,7 +428,11 @@ export const ReinscriptionAnnualRegister = ({
       filters?.id_academic_year;
     let isMounted = true;
     setAnnualRegisterLoading(true);
-    fetchAnnualRegisterByCardNumber(trimmed, academicYearId ?? undefined)
+    fetchAnnualRegisterByCardNumber(
+      trimmed,
+      registerType,
+      academicYearId ?? undefined
+    )
       .then((response) => {
         if (!isMounted) {
           return;
@@ -521,7 +520,8 @@ export const ReinscriptionAnnualRegister = ({
       const created = await createAnnualRegister({
         num_carte: cardValue,
         id_academic_year: academicYearId,
-        semester_count: 1
+        semester_count: 1,
+        register_type: registerType
       });
       if (!created?.id) {
         throw new Error("Impossible de créer la fiche annuelle.");
@@ -1372,9 +1372,23 @@ export const ReinscriptionAnnualRegister = ({
           )}
         </Button>
       </div>
-      <Tabs defaultValue="registration" className="space-y-3">
-        <TabsList className="grid w-full grid-cols-3 md:w-auto">
-          <TabsTrigger value="registration">Registration</TabsTrigger>
+
+      <Tabs
+        defaultValue={
+          registerType === "REGISTRATION" ? "registration" : "payment"
+        }
+        className="space-y-3"
+      >
+        <TabsList
+          className={
+            registerType === "REGISTRATION"
+              ? "grid w-full grid-cols-3 md:w-auto"
+              : "grid w-full grid-cols-2 md:w-auto"
+          }
+        >
+          {registerType === "REGISTRATION" && (
+            <TabsTrigger value="registration">Registration</TabsTrigger>
+          )}
           <TabsTrigger value="payment">
             <span className="relative inline-flex items-center gap-2">
               Payment
@@ -1388,21 +1402,23 @@ export const ReinscriptionAnnualRegister = ({
             </span>
           </TabsTrigger>
         </TabsList>
-
+        {registerType === "REGISTRATION" && (
+          <TabsContent
+            value="registration"
+            className="space-y-2 max-h-[260px] overflow-y-auto"
+          >
+            <RegistrationSummary
+              displayAnnualRegisters={displayAnnualRegisters}
+            />
+          </TabsContent>
+        )}
         <TabsContent
           value="payment"
           className="space-y-2 max-h-[260px] overflow-y-auto"
         >
           <PaymentSummary displayAnnualRegisters={displayAnnualRegisters} />
         </TabsContent>
-        <TabsContent
-          value="registration"
-          className="space-y-2 max-h-[260px] overflow-y-auto"
-        >
-          <RegistrationSummary
-            displayAnnualRegisters={displayAnnualRegisters}
-          />
-        </TabsContent>
+
         <TabsContent
           value="document"
           className="space-y-2 max-h-[260px] overflow-y-auto"
@@ -1468,15 +1484,30 @@ export const ReinscriptionAnnualRegister = ({
               </p>
             ) : null}
             <div className="flex-1 px-6 pb-6 pt-4 space-y-4">
-              <Tabs defaultValue="registration" className="space-y-3">
-                <TabsList className="grid w-full grid-cols-3 md:w-auto">
-                  <TabsTrigger value="registration">Registration</TabsTrigger>
+              <Tabs
+                defaultValue={
+                  registerType === "REGISTRATION" ? "registration" : "payment"
+                }
+                className="space-y-3"
+              >
+                <TabsList
+                  className={
+                    registerType === "REGISTRATION"
+                      ? "grid w-full grid-cols-3 md:w-auto"
+                      : "grid w-full grid-cols-2 md:w-auto"
+                  }
+                >
+                  {registerType === "REGISTRATION" && (
+                    <TabsTrigger value="registration">Registration</TabsTrigger>
+                  )}
+
                   <TabsTrigger value="payment">
                     <span className="relative inline-flex items-center gap-2">
                       Payment
                       {renderPaymentStatusBadge(paymentStatus)}
                     </span>
                   </TabsTrigger>
+
                   <TabsTrigger value="document">
                     <span className="relative inline-flex items-center gap-2">
                       Document
@@ -1484,44 +1515,46 @@ export const ReinscriptionAnnualRegister = ({
                     </span>
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent
-                  value="registration"
-                  className="space-y-4 max-h-[520px] overflow-y-auto"
-                >
-                  <RegistrationEditor
-                    annualRegisterDrafts={annualRegisterDrafts}
-                    hasRegistrationEntries={hasRegistrationEntries}
-                    mergeAnnualWithDrafts={mergeAnnualWithDrafts}
-                    filters={filters}
-                    journeyOptions={journeyOptions}
-                    onAddRegistration={handleAddRegistration}
-                    onSave={handleSaveAnnualRegister}
-                    onUpdateRegistrationField={updateRegistrationField}
-                    onCancel={handleCancelRegistrationEdit}
-                    onToggleEdit={(annualIndex, registrationIndex) => {
-                      const annualKey = getAnnualKey(
-                        annualRegisterDrafts[annualIndex],
-                        annualIndex
-                      );
-                      setEditingRegistrationIndexByAnnual((previous) => ({
-                        ...previous,
-                        [annualKey]: registrationIndex
-                      }));
-                    }}
-                    onDelete={(annualIndex, targetIndex) =>
-                      setConfirmDeleteTarget({
-                        type: "registration",
-                        index: annualIndex,
-                        itemIndex: targetIndex
-                      })
-                    }
-                    editingRegistrationIndexByAnnual={
-                      editingRegistrationIndexByAnnual
-                    }
-                    getAnnualKey={getAnnualKey}
-                    savingIndex={savingIndex}
-                  />
-                </TabsContent>
+                {registerType === "REGISTRATION" && (
+                  <TabsContent
+                    value="registration"
+                    className="space-y-4 max-h-[520px] overflow-y-auto"
+                  >
+                    <RegistrationEditor
+                      annualRegisterDrafts={annualRegisterDrafts}
+                      hasRegistrationEntries={hasRegistrationEntries}
+                      mergeAnnualWithDrafts={mergeAnnualWithDrafts}
+                      filters={filters}
+                      journeyOptions={journeyOptions}
+                      onAddRegistration={handleAddRegistration}
+                      onSave={handleSaveAnnualRegister}
+                      onUpdateRegistrationField={updateRegistrationField}
+                      onCancel={handleCancelRegistrationEdit}
+                      onToggleEdit={(annualIndex, registrationIndex) => {
+                        const annualKey = getAnnualKey(
+                          annualRegisterDrafts[annualIndex],
+                          annualIndex
+                        );
+                        setEditingRegistrationIndexByAnnual((previous) => ({
+                          ...previous,
+                          [annualKey]: registrationIndex
+                        }));
+                      }}
+                      onDelete={(annualIndex, targetIndex) =>
+                        setConfirmDeleteTarget({
+                          type: "registration",
+                          index: annualIndex,
+                          itemIndex: targetIndex
+                        })
+                      }
+                      editingRegistrationIndexByAnnual={
+                        editingRegistrationIndexByAnnual
+                      }
+                      getAnnualKey={getAnnualKey}
+                      savingIndex={savingIndex}
+                    />
+                  </TabsContent>
+                )}
                 <TabsContent
                   value="payment"
                   className="space-y-4 max-h-[520px] overflow-y-auto"

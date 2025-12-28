@@ -153,7 +153,8 @@ export const DossierSelectionPage = () => {
     id_journey: "",
     semester: defaultSemester,
     id_year: "",
-    level: ""
+    level: "",
+    register_type: "SELECTION"
   });
   const [formState, setFormState] = useState<StudentFormState>(
     createEmptyFormState()
@@ -562,6 +563,7 @@ export const DossierSelectionPage = () => {
                 enableLookup={false}
                 enablePicture={false}
                 mentionOptions={mentionOptions}
+                registerType="SELECTION"
               />
             </div>
             <DialogFooter className="px-6 py-4 border-t">

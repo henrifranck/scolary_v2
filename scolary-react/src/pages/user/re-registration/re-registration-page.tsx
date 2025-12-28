@@ -230,7 +230,8 @@ export const ReinscriptionPage = () => {
         "id_mention" in parsed &&
         "id_journey" in parsed &&
         "semester" in parsed &&
-        "id_year" in parsed
+        "id_year" in parsed &&
+        "register_type" in parsed
       ) {
         return parsed as AcademicFilterValue;
       }
@@ -250,7 +251,8 @@ export const ReinscriptionPage = () => {
         id_mention: "",
         id_journey: "",
         semester: defaultSemester,
-        id_year: ""
+        id_year: "",
+        register_type: "REGISTRATION"
       }
     );
   });
@@ -399,7 +401,8 @@ export const ReinscriptionPage = () => {
     filters.id_mention,
     filters.id_journey,
     filters.id_year,
-    filters.semester
+    filters.semester,
+    filters.register_type
   ]);
 
   const reinscriptionQuery = useQuery({
@@ -1070,6 +1073,7 @@ export const ReinscriptionPage = () => {
               filters={filters}
               mentionOptions={mentionOptions}
               disabledEditing={!formState.studentRecordId}
+              registerType="REGISTRATION"
             />
 
             <DialogFooter className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 px-6 py-4 backdrop-blur">

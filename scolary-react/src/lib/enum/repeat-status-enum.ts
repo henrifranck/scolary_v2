@@ -6,7 +6,7 @@ export enum RepeatStatusEnum {
 }
 
 // Fonction utilitaire pour formater l'affichage du statut
-const formatRepeatStatus = (status: string): string => {
+const formatRepeatStatus = (status?: string | null): string => {
   switch (status) {
     case RepeatStatusEnum.PASSING:
       return "Passant";

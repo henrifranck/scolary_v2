@@ -30,7 +30,7 @@ import {
   studentFatherInformation
 } from "./student-form-data";
 import { ReinscriptionFilters } from "@/services/reinscription-service";
-import { ReinscriptionAnnualRegister } from "@/pages/user/re-registration/re-registration-payment-form";
+import { ReinscriptionAnnualRegister } from "@/pages/user/payment/model-payment-form";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { Mention, MentionOption } from "@/models/mentions";
 import { fetchMentions } from "@/services/mention-service";
@@ -95,6 +95,7 @@ interface StudentFormProps {
   mentionOptions?: MentionOption[];
   baccalaureateOptions?: BaccalaureateSerieOption[];
   disabledEditing?: boolean;
+  registerType: string;
 }
 
 export const StudentForm = ({
@@ -107,7 +108,8 @@ export const StudentForm = ({
   enablePicture = true,
   mentionOptions = [],
   baccalaureateOptions = [],
-  disabledEditing = false
+  disabledEditing = false,
+  registerType = "REGISTRATION"
 }: StudentFormProps) => {
   const { data: fetchedMentions = [], isLoading: isLoadingMentions } = useQuery(
     {
@@ -369,7 +371,11 @@ export const StudentForm = ({
       setStudentLookupLoading(true);
       setStudentLookupError(null);
       try {
-        const profile = await fetchStudentByCardNumber(filters, trimmed);
+        const profile = await fetchStudentByCardNumber(
+          filters,
+          registerType,
+          trimmed
+        );
         console.log("PROFILE =", profile);
         console.log(
           "profile.annual_register =",
@@ -456,7 +462,7 @@ export const StudentForm = ({
   }, [dialogMode, enableLookup, formState.cardNumber, handleStudentLookup]);
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+    <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0 overflow-y-hide">
       <div className="space-y-4">
         {formError && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
@@ -464,43 +470,92 @@ export const StudentForm = ({
           </div>
         )}
         <div className="space-y-6">
-          <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5">
-            {enableLookup && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Numéro de carte étudiant
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input
-                    value={formState.cardNumber}
-                    onChange={(event) =>
-                      handleFormChange("cardNumber", event.target.value)
-                    }
-                    placeholder="Ex: SCT-000123"
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => handleStudentLookup(true)}
-                    disabled={
-                      studentLookupLoading ||
-                      !formState.cardNumber?.trim().length
-                    }
-                  >
-                    {studentLookupLoading ? "Recherche..." : "Rechercher"}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Entrez le numéro pour charger automatiquement les informations
-                  enregistrées dans la base.
-                </p>
-                {studentLookupError && (
-                  <p className="text-sm text-destructive">
-                    {studentLookupError}
+          <div
+            className={`flex ${!formState.studentRecordId ? "justify-center" : "justify-between"} gap-4`}
+          >
+            <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5  w-[80%]">
+              {enableLookup && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Numéro de carte étudiant
+                  </label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={formState.cardNumber}
+                      onChange={(event) =>
+                        handleFormChange("cardNumber", event.target.value)
+                      }
+                      placeholder="Ex: SCT-000123"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => handleStudentLookup(true)}
+                      disabled={
+                        studentLookupLoading ||
+                        !formState.cardNumber?.trim().length
+                      }
+                    >
+                      {studentLookupLoading ? "Recherche..." : "Rechercher"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Entrez le numéro pour charger automatiquement les
+                    informations enregistrées dans la base.
                   </p>
+                  {studentLookupError && (
+                    <p className="text-sm text-destructive">
+                      {studentLookupError}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {formState.studentRecordId && (
+              <div className="flex justify-center w-[20%]">
+                {enablePicture && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2"></div>
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-36 w-36">
+                        {picturePreview || formState.picture ? (
+                          <img
+                            src={
+                              picturePreview ??
+                              resolveAssetUrl(formState.picture)
+                            }
+                            alt="Photo étudiant"
+                            className="h-36 w-36 rounded-full border object-cover"
+                          />
+                        ) : (
+                          <div className="h-36 w-36 rounded-full border bg-muted/20" />
+                        )}
+                        <label
+                          htmlFor={pictureInputId}
+                          className={`absolute -bottom-0 -right-0 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm ${
+                            disabledEditing
+                              ? "cursor-not-allowed opacity-50"
+                              : "hover:bg-muted/50 cursor-pointer"
+                          }`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </label>
+                        <input
+                          id={pictureInputId}
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePictureUpload}
+                          className="hidden"
+                          disabled={disabledEditing}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
-
+          </div>
+          {formState.studentRecordId && (
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
               <div className="space-y-4">
                 <StudentFormItem
@@ -545,51 +600,6 @@ export const StudentForm = ({
                     </Select>
                   </div>
                 )}
-                {/* {enablePicture && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-foreground">
-                      Photo étudiant
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="relative h-24 w-24">
-                      {picturePreview || formState.picture ? (
-                        <img
-                          src={
-                            picturePreview ?? resolveAssetUrl(formState.picture)
-                          }
-                          alt="Photo étudiant"
-                          className="h-24 w-24 rounded-full border object-cover"
-                        />
-                      ) : (
-                        <div className="h-24 w-24 rounded-full border bg-muted/20" />
-                      )}
-                      <label
-                        htmlFor={pictureInputId}
-                        className={`absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm ${
-                          disabledEditing
-                            ? "cursor-not-allowed opacity-50"
-                            : "hover:bg-muted/50 cursor-pointer"
-                        }`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </label>
-                      <input
-                        id={pictureInputId}
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePictureUpload}
-                        className="hidden"
-                        disabled={disabledEditing}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      La photo sera envoyée au moment d'enregistrer.
-                    </p>
-                  </div>
-                </div>
-              )} */}
               </div>
               <ReinscriptionAnnualRegister
                 annualRegister={annualRegister}
@@ -597,30 +607,33 @@ export const StudentForm = ({
                 cardNumber={formState.cardNumber}
                 filters={filters}
                 disabledEditing={disabledEditing}
+                registerType={registerType}
               />
             </div>
-          </div>
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setCollapsed(!collapsed)}
-              className="gap-2"
-            >
-              {collapsed ? (
-                <>
-                  <Eye className="h-4 w-4" />
-                  Voir plus d'informations
-                </>
-              ) : (
-                <>
-                  <EyeOff className="h-4 w-4" />
-                  Voir moins informations
-                </>
-              )}
-            </Button>
-          </div>
+          )}
+          {formState.studentRecordId && (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCollapsed(!collapsed)}
+                className="gap-2"
+              >
+                {collapsed ? (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    Voir plus d'informations
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="h-4 w-4" />
+                    Voir moins informations
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
           {!collapsed && (
             <>
               <div className="grid gap-6 lg:grid-cols-2">

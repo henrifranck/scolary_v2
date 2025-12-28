@@ -52,6 +52,7 @@ export interface AcademicFilterValue {
   semester: string;
   id_year: string;
   level?: string;
+  register_type: string;
 }
 
 const getJourneyMentionId = (journey: JourneyOption) =>

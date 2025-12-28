@@ -25,6 +25,7 @@ export interface ReinscriptionFilters {
   id_enter_year?: string;
   search?: string;
   deletedOnly?: boolean;
+  registerType?: string;
   limit?: number;
   offset?: number;
 }
@@ -135,9 +136,9 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
   const semester = filters.semester;
 
   // Build nested filter: annual_register.[id_academic_year,register_semester.[id_journey,semester]]
-  const nestedKeys: string[] = [];
-  const nestedOperators: string[] = [];
-  const nestedValues: Array<string | number> = [];
+  const nestedKeys: string[] = ["register_type"];
+  const nestedOperators: string[] = ["=="];
+  const nestedValues: Array<string | number> = ["REGISTRATION"];
 
   if (academicYear) {
     nestedKeys.push("id_academic_year");

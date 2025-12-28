@@ -18,6 +18,7 @@ const baseColumn = JSON.stringify(["last_name", "first_name"]);
 
 const buildWhereClause = (
   cardNumber: string,
+  registerType: string,
   academicYearId?: string | number
 ) =>
   JSON.stringify([
@@ -44,6 +45,7 @@ export type AnnualRegisterPayload = {
   id_academic_year: number;
   semester_count: number;
   id_enrollment_fee?: number;
+  register_type: string;
 };
 
 export type RegisterSemesterPayload = {
@@ -63,6 +65,7 @@ export type PaymentPayload = {
 
 export const fetchAnnualRegisterByCardNumber = async (
   cardNumber: string,
+  registerType: string,
   academicYearId?: string | number
 ): Promise<ApiAnnualRegisterPayload> => {
   const trimmed = cardNumber.trim();
@@ -76,7 +79,7 @@ export const fetchAnnualRegisterByCardNumber = async (
       query: {
         relation: relations,
         base_column: baseColumn,
-        where: buildWhereClause(trimmed, academicYearId)
+        where: buildWhereClause(trimmed, registerType, academicYearId)
       }
     }
   );
@@ -129,9 +132,7 @@ export const createPayment = async (payload: PaymentPayload) =>
     json: payload
   });
 
-export const deletePayment = async (
-  id: number
-): Promise<{ msg: string }> =>
+export const deletePayment = async (id: number): Promise<{ msg: string }> =>
   apiRequest<{ msg: string }>(`/payments/${id}`, {
     method: "DELETE"
   });
