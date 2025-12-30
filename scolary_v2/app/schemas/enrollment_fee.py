@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict
 from app.enum.level import LevelEnum
 from .academic_year import AcademicYear
 from .mention import Mention
+from ..enum.register_type import RegisterTypeEnum
 
 
 class EnrollmentFeeBase(BaseModel):
@@ -16,6 +17,7 @@ class EnrollmentFeeBase(BaseModel):
     price: Optional[float] = None
     id_mention: Optional[int] = None
     id_academic_year: Optional[int] = None
+    register_type: Optional[str] = RegisterTypeEnum.REGISTRATION
 
 
 class EnrollmentFeeCreate(EnrollmentFeeBase):

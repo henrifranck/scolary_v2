@@ -17,6 +17,9 @@ from sqlalchemy import MetaData, Table, create_engine, select, text
 from sqlalchemy.engine import Connection
 
 from dotenv import load_dotenv
+
+from app.enum.register_type import RegisterTypeEnum
+
 load_dotenv()
 
 def parse_args() -> argparse.Namespace:
@@ -803,6 +806,7 @@ def transform_working_time(data: Dict[str, Any], src: Dict[str, Any], fallback_t
 
 def transform_enrollment_fee(data: Dict[str, Any], src: Dict[str, Any], fallback_time: dt.datetime) -> Dict[str, Any]:
     data["level"] = src.get("level")
+    data["register_type"] = RegisterTypeEnum.REGISTRATION
     data["created_at"] = to_datetime(src.get("created_at"), fallback_time)
     data["updated_at"] = to_datetime(src.get("updated_at"), fallback_time)
     return data
@@ -1076,9 +1080,11 @@ def migrate_all(args: argparse.Namespace) -> None:
                 "level": "level",
                 "price": "price",
                 "id_mention": "id_mention",
+                "register_type": "register_type",
                 "id_academic_year": "id_year",
                 "created_at": "created_at",
                 "updated_at": "updated_at",
+
             },
             transform_row=transform_enrollment_fee,
             batch_size=args.batch_size,

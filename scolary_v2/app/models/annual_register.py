@@ -13,9 +13,12 @@ class AnnualRegister(Base):
     __table_args__ = (
         UniqueConstraint('num_carte', 'id_academic_year', 'register_type',
                          name='uq_annual_register_student_year'),
+        UniqueConstraint('num_select', 'id_academic_year', 'register_type',
+                         name='uq_annual_seletion_student_year'),
     )
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     num_carte = Column(String(255), ForeignKey('student.num_carte'))
+    num_select = Column(String(255))
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
     register_type = Column(Enum(RegisterTypeEnum), default=RegisterTypeEnum.REGISTRATION)
     semester_count = Column(Integer, nullable=False)

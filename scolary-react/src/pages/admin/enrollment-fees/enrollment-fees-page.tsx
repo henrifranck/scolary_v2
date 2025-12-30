@@ -33,23 +33,30 @@ import { useAcademicYears } from "@/services/academic-year-service";
 import { useMentions } from "@/services/mention-service";
 import { ActionButton } from "@/components/action-button";
 import { Mention, MentionOption } from "@/models/mentions";
+import { RegisterType, RegisterTypeValue } from "@/lib/enum/repeat-status-enum";
 
 type EnrollmentFeeFormValues = {
   level: string;
   price: string;
   id_academic_year?: string;
   id_mention?: string;
+  register_type?: string;
 };
 
 const NONE_VALUE = "none";
 
 const levelOptions = ["L1", "L2", "L3", "M1", "M2"];
+const registerOptions = [
+  { value: "REGISTRATION", label: "Inscription ou Ré-inscription" },
+  { value: "SELECTION", label: "Séléction de dossier" }
+];
 
 const defaultFormValues: EnrollmentFeeFormValues = {
   level: "",
   price: "",
   id_academic_year: NONE_VALUE,
-  id_mention: NONE_VALUE
+  id_mention: NONE_VALUE,
+  register_type: NONE_VALUE
 };
 
 const toFormValues = (fee?: EnrollmentFee | null): EnrollmentFeeFormValues => ({
@@ -58,12 +65,14 @@ const toFormValues = (fee?: EnrollmentFee | null): EnrollmentFeeFormValues => ({
   id_academic_year: fee?.id_academic_year
     ? String(fee.id_academic_year)
     : NONE_VALUE,
-  id_mention: fee?.id_mention ? String(fee.id_mention) : NONE_VALUE
+  id_mention: fee?.id_mention ? String(fee.id_mention) : NONE_VALUE,
+  register_type: fee?.register_type ?? RegisterType.REGISTRATION
 });
 
 const toPayload = (values: EnrollmentFeeFormValues): EnrollmentFeePayload => ({
   level: values.level,
   price: Number(values.price),
+  register_type: values.register_type,
   id_academic_year:
     values.id_academic_year && values.id_academic_year !== NONE_VALUE
       ? Number(values.id_academic_year)
@@ -227,6 +236,39 @@ const EnrollmentFeeForm = ({
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium" htmlFor="enrollment-fee-level">
+            Type
+          </label>
+          <Select
+            defaultValue={initialValues?.register_type || undefined}
+            onValueChange={(value) =>
+              reset((prev) => ({ ...prev, register_type: value }), {
+                keepDefaultValues: false
+              })
+            }
+          >
+            <SelectTrigger
+              id="enrollment-fee-level"
+              className={cn(errors.level && "border-destructive")}
+            >
+              <SelectValue placeholder="Select a level" />
+            </SelectTrigger>
+            <SelectContent>
+              {registerOptions.map((register) => (
+                <SelectItem key={register.value} value={register.value}>
+                  {register.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.register_type ? (
+            <p className="text-xs text-destructive">
+              {errors.register_type.message}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex items-center justify-end gap-2">
@@ -262,6 +304,8 @@ export const EnrollmentFeesPage = () => {
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedMention, setSelectedMention] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
+  const [selectedRegistrationType, setSelectedRegistrationType] =
+    useState<string>("all");
   const [isMigrating, setIsMigrating] = useState(false);
 
   const offset = (page - 1) * pageSize;
@@ -296,6 +340,15 @@ export const EnrollmentFeesPage = () => {
               key: "id_mention",
               operator: "==",
               value: Number(selectedMention)
+            }
+          ]
+        : []),
+      ...(selectedRegistrationType !== "all"
+        ? [
+            {
+              key: "register_type",
+              operator: "==",
+              value: selectedRegistrationType
             }
           ]
         : [])
@@ -419,6 +472,11 @@ export const EnrollmentFeesPage = () => {
     setPage(1);
   }, []);
 
+  const handleRegistrationTypelFilterChange = useCallback((value: string) => {
+    setSelectedRegistrationType(value);
+    setPage(1);
+  }, []);
+
   const feesByYear = useMemo(() => {
     const map = new Map<string, number>();
     allFees.forEach((fee) => {
@@ -472,12 +530,15 @@ export const EnrollmentFeesPage = () => {
       {
         id: "mention",
         header: "Mention",
+        cell: ({ row }) => row.original.mention?.name || "—"
+      },
+      {
+        id: "register_type",
+        header: "Registration type",
         cell: ({ row }) =>
-          row.original.mention?.name ??
-          mentionOptions.find(
-            (m: Mention) => m.id === String(row.original.id_mention)
-          )?.label ??
-          "—"
+          row.original.register_type
+            ? RegisterTypeValue[row.original.register_type]
+            : "—"
       },
       {
         id: "actions",
@@ -554,7 +615,7 @@ export const EnrollmentFeesPage = () => {
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
           <label className="text-sm font-medium text-muted-foreground">
             Filter by level
@@ -607,6 +668,28 @@ export const EnrollmentFeesPage = () => {
               {mentionOptions.map((mention: MentionOption) => (
                 <SelectItem key={mention.id} value={mention.id}>
                   {mention.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-muted-foreground">
+            Filter Type
+          </label>
+          <Select
+            value={selectedRegistrationType}
+            onValueChange={handleRegistrationTypelFilterChange}
+          >
+            <SelectTrigger className="h-10">
+              <SelectValue placeholder="All levels" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {registerOptions.map((register) => (
+                <SelectItem key={register.value} value={register.value}>
+                  {register.label}
                 </SelectItem>
               ))}
             </SelectContent>

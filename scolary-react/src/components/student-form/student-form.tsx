@@ -244,20 +244,20 @@ export const StudentForm = ({
 
   const [collapsed, setCollapsed] = useState(true);
 
-  useEffect(() => {
-    console.log("STATE annualRegister =", annualRegister);
-  }, [annualRegister]);
+  const [showField, setShowField] = useState(false);
 
-  const toggleSectionEditing = useCallback(
-    (section: EditableSection) => {
-      if (disabledEditing) return;
-      setEditingSections((previous) => ({
-        ...previous,
-        [section]: !previous[section]
-      }));
-    },
-    [disabledEditing]
-  );
+  useEffect(() => {
+    console.log(registerType);
+
+    if (registerType === "REGISTRATION") {
+      console.log(formState);
+
+      setShowField(formState.studentRecordId !== "");
+    } else {
+      setShowField(true);
+    }
+    console.log("tena ato izy ah", showField);
+  }, [showField]);
 
   const [editingSections, setEditingSections] = useState<
     Record<EditableSection, boolean>
@@ -376,20 +376,9 @@ export const StudentForm = ({
           registerType,
           trimmed
         );
-        console.log("PROFILE =", profile);
-        console.log(
-          "profile.annual_register =",
-          (profile as any).annual_register
-        );
-        console.log(
-          "profile.data?.annual_register =",
-          (profile as any).data?.annual_register
-        );
-
         const student = (profile as any).data ?? profile;
 
-        console.log("student.annual_register =", student.annual_register);
-
+        setShowField(student.id !== undefined);
         const rawAnnual = Array.isArray(student.annual_register)
           ? student.annual_register
           : [];
@@ -471,7 +460,7 @@ export const StudentForm = ({
         )}
         <div className="space-y-6">
           <div
-            className={`flex ${!formState.studentRecordId ? "justify-center" : "justify-between"} gap-4`}
+            className={`flex ${showField ? "justify-center" : "justify-between"} gap-4`}
           >
             <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5  w-[80%]">
               {enableLookup && (
@@ -511,7 +500,7 @@ export const StudentForm = ({
               )}
             </div>
 
-            {formState.studentRecordId && (
+            {showField && (
               <div className="flex justify-center w-[20%]">
                 {enablePicture && (
                   <div className="space-y-2">
@@ -555,7 +544,7 @@ export const StudentForm = ({
               </div>
             )}
           </div>
-          {formState.studentRecordId && (
+          {showField && (
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
               <div className="space-y-4">
                 <StudentFormItem
@@ -611,7 +600,7 @@ export const StudentForm = ({
               />
             </div>
           )}
-          {formState.studentRecordId && (
+          {showField && (
             <div className="flex justify-end">
               <Button
                 type="button"

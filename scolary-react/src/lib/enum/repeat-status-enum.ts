@@ -20,3 +20,13 @@ const formatRepeatStatus = (status?: string | null): string => {
 };
 
 export default formatRepeatStatus;
+
+export enum RegisterType {
+  SELECTION = "SELECTION",
+  REGISTRATION = "REGISTRATION"
+}
+
+export const RegisterTypeValue: any = {
+  SELECTION: "Séléction de dossier",
+  REGISTRATION: "Inscription ou Ré-inscription"
+};
