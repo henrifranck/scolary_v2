@@ -256,7 +256,30 @@ def update_student(
     student = crud.student.get(db=db, id=student_id)
     if not student:
         raise HTTPException(status_code=404, detail='Student not found')
-    student = crud.student.update(db=db, db_obj=student, obj_in=student_in)
+    data = student_in.model_dump(exclude_none=True)
+    new_registration = data.pop("new_registration", False)
+
+    if new_registration and not student.num_carte:
+        mention_id = data.get("id_mention") or getattr(student, "id_mention", None)
+        prefix = "S"
+        if mention_id:
+            mention = crud.mention.get(db=db, id=mention_id)
+            if mention and mention.name:
+                prefix = mention.name[0].upper()
+        latest = (
+            db.query(models.Student.num_carte)
+            .filter(models.Student.num_carte.like(f"{prefix}%"))
+            .order_by(models.Student.num_carte.desc())
+            .first()
+        )
+        next_num = 1
+        if latest and latest[0]:
+            match = re.match(rf"^{re.escape(prefix)}(\d+)$", latest[0])
+            if match:
+                next_num = int(match.group(1)) + 1
+        data["num_carte"] = f"{prefix}{next_num:06d}"
+
+    student = crud.student.update(db=db, db_obj=student, obj_in=data)
     return student
 
 

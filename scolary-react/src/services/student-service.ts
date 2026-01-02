@@ -56,10 +56,10 @@ const baseColumn = JSON.stringify([
   "parent_address"
 ]);
 
-const buildWhereClause = (cardNumber: string) =>
+const buildWhereClause = (cardNumber: string, newRegistration: boolean) =>
   JSON.stringify([
     {
-      key: "num_carte",
+      key: newRegistration ? "num_select" : "num_carte",
       operator: "==",
       value: cardNumber
     }
@@ -116,7 +116,8 @@ const extractStudent = (payload: OneStudentApiResponse): StudentProfile => {
 export const fetchStudentByCardNumber = async (
   filtes: ReinscriptionFilters,
   registerType: string,
-  cardNumber: string
+  cardNumber: string,
+  newRegistration: boolean
 ): Promise<StudentProfile> => {
   const trimmed = cardNumber.trim();
   if (!trimmed) {
@@ -129,7 +130,7 @@ export const fetchStudentByCardNumber = async (
       query: {
         relation: relations,
         base_column: baseColumn,
-        where: buildWhereClause(trimmed),
+        where: buildWhereClause(trimmed, newRegistration),
         where_relation: buildWhereRelationClause(filtes, registerType),
         where_custom: buildWhereCustomClause(filtes, registerType, cardNumber),
         route_ui: "re-registration"

@@ -50,6 +50,10 @@ interface DashboardSummary {
   total_journeys: number;
   total_users: number;
   total_teachers: number;
+  students_this_year: number;
+  students_previous_year: number;
+  teachers_this_month: number;
+  teachers_previous_month: number;
   mention_counts: Array<{ id: number; name: string; count: number }>;
   mention_enrollments: Array<{
     academic_year_id: number;
@@ -77,6 +81,25 @@ interface DashboardSummary {
   nationality_counts: Array<{ id: number; name: string; count: number }>;
   role_counts: Array<{ role: string; count: number }>;
 }
+
+const formatTrend = (
+  current?: number,
+  previous?: number
+): string | undefined => {
+  const currentVal = current ?? 0;
+  const previousVal = previous ?? 0;
+
+  if (previousVal === 0 && currentVal === 0) {
+    return "0%";
+  }
+  if (previousVal === 0 && currentVal > 0) {
+    return "+100%";
+  }
+  const diff = ((currentVal - previousVal) / previousVal) * 100;
+  const clamped = Math.max(-100, diff);
+  const rounded = clamped.toFixed(0);
+  return `${clamped >= 0 ? "+" : ""}${rounded}%`;
+};
 
 interface ChartData {
   name: string;
@@ -363,24 +386,30 @@ export const DashboardPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Tableau de bord
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Comprehensive overview of academic metrics and student data.
+            Vue d&apos;ensemble des indicateurs académiques et des données
+            étudiants.
           </p>
         </div>
         <Button size="sm" onClick={() => refetch()}>
-          Refresh data
+          Rafraîchir les données
         </Button>
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
         <MetricCard
           icon={Users}
-          label="Total students"
+          label="Total étudiants"
           loading={isPending}
           value={summary?.total_students ?? 0}
-          trend="+0%"
+          trend={formatTrend(
+            summary?.students_this_year,
+            summary?.students_previous_year
+          )}
         />
         <MetricCard
           icon={Layers}
@@ -391,23 +420,16 @@ export const DashboardPage = () => {
         />
         <MetricCard
           icon={GraduationCap}
-          label="Total journeys"
+          label="Total parcours"
           loading={isPending}
           value={summary?.total_journeys ?? 0}
           trend="+0%"
         />
         <MetricCard
           icon={FileText}
-          label="Total users"
+          label="Total utilisateurs"
           loading={isPending}
           value={summary?.total_users ?? 0}
-          trend="+0%"
-        />
-        <MetricCard
-          icon={GraduationCap}
-          label="Total teachers"
-          loading={isPending}
-          value={summary?.total_teachers ?? 0}
           trend="+0%"
         />
       </div>
@@ -415,12 +437,27 @@ export const DashboardPage = () => {
       {/* Secondary Metrics */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <MetricCard
+          icon={GraduationCap}
+          label="Total enseignants"
+          loading={isPending}
+          value={summary?.total_teachers ?? 0}
+          trend={formatTrend(
+            summary?.teachers_this_month,
+            summary?.teachers_previous_month
+          )}
+        />
+        <MetricCard
           icon={Clock}
-          label="Avg. processing time"
+          label="Temps de traitement moyen"
           loading
           value="—"
         />
-        <MetricCard icon={CalendarDays} label="Next event" loading value="—" />
+        <MetricCard
+          icon={CalendarDays}
+          label="Prochain événement"
+          loading
+          value="—"
+        />
       </div>
 
       {/* Charts Section */}
@@ -440,13 +477,13 @@ export const DashboardPage = () => {
             {isPending ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  Loading chart...
+                  Chargement du graphique...
                 </div>
               </div>
             ) : !mentionTrendData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  No data available
+                  Aucune donnée disponible
                 </div>
               </div>
             ) : (
@@ -505,13 +542,13 @@ export const DashboardPage = () => {
             {!summary ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  Loading chart...
+                  Chargement du graphique...
                 </div>
               </div>
             ) : !mentionSexChart.data.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  No data available
+                  Aucune donnée disponible
                 </div>
               </div>
             ) : (
@@ -555,13 +592,13 @@ export const DashboardPage = () => {
             {!summary ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  Loading chart...
+                  Chargement du graphique...
                 </div>
               </div>
             ) : !mentionChartData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  No data available
+                  Aucune donnée disponible
                 </div>
               </div>
             ) : (
@@ -687,13 +724,13 @@ export const DashboardPage = () => {
           {isPending ? (
             <div className="flex h-full items-center justify-center">
               <div className="text-sm text-muted-foreground">
-                Loading chart...
+                Chargement du graphique...
               </div>
             </div>
           ) : !ageChartData.length ? (
             <div className="flex h-full items-center justify-center">
               <div className="text-sm text-muted-foreground">
-                No data available
+                Aucune donnée disponible
               </div>
             </div>
           ) : (
@@ -730,13 +767,13 @@ export const DashboardPage = () => {
             {!summary ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  Loading chart...
+                  Chargement du graphique...
                 </div>
               </div>
             ) : !sexChartData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  No data available
+                  Aucune donnée disponible
                 </div>
               </div>
             ) : (
@@ -790,13 +827,13 @@ export const DashboardPage = () => {
             {!summary ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  Loading chart...
+                  Chargement du graphique...
                 </div>
               </div>
             ) : !nationalityChartData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  No data available
+                  Aucune donnée disponible
                 </div>
               </div>
             ) : (
@@ -849,13 +886,13 @@ export const DashboardPage = () => {
             {!summary ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  Loading chart...
+                  Chargement du graphique...
                 </div>
               </div>
             ) : !roleChartData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  No data available
+                  Aucune donnée disponible
                 </div>
               </div>
             ) : (
@@ -915,13 +952,13 @@ export const DashboardPage = () => {
             {isPending ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  Loading chart...
+                  Chargement du graphique...
                 </div>
               </div>
             ) : !newStudentmentionTrendData.length ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
-                  No data available
+                  Aucune donnée disponible
                 </div>
               </div>
             ) : (
@@ -997,7 +1034,7 @@ const MetricCard = ({
           <p
             className={`mt-1 text-xs ${trend.startsWith("+") ? "text-green-600" : "text-red-600"}`}
           >
-            {trend} from last month
+            {trend} par rapport à la période précédente
           </p>
         )}
       </div>

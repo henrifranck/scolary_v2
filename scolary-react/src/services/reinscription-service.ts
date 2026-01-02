@@ -22,10 +22,12 @@ export interface ReinscriptionFilters {
   id_journey?: string;
   id_annual_register?: string | number;
   id_year?: string;
+  level?: string;
   id_enter_year?: string;
   search?: string;
   deletedOnly?: boolean;
   registerType?: string;
+  skipRegisterType?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -131,14 +133,21 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
   const whereRelation: Array<Record<string, unknown>> = [];
   const academicYear = filters.id_year ?? filters.academicYearId;
   const journeyId = filters.id_journey ?? filters.journeyId;
+  const level = filters.level;
   const annualRegisterId =
     filters.id_annual_register ?? filters.annualRegisterId;
   const semester = filters.semester;
 
   // Build nested filter: annual_register.[id_academic_year,register_semester.[id_journey,semester]]
-  const nestedKeys: string[] = ["register_type"];
-  const nestedOperators: string[] = ["=="];
-  const nestedValues: Array<string | number> = ["REGISTRATION"];
+  const nestedKeys: string[] = [];
+  const nestedOperators: string[] = [];
+  const nestedValues: Array<string | number> = [];
+
+  if (!filters.skipRegisterType) {
+    nestedKeys.push("register_type");
+    nestedOperators.push("==");
+    nestedValues.push(filters.registerType ?? "REGISTRATION");
+  }
 
   if (academicYear) {
     nestedKeys.push("id_academic_year");
@@ -154,6 +163,14 @@ const buildQueryParams = (filters: ReinscriptionFilters) => {
     registerParts.push("id_journey");
     registerOperators.push("==");
     registerValues.push(Number(journeyId));
+  }
+
+  if (level) {
+    where.push({
+      key: "level",
+      operator: "==",
+      value: level
+    });
   }
 
   if (semester) {

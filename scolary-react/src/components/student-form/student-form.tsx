@@ -90,6 +90,7 @@ interface StudentFormProps {
   annualRegisterDisabled?: boolean;
   annualRegisterDisabledMessage?: string;
   registerType: string;
+  newRegistration: boolean;
 }
 
 export const StudentForm = ({
@@ -105,7 +106,8 @@ export const StudentForm = ({
   disabledEditing = false,
   annualRegisterDisabled = false,
   annualRegisterDisabledMessage,
-  registerType = "REGISTRATION"
+  registerType = "REGISTRATION",
+  newRegistration = false
 }: StudentFormProps) => {
   const {
     mentionOptions: cachedMentionOptions,
@@ -239,19 +241,16 @@ export const StudentForm = ({
   const [collapsed, setCollapsed] = useState(true);
 
   const [showField, setShowField] = useState(false);
+  const isNewStudentWithoutCard =
+    newRegistration && !(formState.cardNumber ?? "").trim();
 
   useEffect(() => {
-    console.log(registerType);
-
     if (registerType === "REGISTRATION") {
-      console.log(formState);
-
       setShowField(formState.studentRecordId !== "");
     } else {
       setShowField(true);
     }
-    console.log("tena ato izy ah", showField);
-  }, [showField]);
+  }, [formState.studentRecordId, registerType]);
 
   const [editingSections, setEditingSections] = useState<
     Record<EditableSection, boolean>
@@ -266,11 +265,17 @@ export const StudentForm = ({
         [key]: nextValue
       }));
 
+      console.log(formState.selectNumber);
+
       if (key === "cardNumber") {
         setStudentLookupError(null);
       }
+
+      if (key === "selectNumber") {
+        setStudentLookupError(null);
+      }
     },
-    []
+    [setFormState]
   );
 
   const populateStudentFields = useCallback(
@@ -351,9 +356,14 @@ export const StudentForm = ({
 
   const handleStudentLookup = useCallback(
     async (force = false) => {
-      const trimmed = formState.cardNumber?.trim();
+      const trimmed = newRegistration
+        ? formState.selectNumber?.trim()
+        : formState.cardNumber?.trim();
       if (!trimmed) {
-        setStudentLookupError("Veuillez saisir un numéro de carte.");
+        const message = !newRegistration
+          ? "Veuillez saisir un numéro de carte."
+          : "Veuillez saisir un numéro de sélection.";
+        setStudentLookupError(message);
         return;
       }
 
@@ -366,10 +376,13 @@ export const StudentForm = ({
       setStudentLookupLoading(true);
       setStudentLookupError(null);
       try {
+        console.log(newRegistration);
+
         const profile = await fetchStudentByCardNumber(
           filters,
           registerType,
-          trimmed
+          trimmed,
+          newRegistration
         );
         const student = (profile as any).data ?? profile;
 
@@ -400,7 +413,14 @@ export const StudentForm = ({
         setStudentLookupLoading(false);
       }
     },
-    [formState.cardNumber, populateStudentFields, filters]
+    [
+      formState.cardNumber,
+      formState.selectNumber,
+      populateStudentFields,
+      filters,
+      registerType,
+      newRegistration
+    ]
   );
 
   const handlePictureUpload = useCallback(
@@ -461,32 +481,72 @@ export const StudentForm = ({
               <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5  w-[80%]">
                 {enableLookup && (
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      Numéro de carte étudiant
-                    </label>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Input
-                        value={formState.cardNumber}
-                        onChange={(event) =>
-                          handleFormChange("cardNumber", event.target.value)
-                        }
-                        placeholder="Ex: SCT-000123"
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => handleStudentLookup(true)}
-                        disabled={
-                          studentLookupLoading ||
-                          !formState.cardNumber?.trim().length
-                        }
-                      >
-                        {studentLookupLoading ? "Recherche..." : "Rechercher"}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Entrez le numéro pour charger automatiquement les
-                      informations enregistrées dans la base.
-                    </p>
+                    {newRegistration ? (
+                      <>
+                        <label className="text-sm font-medium text-foreground">
+                          Numéro de dossier étudiant
+                        </label>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Input
+                            value={formState.selectNumber}
+                            onChange={(event) =>
+                              handleFormChange(
+                                "selectNumber",
+                                event.target.value
+                              )
+                            }
+                            placeholder="Ex: SCT-000123"
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => handleStudentLookup(true)}
+                            disabled={
+                              studentLookupLoading ||
+                              !formState.selectNumber?.trim().length
+                            }
+                          >
+                            {studentLookupLoading
+                              ? "Recherche..."
+                              : "Rechercher"}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Entrez le numéro pour charger automatiquement les
+                          informations enregistrées dans la base.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <label className="text-sm font-medium text-foreground">
+                          Numéro de carte étudiant
+                        </label>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Input
+                            value={formState.cardNumber}
+                            onChange={(event) =>
+                              handleFormChange("cardNumber", event.target.value)
+                            }
+                            placeholder="Ex: SCT-000123"
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => handleStudentLookup(true)}
+                            disabled={
+                              studentLookupLoading ||
+                              !formState.cardNumber?.trim().length
+                            }
+                          >
+                            {studentLookupLoading
+                              ? "Recherche..."
+                              : "Rechercher"}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Entrez le numéro pour charger automatiquement les
+                          informations enregistrées dans la base.
+                        </p>
+                      </>
+                    )}
                     {studentLookupError && (
                       <p className="text-sm text-destructive">
                         {studentLookupError}
@@ -619,10 +679,10 @@ export const StudentForm = ({
                 </div>
               </div>
               <div className="space-y-4 rounded-xl border bg-muted/20">
-                {annualRegisterDisabled && (
+                {(annualRegisterDisabled || isNewStudentWithoutCard) && (
                   <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
                     {annualRegisterDisabledMessage ??
-                      "Veuillez créer l'étudiant puis cliquez sur Suivant pour compléter la scolarité."}
+                      "Veuillez d'abord attribuer un numéro de carte avant de compléter la scolarité."}
                   </div>
                 )}
                 <ReinscriptionAnnualRegister
@@ -634,7 +694,9 @@ export const StudentForm = ({
                       : formState.cardNumber
                   }
                   filters={filters}
-                  disabledEditing={disabledEditing || annualRegisterDisabled}
+                  disabledEditing={
+                    disabledEditing || annualRegisterDisabled || isNewStudentWithoutCard
+                  }
                   registerType={registerType}
                 />
               </div>

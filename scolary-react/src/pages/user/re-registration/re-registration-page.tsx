@@ -469,7 +469,8 @@ export const ReinscriptionPage = () => {
         const response = await fetchReinscriptionsWithMeta({
           search: query,
           limit: 50,
-          offset: 0
+          offset: 0,
+          skipRegisterType: true
         });
         setSearchResults(response.data ?? []);
       } catch (error) {
@@ -1079,6 +1080,7 @@ export const ReinscriptionPage = () => {
               mentionOptions={mentionOptions}
               disabledEditing={!formState.studentRecordId}
               registerType="REGISTRATION"
+              newRegistration={false}
             />
 
             <DialogFooter className="sticky bottom-0 z-10 mt-auto border-t bg-background/95 px-6 py-4 backdrop-blur">

@@ -22,6 +22,7 @@ class StudentBase(BaseModel):
     num_carte: Optional[str] = None
     email: Optional[str] = None
     num_select: Optional[str] = None
+    new_registration: Optional[bool] = False
     last_name: Optional[str] = None
     first_name: Optional[str] = None
     date_of_birth: Optional[date] = None

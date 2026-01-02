@@ -12,6 +12,7 @@ export type StudentFormState = {
   studentRecordId: string;
   studentId: string;
   cardNumber?: string;
+  selectNumber?: string;
   firstName?: string;
   lastName: string;
   email?: string;
@@ -158,6 +159,7 @@ export interface StudentProfile {
   annual_register?: Array<StudentAnnualProps> | [];
   updated_at?: string;
   deleted_at?: string;
+  new_registration?: boolean;
   father_name?: string;
   father_job?: string;
   mother_name?: string;

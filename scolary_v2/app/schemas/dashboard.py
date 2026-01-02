@@ -55,6 +55,10 @@ class DashboardStats(BaseModel):
     total_journeys: int
     total_users: int
     total_teachers: int
+    students_this_year: int
+    students_previous_year: int
+    teachers_this_month: int
+    teachers_previous_month: int
     mention_counts: list[MentionCount]
     academic_year_counts: list[AcademicYearCount]
     mention_enrollments: list[MentionEnrollment]

@@ -14,7 +14,7 @@ class TeachingUnitOffering(Base):
     id_teaching_unit = Column(Integer, ForeignKey('teaching_unit.id'))
     credit = Column(Integer, nullable=False)
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
-    id_teaching_unit_goup = Column(Integer, ForeignKey('teaching_unit_optional_group.id'))
+    id_teaching_unit_optional_group = Column(Integer, ForeignKey('teaching_unit_optional_group.id'))
 
     # default column
     created_at = Column(DateTime, nullable=False, default=func.now())
@@ -24,7 +24,7 @@ class TeachingUnitOffering(Base):
     # Relations
     teaching_unit = relationship('TeachingUnit', foreign_keys=[id_teaching_unit])
     academic_year = relationship('AcademicYear', foreign_keys=[id_academic_year])
-    teaching_unit_group = relationship('TeachingUnitOptionalGroup', foreign_keys=[id_teaching_unit_goup])
+    teaching_unit_optional_group = relationship('TeachingUnitOptionalGroup', foreign_keys=[id_teaching_unit_optional_group])
 
 
 # begin #

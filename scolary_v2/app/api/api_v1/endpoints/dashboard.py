@@ -1,4 +1,5 @@
 from typing import Any
+from datetime import datetime, date
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -258,12 +259,71 @@ def get_dashboard_summary(
     else:
         total_students = crud.student.get_count_where_array(db=db)
 
+    today = date.today()
+    start_of_current_year = date(today.year, 1, 1)
+    start_of_next_year = date(today.year + 1, 1, 1)
+    start_of_previous_year = date(today.year - 1, 1, 1)
+
+    start_of_current_month = date(today.year, today.month, 1)
+    start_of_next_month = (
+        date(today.year + 1, 1, 1)
+        if today.month == 12
+        else date(today.year, today.month + 1, 1)
+    )
+    start_of_previous_month = (
+        date(today.year - 1, 12, 1)
+        if today.month == 1
+        else date(today.year, today.month - 1, 1)
+    )
+
+    students_this_year = (
+        db.query(func.count(models.Student.id))
+        .filter(
+            models.Student.created_at >= start_of_current_year,
+            models.Student.created_at < start_of_next_year,
+        )
+        .scalar()
+        or 0
+    )
+    students_previous_year = (
+        db.query(func.count(models.Student.id))
+        .filter(
+            models.Student.created_at >= start_of_previous_year,
+            models.Student.created_at < start_of_current_year,
+        )
+        .scalar()
+        or 0
+    )
+
+    teachers_this_month = (
+        db.query(func.count(models.Teacher.id))
+        .filter(
+            models.Teacher.created_at >= start_of_current_month,
+            models.Teacher.created_at < start_of_next_month,
+        )
+        .scalar()
+        or 0
+    )
+    teachers_previous_month = (
+        db.query(func.count(models.Teacher.id))
+        .filter(
+            models.Teacher.created_at >= start_of_previous_month,
+            models.Teacher.created_at < start_of_current_month,
+        )
+        .scalar()
+        or 0
+    )
+
     return schemas.DashboardStats(
         total_students=total_students,
         total_mentions=crud.mention.get_count_where_array(db=db),
         total_journeys=crud.journey.get_count_where_array(db=db),
         total_users=crud.user.get_count_where_array(db=db),
         total_teachers=crud.teacher.get_count_where_array(db=db),
+        students_this_year=students_this_year,
+        students_previous_year=students_previous_year,
+        teachers_this_month=teachers_this_month,
+        teachers_previous_month=teachers_previous_month,
         mention_counts=[
             schemas.MentionCount(id=row.id, name=row.name or "", count=row.count)
             for row in mention_rows

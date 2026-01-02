@@ -267,11 +267,11 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
 
   return [
     generalSection,
-      {
-        title: "Etudiant",
-        roles: ["user"],
-        items: [
-          { to: "/notes", label: "Notes", icon: NotepadText, roles: ["user"] },
+    {
+      title: "Etudiant",
+      roles: ["user"],
+      items: [
+        { to: "/notes", label: "Notes", icon: NotepadText, roles: ["user"] },
         {
           to: "/folder-selection",
           label: "Nouveau etudians",
@@ -515,6 +515,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const isReinscriptionPage =
     location.pathname.startsWith("/re-registration") ||
     location.pathname.startsWith("/admin/re-registration");
+  location.pathname.startsWith("/registration") ||
+    location.pathname.startsWith("/admin/registration");
+  location.pathname.startsWith("/selection") ||
+    location.pathname.startsWith("/admin/selection");
   const { data: academicYearsData } = useAcademicYears();
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);

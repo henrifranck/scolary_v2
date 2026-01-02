@@ -851,7 +851,6 @@ export const UsersPage = () => {
           if (pictureFile && userId) {
             await uploadUserPicture(userId, pictureFile);
           }
-          const hadTeacher = Boolean(editingUser.teacher);
           if (values.isTeacher && userId) {
             const maxHoursPerDay = values.max_hours_per_day.trim();
             const maxDaysPerWeek = values.max_days_per_week.trim();
@@ -1180,7 +1179,7 @@ export const UsersPage = () => {
       },
       {
         id: "actions",
-        header: "",
+        header: "Actions",
         cell: ({ row }) => (
           // <div className="flex justify-end gap-2">
           //   <Button

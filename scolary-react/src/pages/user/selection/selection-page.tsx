@@ -277,7 +277,7 @@ export const DossierSelectionPage = () => {
           ...createEmptyFormState(),
           studentRecordId: profile.id ? String(profile.id) : student.recordId,
           studentId: profile.num_select ?? student.numSelect,
-          cardNumber: profile.num_carte ?? student.id,
+          cardNumber: profile.num_carte,
           firstName: profile.first_name ?? "",
           lastName: profile.last_name ?? "",
           email: profile.email ?? "",
@@ -460,7 +460,9 @@ export const DossierSelectionPage = () => {
               className="h-8 w-8 text-destructive hover:text-destructive"
               aria-label="Delete"
               onClick={() => setConfirmDeleteStudent(row.original)}
-              disabled={deletingId === (row.original.apiId || row.original.recordId)}
+              disabled={
+                deletingId === (row.original.apiId || row.original.recordId)
+              }
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -517,25 +519,27 @@ export const DossierSelectionPage = () => {
 
       try {
         setFormSubmitting(true);
-      if (dialogMode === "edit" && formState.studentRecordId) {
-        await updateStudentProfile(formState.studentRecordId, payload);
-      } else {
-        const created = await createStudent(payload);
-        setHasCreatedStudent(true);
-        setDialogMode("edit");
-        setFormState((prev) => ({
-          ...prev,
-          studentRecordId: created.id ? String(created.id) : prev.studentRecordId,
-          studentId: created.num_select ?? prev.studentId,
-          cardNumber: created.num_carte ?? prev.cardNumber
-        }));
-        setFormSubmitting(false);
-        return;
-      }
-      await queryClient.invalidateQueries({ queryKey: ["selections"] });
-      setDialogOpen(false);
-    } catch (error) {
-      setFormError(
+        if (dialogMode === "edit" && formState.studentRecordId) {
+          await updateStudentProfile(formState.studentRecordId, payload);
+        } else {
+          const created = await createStudent(payload);
+          setHasCreatedStudent(true);
+          setDialogMode("edit");
+          setFormState((prev) => ({
+            ...prev,
+            studentRecordId: created.id
+              ? String(created.id)
+              : prev.studentRecordId,
+            studentId: created.num_select ?? prev.studentId,
+            cardNumber: created.num_carte ?? prev.cardNumber
+          }));
+          setFormSubmitting(false);
+          return;
+        }
+        await queryClient.invalidateQueries({ queryKey: ["selections"] });
+        setDialogOpen(false);
+      } catch (error) {
+        setFormError(
           error instanceof Error
             ? error.message
             : "Erreur lors de l'enregistrement de l'étudiant."
@@ -632,7 +636,9 @@ export const DossierSelectionPage = () => {
           summarySlot={
             <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground space-y-3">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-medium text-foreground">Statut dossier</span>
+                <span className="font-medium text-foreground">
+                  Statut dossier
+                </span>
                 <select
                   className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
                   value={enrollmentFilter}
@@ -734,6 +740,7 @@ export const DossierSelectionPage = () => {
                 enablePicture={false}
                 mentionOptions={mentionOptions}
                 registerType="SELECTION"
+                newRegistration={false}
                 annualRegisterDisabled={
                   !hasCreatedStudent && dialogMode === "create"
                 }
