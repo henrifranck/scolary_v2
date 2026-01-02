@@ -45,6 +45,7 @@ class User(UserInDBBase):
 
 class UserWithRelation(UserInDBBase):
     permissions: Optional[dict] = None
+    teacher: Optional[Any] = None
     user_role: Optional[Any] = None
     user_mention: Optional[Any] = None
 

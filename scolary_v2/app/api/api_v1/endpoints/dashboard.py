@@ -263,6 +263,7 @@ def get_dashboard_summary(
         total_mentions=crud.mention.get_count_where_array(db=db),
         total_journeys=crud.journey.get_count_where_array(db=db),
         total_users=crud.user.get_count_where_array(db=db),
+        total_teachers=crud.teacher.get_count_where_array(db=db),
         mention_counts=[
             schemas.MentionCount(id=row.id, name=row.name or "", count=row.count)
             for row in mention_rows

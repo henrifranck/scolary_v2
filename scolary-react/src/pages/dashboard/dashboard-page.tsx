@@ -49,6 +49,7 @@ interface DashboardSummary {
   total_mentions: number;
   total_journeys: number;
   total_users: number;
+  total_teachers: number;
   mention_counts: Array<{ id: number; name: string; count: number }>;
   mention_enrollments: Array<{
     academic_year_id: number;
@@ -400,6 +401,13 @@ export const DashboardPage = () => {
           label="Total users"
           loading={isPending}
           value={summary?.total_users ?? 0}
+          trend="+0%"
+        />
+        <MetricCard
+          icon={GraduationCap}
+          label="Total teachers"
+          loading={isPending}
+          value={summary?.total_teachers ?? 0}
           trend="+0%"
         />
       </div>

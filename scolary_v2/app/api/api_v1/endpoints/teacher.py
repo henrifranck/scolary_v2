@@ -48,7 +48,11 @@ def create_teacher(
     """
     Create new teacher.
     """
-    teacher = crud.teacher.create(db=db, obj_in=teacher_in)
+    teacher = crud.teacher.get_by_user(db=db, id_user=teacher_in.id_user)
+    if teacher:
+        teacher = crud.teacher.update(db=db, db_obj=teacher, obj_in=teacher_in)
+    else:
+        teacher = crud.teacher.create(db=db, obj_in=teacher_in)
     return teacher
 
 

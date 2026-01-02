@@ -29,7 +29,7 @@ class User(Base):
     # Relations
     user_role = relationship('UserRole', back_populates="user")
     user_mention = relationship('UserMention', back_populates="user")
-    teacher = relationship('Teacher')
+    teacher = relationship('Teacher', uselist=False)
 
 # begin #
 # ---write your code here--- #

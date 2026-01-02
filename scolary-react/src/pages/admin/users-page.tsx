@@ -43,17 +43,27 @@ import {
 import { useRoles } from "../../services/role-service";
 import { useMentions } from "../../services/mention-service";
 import { ActionButton } from "@/components/action-button";
+import { createTeacher, type Grade } from "@/services/teacher-service";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Mention } from "@/models/mentions";
 
 type UserFormValues = {
   first_name: string;
   last_name: string;
   email: string;
   password: string;
+  address: string;
+  phone_number: string;
   is_superuser: boolean;
   is_active: boolean;
   roleIds: string[];
   mentionIds: string[];
   pictureFile?: FileList;
+  isTeacher: boolean;
+  teacherGrade: Grade;
+  max_hours_per_day: string;
+  max_days_per_week: string;
 };
 
 const defaultFormValues: UserFormValues = {
@@ -61,11 +71,17 @@ const defaultFormValues: UserFormValues = {
   last_name: "",
   email: "",
   password: "",
+  address: "",
+  phone_number: "",
   is_superuser: false,
   is_active: true,
   roleIds: [],
   mentionIds: [],
-  pictureFile: undefined
+  pictureFile: undefined,
+  isTeacher: false,
+  teacherGrade: "MR",
+  max_hours_per_day: "",
+  max_days_per_week: ""
 };
 
 const resolvePictureUrl = (picture?: string | null) => {
@@ -101,7 +117,7 @@ const getUserAvatarUrl = (user: User) => {
   const initialsSource =
     `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
     user.email ||
-    "User";
+    "Utilisateur";
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(initialsSource)}&background=random&color=fff&size=128`;
 };
 
@@ -110,8 +126,18 @@ const toFormValues = (user?: User | null): UserFormValues => ({
   last_name: user?.last_name ?? "",
   email: user?.email ?? "",
   password: "",
+  address: user?.address ?? "",
+  phone_number: user?.phone_number ?? "",
   is_superuser: user?.is_superuser ?? false,
   is_active: user?.is_active ?? true,
+  isTeacher: Boolean(user?.teacher),
+  teacherGrade: (user?.teacher?.grade as Grade | undefined) ?? "MR",
+  max_hours_per_day: user?.teacher?.max_hours_per_day
+    ? String(user.teacher.max_hours_per_day)
+    : "",
+  max_days_per_week: user?.teacher?.max_days_per_week
+    ? String(user.teacher.max_days_per_week)
+    : "",
   roleIds: (() => {
     if (!user) {
       return [];
@@ -141,7 +167,7 @@ const toFormValues = (user?: User | null): UserFormValues => ({
     }
 
     const collectedIds = new Set<number>();
-    const addId = (value?: number | null) => {
+    const addId = (value?: number | null | string) => {
       if (typeof value === "number" && Number.isFinite(value) && value > 0) {
         collectedIds.add(value);
       }
@@ -164,7 +190,7 @@ const toPayload = (values: UserFormValues): UserPayload => {
     .map((roleId) => Number(roleId))
     .filter((roleId) => Number.isFinite(roleId) && roleId > 0);
   if (roleIds.length === 0) {
-    throw new Error("Select at least one role");
+    throw new Error("Sélectionnez au moins un rôle");
   }
 
   const mentionIds = (values.mentionIds ?? [])
@@ -175,6 +201,8 @@ const toPayload = (values: UserFormValues): UserPayload => {
     email: values.email.trim(),
     first_name: values.first_name.trim(),
     last_name: values.last_name.trim(),
+    address: values.address.trim() || undefined,
+    phone_number: values.phone_number.trim() || undefined,
     is_superuser: values.is_superuser,
     is_active: values.is_active,
     role_ids: Array.from(new Set(roleIds)),
@@ -238,6 +266,8 @@ const UserForm = ({
   const statusValue = watch("is_active") ? "active" : "inactive";
   const selectedRoleIds = watch("roleIds") ?? [];
   const selectedMentionIds = watch("mentionIds") ?? [];
+  const isTeacher = watch("isTeacher");
+  const teacherGrade = watch("teacherGrade");
   const watchedPictureFiles = watch("pictureFile");
   const roleSelectionError = (
     errors.roleIds as { message?: string } | undefined
@@ -245,7 +275,8 @@ const UserForm = ({
 
   useEffect(() => {
     register("roleIds", {
-      validate: (value) => (value?.length ? true : "Select at least one role")
+      validate: (value) =>
+        value?.length ? true : "Sélectionnez au moins un rôle"
     });
   }, [register]);
 
@@ -257,6 +288,13 @@ const UserForm = ({
   useEffect(() => {
     setPreviewUrl(initialPicture ? resolvePictureUrl(initialPicture) : null);
   }, [initialPicture]);
+
+  useEffect(() => {
+    register("isTeacher");
+    register("teacherGrade");
+    register("max_hours_per_day");
+    register("max_days_per_week");
+  }, [register]);
 
   useEffect(() => {
     const file = watchedPictureFiles?.[0];
@@ -307,13 +345,16 @@ const UserForm = ({
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-      <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <div className="flex-1 space-y-4">
-          <div className="grid gap-4 md:grid-cols-1">
+    <form
+      className="grid gap-6 md:grid-cols-2"
+      onSubmit={handleSubmit(onSubmit)}
+    >
+      <div className="md:col-span-2 flex flex-col gap-4 md:flex-row md:items-start">
+        <div className="flex-1 space-y-4 md:max-w-3xl">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="user-first-name">
-                First name
+                Prénom
               </label>
               <Input
                 id="user-first-name"
@@ -333,7 +374,7 @@ const UserForm = ({
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="user-last-name">
-                Last name
+                Nom
               </label>
               <Input
                 id="user-last-name"
@@ -352,36 +393,77 @@ const UserForm = ({
               ) : null}
             </div>
           </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="user-email">
+                Email
+              </label>
+              <Input
+                id="user-email"
+                type="email"
+                placeholder="amine@scolary.com"
+                className={cn(
+                  errors.email && "border-destructive text-destructive"
+                )}
+                {...register("email", { required: "L'email est requis" })}
+              />
+              {errors.email ? (
+                <p className="text-xs text-destructive">
+                  {errors.email.message}
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="user-phone">
+                Numéro de téléphone
+              </label>
+              <Input
+                id="user-phone"
+                type="tel"
+                placeholder="+261 ..."
+                className={cn(
+                  errors.phone_number && "border-destructive text-destructive"
+                )}
+                {...register("phone_number")}
+              />
+              {errors.phone_number ? (
+                <p className="text-xs text-destructive">
+                  {errors.phone_number.message}
+                </p>
+              ) : null}
+            </div>
+          </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="user-email">
-              Email
+            <label className="text-sm font-medium" htmlFor="user-address">
+              Adresse
             </label>
-            <Input
-              id="user-email"
-              type="email"
-              placeholder="amine@scolary.com"
+            <Textarea
+              id="user-address"
+              placeholder="Rue, ville..."
               className={cn(
-                errors.email && "border-destructive text-destructive"
+                errors.address && "border-destructive text-destructive"
               )}
-              {...register("email", { required: "Email is required" })}
+              {...register("address")}
             />
-            {errors.email ? (
-              <p className="text-xs text-destructive">{errors.email.message}</p>
+            {errors.address ? (
+              <p className="text-xs text-destructive">
+                {errors.address.message}
+              </p>
             ) : null}
           </div>
         </div>
-        <div className="w-full max-w-[180px] rounded-lg border bg-muted/10 p-4 shadow-sm">
-          <p className="text-sm font-medium text-foreground">Profile picture</p>
+        <div className="w-full max-w-[220px] rounded-lg border bg-muted/10 p-4 shadow-sm">
+          <p className="text-sm font-medium text-foreground">Photo de profil</p>
           <div className="mt-3 flex flex-col items-center gap-3">
             {previewUrl ? (
               <img
                 src={previewUrl}
-                alt="Selected picture preview"
+                alt="Aperçu de la photo sélectionnée"
                 className="h-20 w-20 rounded-full border object-cover"
               />
             ) : (
               <div className="flex h-20 w-20 items-center justify-center rounded-full border border-dashed bg-muted text-xs text-muted-foreground">
-                No photo
+                Pas de photo
               </div>
             )}
             <Button
@@ -392,10 +474,11 @@ const UserForm = ({
               onClick={openFileDialog}
             >
               <Plus className="h-4 w-4" />
-              Upload
+              Téléverser
             </Button>
             <p className="text-center text-[11px] text-muted-foreground">
-              JPG or PNG, max 2 MB. Click upload to select a picture.
+              JPG ou PNG, max 2 Mo. Cliquez sur téléverser pour choisir une
+              photo.
             </p>
           </div>
           <input
@@ -411,10 +494,10 @@ const UserForm = ({
           />
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="user-role">
-            Role
+            Rôle
           </label>
           <Select
             value={roleValue}
@@ -423,17 +506,17 @@ const UserForm = ({
             }
           >
             <SelectTrigger id="user-role">
-              <SelectValue placeholder="Select role" />
+              <SelectValue placeholder="Sélectionner un rôle" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="standard">Standard user</SelectItem>
-              <SelectItem value="admin">Administrator</SelectItem>
+              <SelectItem value="standard">Utilisateur standard</SelectItem>
+              <SelectItem value="admin">Administrateur</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="user-status">
-            Status
+            Statut
           </label>
           <Select
             value={statusValue}
@@ -442,24 +525,26 @@ const UserForm = ({
             }
           >
             <SelectTrigger id="user-status">
-              <SelectValue placeholder="Select status" />
+              <SelectValue placeholder="Sélectionner un statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="active">Actif</SelectItem>
+              <SelectItem value="inactive">Inactif</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
-      <Tabs defaultValue="roles" className="space-y-3">
+      <Tabs defaultValue="roles" className="space-y-3 md:col-span-2">
         <TabsList className="grid w-full grid-cols-2 md:w-auto">
-          <TabsTrigger value="roles">Roles</TabsTrigger>
+          <TabsTrigger value="roles">Rôles</TabsTrigger>
           <TabsTrigger value="mentions">Mentions</TabsTrigger>
         </TabsList>
         <TabsContent value="roles" className="space-y-2">
           <div className="rounded-md border border-input px-3 py-2">
             {isRolesLoading ? (
-              <p className="text-sm text-muted-foreground">Loading roles…</p>
+              <p className="text-sm text-muted-foreground">
+                Chargement des rôles…
+              </p>
             ) : hasRoleOptions ? (
               <div className="space-y-2">
                 {roleOptions.map((role) => {
@@ -493,7 +578,7 @@ const UserForm = ({
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Create a role first before assigning it to users.
+                Créez un rôle avant de l’assigner aux utilisateurs.
               </p>
             )}
           </div>
@@ -504,7 +589,9 @@ const UserForm = ({
         <TabsContent value="mentions" className="space-y-2">
           <div className="rounded-md border border-input px-3 py-2">
             {isMentionsLoading ? (
-              <p className="text-sm text-muted-foreground">Loading mentions…</p>
+              <p className="text-sm text-muted-foreground">
+                Chargement des mentions…
+              </p>
             ) : hasMentionOptions ? (
               <div className="space-y-2">
                 {mentionOptions.map((mention) => {
@@ -538,19 +625,105 @@ const UserForm = ({
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Create a mention first before assigning it to users.
+                Créez une mention avant de l’assigner aux utilisateurs.
               </p>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Mention selection is optional. Leave empty to keep current
-            assignment.
+            La sélection de mention est optionnelle. Laisser vide pour conserver
+            l’affectation actuelle.
           </p>
         </TabsContent>
       </Tabs>
-      <div className="space-y-2">
+      <div className="space-y-3 rounded-lg border bg-muted/10 p-4 md:col-span-2">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">Enseignant</p>
+            <p className="text-xs text-muted-foreground">
+              Créer un profil enseignant lors de l’enregistrement d’un nouvel
+              utilisateur.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="user-is-teacher"
+              checked={isTeacher}
+              onCheckedChange={(checked) =>
+                setValue("isTeacher", checked, { shouldDirty: true })
+              }
+            />
+            <label
+              htmlFor="user-is-teacher"
+              className="text-sm text-muted-foreground"
+            >
+              Est enseignant
+            </label>
+          </div>
+        </div>
+        {isTeacher ? (
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="teacher-grade">
+                Grade
+              </label>
+              <Select
+                value={teacherGrade}
+                onValueChange={(value) =>
+                  setValue("teacherGrade", value as Grade, {
+                    shouldDirty: true
+                  })
+                }
+              >
+                <SelectTrigger id="teacher-grade">
+                  <SelectValue placeholder="Sélectionner un grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MR">MR</SelectItem>
+                  <SelectItem value="DR">DR</SelectItem>
+                  <SelectItem value="PR">PR</SelectItem>
+                  <SelectItem value="Mme">Mme</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium"
+                htmlFor="teacher-max-hours-per-day"
+              >
+                Max heures / jour
+              </label>
+              <Input
+                id="teacher-max-hours-per-day"
+                type="number"
+                min="0"
+                step="0.5"
+                placeholder="e.g. 6"
+                {...register("max_hours_per_day")}
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium"
+                htmlFor="teacher-max-days-per-week"
+              >
+                Max jours / semaine
+              </label>
+              <Input
+                id="teacher-max-days-per-week"
+                type="number"
+                min="0"
+                max="7"
+                step="1"
+                placeholder="e.g. 5"
+                {...register("max_days_per_week")}
+              />
+            </div>
+          </div>
+        ) : null}
+      </div>
+      <div className="space-y-2 md:col-span-2">
         <label className="text-sm font-medium" htmlFor="user-password">
-          Password
+          Mot de passe
         </label>
         <Input
           id="user-password"
@@ -560,37 +733,39 @@ const UserForm = ({
             errors.password && "border-destructive text-destructive"
           )}
           {...register("password", {
-            ...(mode === "create" ? { required: "Password is required" } : {}),
+            ...(mode === "create"
+              ? { required: "Le mot de passe est requis" }
+              : {}),
             minLength: {
               value: 6,
-              message: "Password must be at least 6 characters"
+              message: "Le mot de passe doit contenir au moins 6 caractères"
             }
           })}
         />
         {mode === "edit" ? (
           <p className="text-xs text-muted-foreground">
-            Leave blank to keep the current password.
+            Laissez vide pour conserver le mot de passe actuel.
           </p>
         ) : null}
         {errors.password ? (
           <p className="text-xs text-destructive">{errors.password.message}</p>
         ) : null}
       </div>
-      <div className="flex items-center justify-end gap-2">
+      <div className="md:col-span-2 flex items-center justify-end gap-2">
         <Button
           type="button"
           variant="ghost"
           onClick={onCancel}
           disabled={isSubmitting}
         >
-          Cancel
+          Annuler
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting
-            ? "Saving…"
+            ? "Enregistrement…"
             : mode === "edit"
-              ? "Save changes"
-              : "Create user"}
+              ? "Enregistrer les modifications"
+              : "Créer l’utilisateur"}
         </Button>
       </div>
     </form>
@@ -623,7 +798,11 @@ export const UsersPage = () => {
   const mentionsData = mentionsResponse?.data ?? [];
   const usersQuery = useMemo(
     () => ({
-      relation: JSON.stringify(["user_role.role", "user_mention.mention"]),
+      relation: JSON.stringify([
+        "user_role.role",
+        "user_mention.mention",
+        "teacher{grade,max_hours_per_day,max_days_per_week}"
+      ]),
       offset: (page - 1) * pageSize,
       limit: pageSize
     }),
@@ -633,7 +812,8 @@ export const UsersPage = () => {
     data: usersResponse,
     isPending,
     isError,
-    error
+    error,
+    refetch: refetchUsers
   } = useUsers(usersQuery);
   const users = usersResponse?.data ?? [];
   const totalUsers = usersResponse?.count ?? users.length;
@@ -671,25 +851,70 @@ export const UsersPage = () => {
           if (pictureFile && userId) {
             await uploadUserPicture(userId, pictureFile);
           }
-          setFeedback({ type: "success", text: "User updated successfully." });
+          const hadTeacher = Boolean(editingUser.teacher);
+          if (values.isTeacher && userId) {
+            const maxHoursPerDay = values.max_hours_per_day.trim();
+            const maxDaysPerWeek = values.max_days_per_week.trim();
+            await createTeacher({
+              id_user: userId,
+              grade: values.teacherGrade,
+              max_hours_per_day: maxHoursPerDay
+                ? Number.parseFloat(maxHoursPerDay)
+                : undefined,
+              max_days_per_week: maxDaysPerWeek
+                ? Number.parseFloat(maxDaysPerWeek)
+                : undefined
+            });
+          }
+          setFeedback({
+            type: "success",
+            text: "Utilisateur mis à jour avec succès."
+          });
+          void refetchUsers();
         } else {
           const created = await createUser.mutateAsync(payload);
           userId = created?.id ?? null;
           if (pictureFile && userId) {
             await uploadUserPicture(userId, pictureFile);
           }
-          setFeedback({ type: "success", text: "User created successfully." });
+          if (values.isTeacher && userId) {
+            const maxHoursPerDay = values.max_hours_per_day.trim();
+            const maxDaysPerWeek = values.max_days_per_week.trim();
+            await createTeacher({
+              id_user: userId,
+              grade: values.teacherGrade,
+              max_hours_per_day: maxHoursPerDay
+                ? Number.parseFloat(maxHoursPerDay)
+                : undefined,
+              max_days_per_week: maxDaysPerWeek
+                ? Number.parseFloat(maxDaysPerWeek)
+                : undefined
+            });
+          }
+          setFeedback({
+            type: "success",
+            text: "Utilisateur créé avec succès."
+          });
         }
+        void refetchUsers();
         closeForm();
       } catch (mutationError) {
         const message =
           mutationError instanceof Error
             ? mutationError.message
-            : "Unable to save user.";
+            : "Impossible d’enregistrer l’utilisateur.";
         setFeedback({ type: "error", text: message });
       }
     },
-    [closeForm, createUser, editingUser, updateUser, uploadUserPicture]
+    [
+      closeForm,
+      createTeacher,
+      createUser,
+      editingUser,
+      updateUser,
+      uploadUserPicture,
+      refetchUsers
+    ]
   );
 
   const handleDelete = useCallback(async () => {
@@ -698,12 +923,16 @@ export const UsersPage = () => {
     }
     try {
       await deleteUser.mutateAsync(userToDelete.id);
-      setFeedback({ type: "success", text: "User deleted successfully." });
+      setFeedback({
+        type: "success",
+        text: "Utilisateur supprimé avec succès."
+      });
+      void refetchUsers();
     } catch (mutationError) {
       const message =
         mutationError instanceof Error
           ? mutationError.message
-          : "Unable to delete user.";
+          : "Impossible de supprimer l’utilisateur.";
       setFeedback({ type: "error", text: message });
     } finally {
       setUserToDelete(null);
@@ -736,11 +965,11 @@ export const UsersPage = () => {
     isRolesError && rolesError instanceof Error
       ? rolesError.message
       : isRolesError
-        ? "Unable to load roles"
+        ? "Impossible de charger les rôles"
         : null;
   const mentionOptions = useMemo(
     () =>
-      mentionsData.map((mention) => ({
+      mentionsData.map((mention: Mention) => ({
         id: String(mention.id),
         label: mention.name
       })),
@@ -748,7 +977,7 @@ export const UsersPage = () => {
   );
   const mentionNameMap = useMemo(() => {
     const map = new Map<number, string>();
-    mentionsData.forEach((mention) => {
+    mentionsData.forEach((mention: Mention) => {
       if (typeof mention.id === "number" && mention.name) {
         map.set(mention.id, mention.name);
       }
@@ -759,7 +988,7 @@ export const UsersPage = () => {
     areMentionsError && mentionsError instanceof Error
       ? mentionsError.message
       : areMentionsError
-        ? "Unable to load mentions"
+        ? "Impossible de charger les mentions"
         : null;
 
   const resolveRoleLabels = useCallback(
@@ -828,13 +1057,13 @@ export const UsersPage = () => {
         labels.push(label);
       };
       const idSet = new Set<number>();
-      const addId = (id?: number | null) => {
+      const addId = (id?: number | null | string) => {
         if (typeof id === "number" && Number.isFinite(id) && id > 0) {
           idSet.add(id);
         }
       };
 
-      user.mentions?.forEach((mention) => {
+      user.mentions?.forEach((mention: Mention) => {
         addLabel(mention?.name ?? null);
         addId(mention?.id);
       });
@@ -869,33 +1098,47 @@ export const UsersPage = () => {
     return [
       {
         accessorKey: "first_name",
-        header: "User",
+        header: "Utilisateur",
         cell: ({ row }) => {
           const user = row.original;
           const fullName =
             `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim();
           return (
-            <div className="flex flex-col">
-              <span className="font-medium">{fullName || user.email}</span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{fullName || user.email}</span>
+                {user.teacher ? (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                    Enseignant
+                  </span>
+                ) : null}
+              </div>
               <span className="text-xs text-muted-foreground">
                 {user.email}
               </span>
+              {user.phone_number ? (
+                <span className="text-xs text-muted-foreground">
+                  {user.phone_number}
+                </span>
+              ) : null}
             </div>
           );
         }
       },
       {
         accessorKey: "is_superuser",
-        header: "Role",
+        header: "Rôle principal",
         cell: ({ row }) => (
           <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
-            {row.original.is_superuser ? "Administrator" : "Standard user"}
+            {row.original.is_superuser
+              ? "Administrateur"
+              : "Utilisateur standard"}
           </span>
         )
       },
       {
         accessorKey: "role_name",
-        header: "Assigned roles",
+        header: "Rôles attribués",
         cell: ({ row }) => {
           const labels = resolveRoleLabels(row.original);
           return (
@@ -907,7 +1150,7 @@ export const UsersPage = () => {
       },
       {
         accessorKey: "mention_names",
-        header: "Assigned mentions",
+        header: "Mentions attribuées",
         cell: ({ row }) => {
           const labels = resolveMentionLabels(row.original);
           return (
@@ -919,7 +1162,7 @@ export const UsersPage = () => {
       },
       {
         accessorKey: "is_active",
-        header: "Status",
+        header: "Statut",
         cell: ({ row }) => {
           const isActive = row.original.is_active ?? true;
           return (
@@ -930,7 +1173,7 @@ export const UsersPage = () => {
                   : "text-xs font-semibold text-muted-foreground"
               }
             >
-              {isActive ? "Active" : "Inactive"}
+              {isActive ? "Actif" : "Inactif"}
             </span>
           );
         }
@@ -974,7 +1217,7 @@ export const UsersPage = () => {
       const avatarUrl = getUserAvatarUrl(user);
       const roleLabels = resolveRoleLabels(user);
       const mentionLabels = resolveMentionLabels(user);
-      const statusLabel = (user.is_active ?? true) ? "Active" : "Inactive";
+      const statusLabel = (user.is_active ?? true) ? "Actif" : "Inactif";
 
       return (
         <div className="flex h-full flex-col gap-4 rounded-lg border bg-background p-5 shadow-sm">
@@ -984,11 +1227,22 @@ export const UsersPage = () => {
               alt={fullName}
               className="h-12 w-12 rounded-full border"
             />
-            <div className="flex-1">
+            <div className="flex-1 space-y-1">
               <p className="text-sm font-semibold leading-tight text-foreground">
                 {fullName}
+                {user.teacher ? (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                    Enseignant
+                    {user.teacher.grade ? ` (${user.teacher.grade})` : ""}
+                  </span>
+                ) : null}
               </p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
+              {user.phone_number ? (
+                <p className="text-xs text-muted-foreground">
+                  {user.phone_number}
+                </p>
+              ) : null}
             </div>
             <span
               className={cn(
@@ -1004,15 +1258,15 @@ export const UsersPage = () => {
           <div className="space-y-3 text-sm">
             <div>
               <p className="text-xs font-medium text-muted-foreground">
-                Role level
+                Rôle principal
               </p>
               <p className="font-medium text-foreground">
-                {user.is_superuser ? "Administrator" : "Standard user"}
+                {user.is_superuser ? "Administrateur" : "Utilisateur standard"}
               </p>
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">
-                Assigned roles
+                Rôles attribués
               </p>
               <p className="text-sm text-foreground">
                 {roleLabels.length ? roleLabels.join(", ") : "—"}
@@ -1020,7 +1274,7 @@ export const UsersPage = () => {
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground">
-                Assigned mentions
+                Mentions attribuées
               </p>
               <p className="text-sm text-foreground">
                 {mentionLabels.length ? mentionLabels.join(", ") : "—"}
@@ -1032,7 +1286,7 @@ export const UsersPage = () => {
                 variant="outline"
                 onClick={() => handleEdit(user)}
               >
-                Edit
+                Modifier
               </Button>
               <Button
                 size="sm"
@@ -1040,7 +1294,7 @@ export const UsersPage = () => {
                 className="text-destructive hover:text-destructive"
                 onClick={() => setUserToDelete(user)}
               >
-                Delete
+                Supprimer
               </Button>
             </div>
           </div>
@@ -1056,13 +1310,15 @@ export const UsersPage = () => {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Utilisateurs
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Create and manage Scolary accounts.
+            Créez et gérez les comptes Scolary.
           </p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
-          Add user
+          Ajouter un utilisateur
         </Button>
       </div>
 
@@ -1073,7 +1329,7 @@ export const UsersPage = () => {
       ) : null}
       {!rolesErrorMessage && !areRolesLoading && roleOptions.length === 0 ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
-          Create at least one role before inviting users.
+          Créez au moins un rôle avant d’inviter des utilisateurs.
         </div>
       ) : null}
       {mentionsErrorMessage ? (
@@ -1085,7 +1341,7 @@ export const UsersPage = () => {
       !areMentionsLoading &&
       mentionOptions.length === 0 ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
-          Create at least one mention before inviting users.
+          Créez au moins une mention avant d’inviter des utilisateurs.
         </div>
       ) : null}
 
@@ -1103,7 +1359,7 @@ export const UsersPage = () => {
             className="text-xs font-medium underline"
             onClick={() => setFeedback(null)}
           >
-            Dismiss
+            Fermer
           </button>
         </div>
       ) : null}
@@ -1117,15 +1373,17 @@ export const UsersPage = () => {
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingUser ? "Edit user" : "Create new user"}
+              {editingUser
+                ? "Modifier l’utilisateur"
+                : "Créer un nouvel utilisateur"}
             </DialogTitle>
             <DialogDescription>
               {editingUser
-                ? "Update the user to align permissions and status."
-                : "Invite a new user to access the administration portal."}
+                ? "Mettez à jour l’utilisateur pour aligner ses droits et son statut."
+                : "Invitez un nouvel utilisateur à accéder au portail d’administration."}
             </DialogDescription>
           </DialogHeader>
           <UserForm
@@ -1145,21 +1403,21 @@ export const UsersPage = () => {
 
       <ConfirmDialog
         open={Boolean(userToDelete)}
-        title="Delete user"
+        title="Supprimer l’utilisateur"
         description={
           userToDelete ? (
             <>
-              Are you sure you want to delete{" "}
+              Voulez-vous vraiment supprimer{" "}
               <strong>
                 {`${userToDelete.first_name ?? ""} ${userToDelete.last_name ?? ""}`.trim() ||
                   userToDelete.email ||
-                  "this user"}
+                  "cet utilisateur"}
               </strong>
-              ? This action cannot be undone.
+              ? Cette action est irréversible.
             </>
           ) : null
         }
-        confirmLabel="Delete"
+        confirmLabel="Supprimer"
         destructive
         isConfirming={deleteUser.isPending}
         onCancel={() => setUserToDelete(null)}
@@ -1170,18 +1428,18 @@ export const UsersPage = () => {
         columns={columns}
         data={users}
         isLoading={isPending}
-        searchPlaceholder="Search users"
+        searchPlaceholder="Rechercher un utilisateur"
         emptyText={
           isError
-            ? (error?.message ?? "Unable to load users")
-            : "No users found"
+            ? (error?.message ?? "Impossible de charger les utilisateurs")
+            : "Aucun utilisateur trouvé"
         }
         enableViewToggle
         renderGridItem={renderUserCard}
         gridClassName="sm:grid-cols-2 xl:grid-cols-3"
         gridEmptyState={
           <div className="flex h-40 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-            No users available.
+            Aucun utilisateur disponible.
           </div>
         }
         totalItems={totalUsers}

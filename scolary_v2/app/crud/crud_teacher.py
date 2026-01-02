@@ -11,8 +11,8 @@ from app.schemas.teacher import TeacherCreate, TeacherUpdate
 
 
 class CRUDTeacher(CRUDBase[Teacher, TeacherCreate, TeacherUpdate]):
-    def get_by_field(self, db: Session, *, field: str, value: Any) -> Optional[Teacher]:
-        return db.query(Teacher).filter(getattr(Teacher, field) == value).first()
+    def get_by_user(self, db: Session, *, id_user: int) -> Optional[Teacher]:
+        return db.query(Teacher).filter(Teacher.id_user == id_user).first()
 
 
 teacher = CRUDTeacher(Teacher)
