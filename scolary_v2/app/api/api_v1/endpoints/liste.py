@@ -213,7 +213,9 @@ def list_registered(
         relations=relations,
         where=wheres,
         base_columns=base_columns,
-        where_relation=wheres_relations
+        where_relation=wheres_relations,
+        order_by="last_name",
+        order="ASC"
     )
     all_student = []
     for on_student in students:

@@ -68,6 +68,7 @@ class CRUDStudent(CRUDBase[Student, StudentCreate, StudentUpdate]):
                     (subquery.c.max_semester == semester) | (subquery.c.max_semester == semester2),
                 )
             )
+            .order_by(Student.last_name)
         ).all()
 
         return [dict(row._mapping) for row in results]
