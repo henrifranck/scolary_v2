@@ -14,6 +14,7 @@ from ..enum.register_type import RegisterTypeEnum
 
 class AnnualRegisterBase(BaseModel):
     num_carte: Optional[str] = None
+    num_select: Optional[str] = None
     id_academic_year: Optional[int] = None
     semester_count: Optional[int] = None
     register_type: Optional[str] = RegisterTypeEnum.REGISTRATION

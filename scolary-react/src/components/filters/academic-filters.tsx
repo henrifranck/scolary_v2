@@ -161,7 +161,7 @@ export const AcademicFilters = ({
           { value: "M2", label: "M2" }
         ];
 
-  const shouldFetchJourneys = journeyOptionsProp.length === 0;
+  const shouldFetchJourneys = journeyOptionsProp.length === 0 && showJourney;
   const {
     data: fetchedJourneys = [],
     isFetching: autoJourneysFetching,

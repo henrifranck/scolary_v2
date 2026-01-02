@@ -21,6 +21,17 @@ export const printStudentsList = (payload: PdfListPayload) =>
     }
   });
 
+export const printSelectionList = (payload: {
+  idYear: string | number;
+  mentionId: string | number;
+}) =>
+  apiRequest<PdfFileResponse>("/liste/list_selection/", {
+    query: {
+      id_year: payload.idYear,
+      id_mention: payload.mentionId
+    }
+  });
+
 export type PrintCardsPayload = {
   mentionId: string | number;
   academicYearId: string | number;

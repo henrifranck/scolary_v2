@@ -92,7 +92,7 @@ const normalizeStudent = (student: StudentProfile): StudentFormState => {
   const lastName = student.last_name ?? "";
 
   return {
-    studentRecordId: student.num_carte ?? String(student.id),
+    studentRecordId: String(student.id),
     studentId: String(student.id ?? student.num_carte ?? ""),
     fullName: buildFullName(student),
     email: student.email,

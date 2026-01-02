@@ -18,7 +18,7 @@ class AnnualRegister(Base):
     )
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     num_carte = Column(String(255), ForeignKey('student.num_carte'))
-    num_select = Column(String(255))
+    num_select = Column(String(255), ForeignKey('student.num_select'))
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
     register_type = Column(Enum(RegisterTypeEnum), default=RegisterTypeEnum.REGISTRATION)
     semester_count = Column(Integer, nullable=False)
@@ -33,6 +33,7 @@ class AnnualRegister(Base):
 
     # Relations
     student = relationship('Student', foreign_keys=[num_carte], back_populates="annual_register")
+    student_selection = relationship('Student', foreign_keys=[num_select])
     academic_year = relationship('AcademicYear', foreign_keys=[id_academic_year])
     register_semester = relationship('RegisterSemester')
     payment = relationship('Payment')
@@ -68,7 +69,8 @@ class AnnualRegister(Base):
             (_max_semester_expr <= 4, LevelEnum.L2.value),
             (_max_semester_expr <= 6, LevelEnum.L3.value),
             (_max_semester_expr <= 8, LevelEnum.M1.value),
-            else_=LevelEnum.M2.value,
+            (_max_semester_expr <= 10, LevelEnum.M2.value),
+            else_="",
         )
     )
 

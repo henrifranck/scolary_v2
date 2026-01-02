@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   EditableSection,
   StudentAnnualProps,
@@ -37,6 +38,7 @@ import {
 } from "@/services/document-service";
 import { fetchAvailableServices } from "@/services/available-service";
 import { fetchAvailableServiceRequiredDocuments } from "@/services/available-service-required-document";
+import { fetchEnrollmentFees } from "@/services/enrollment-fee-service";
 import { DocumentEditor, DocumentSummary } from "./model-payment-document";
 import {
   RegistrationEditor,
@@ -129,42 +131,93 @@ export const ReinscriptionAnnualRegister = ({
     index: number;
     itemIndex?: number;
   } | null>(null);
+
   useEffect(() => {
-    const loadRequiredDocuments = async () => {
-      try {
-        const routeUi = "re-registration";
-        const availableServices = await fetchAvailableServices({
-          where: JSON.stringify([
-            { key: "route_ui", operator: "==", value: routeUi }
-          ]),
-          relation: JSON.stringify(["available_service_required_document"]),
-          limit: 1
-        });
-        const service = availableServices.data?.[0];
-        if (!service?.id) {
-          setRequiredDocuments([]);
-          return;
-        }
-        const associations = await fetchAvailableServiceRequiredDocuments({
-          where: JSON.stringify([
-            { key: "id_available_service", operator: "==", value: service.id }
-          ]),
-          relation: JSON.stringify(["required_document{id,name}"]),
-          limit: 1000
-        });
-        const docs =
-          associations.data
-            ?.map((entry) => entry.required_document)
-            .filter((doc): doc is RequiredDocument => Boolean(doc)) ?? [];
-        setRequiredDocuments(docs);
-        setDocumentStatus(docs.length ? "missing" : "not_applicable");
-      } catch (error) {
-        console.error("Unable to fetch required documents", error);
-        setRequiredDocuments([]);
-      }
-    };
-    loadRequiredDocuments();
-  }, []);
+    if (!saveError) return;
+    const timer = window.setTimeout(() => setSaveError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [saveError]);
+
+  useEffect(() => {
+    if (!documentUploadError) return;
+    const timer = window.setTimeout(() => setDocumentUploadError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [documentUploadError]);
+  const routeUi = registerType === "REGISTRATION" ? "re-registration" : "selection";
+  const {
+    data: availableServiceData
+  } = useQuery({
+    queryKey: ["available-services", routeUi],
+    queryFn: () =>
+      fetchAvailableServices({
+        where: JSON.stringify([
+          { key: "route_ui", operator: "==", value: routeUi }
+        ]),
+        relation: JSON.stringify(["available_service_required_document"]),
+        limit: 1
+      }),
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 120,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false
+  });
+
+  const availableServiceId = availableServiceData?.data?.[0]?.id;
+
+  const { data: requiredDocData } = useQuery({
+    queryKey: ["available-service-required-documents", availableServiceId],
+    queryFn: () =>
+      fetchAvailableServiceRequiredDocuments({
+        where: JSON.stringify([
+          {
+            key: "id_available_service",
+            operator: "==",
+            value: availableServiceId
+          }
+        ]),
+        relation: JSON.stringify(["required_document{id,name}"]),
+        limit: 1000
+      }),
+    enabled: Boolean(availableServiceId),
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 120,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false
+  });
+
+  const { data: enrollmentFeeData } = useQuery({
+    queryKey: [
+      "enrollment-fees",
+      registerType,
+      filters?.id_year,
+      filters?.id_mention
+    ],
+    queryFn: () =>
+      fetchEnrollmentFees({
+        where: JSON.stringify([
+          { key: "id_academic_year", operator: "==", value: filters?.id_year },
+          { key: "id_mention", operator: "==", value: filters?.id_mention },
+          { key: "register_type", operator: "==", value: registerType }
+        ])
+      }),
+    enabled: Boolean(filters?.id_year && filters?.id_mention),
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 120,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false
+  });
+
+  useEffect(() => {
+    const docs =
+      requiredDocData?.data
+        ?.map((entry) => entry.required_document)
+        .filter((doc): doc is RequiredDocument => Boolean(doc)) ?? [];
+    setRequiredDocuments(docs);
+    setDocumentStatus(docs.length ? "missing" : "not_applicable");
+  }, [requiredDocData]);
 
   const emptyJourney = {
     id: 0,
@@ -318,57 +371,42 @@ export const ReinscriptionAnnualRegister = ({
     }
   }, [displayAnnualRegisters]);
 
+  const { data: journeyData } = useQuery({
+    queryKey: ["journeys", "mention", mentionId],
+    queryFn: () => fetchJourneys(mentionId),
+    enabled: Boolean(mentionId),
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 120,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false
+  });
+
   useEffect(() => {
-    let isMounted = true;
+    if (!journeyData) {
+      setJourneyOptions([]);
+      return;
+    }
+    const normalized = journeyData.map((journey) => {
+      const semesterList = Array.isArray(journey.semester_list)
+        ? journey.semester_list
+            .map((semester) =>
+              typeof semester === "string"
+                ? semester
+                : (semester?.semester ?? "")
+            )
+            .filter((semester): semester is string => Boolean(semester))
+        : [];
 
-    const loadJourneys = async () => {
-      if (!mentionId) {
-        if (isMounted) {
-          setJourneyOptions([]);
-        }
-        return;
-      }
-
-      try {
-        const journeys = await fetchJourneys(mentionId);
-        const normalized = journeys.map((journey) => {
-          const semesterList = Array.isArray(journey.semester_list)
-            ? journey.semester_list
-                .map((semester) =>
-                  typeof semester === "string"
-                    ? semester
-                    : (semester?.semester ?? "")
-                )
-                .filter((semester): semester is string => Boolean(semester))
-            : [];
-
-          return {
-            id: String(journey.id),
-            label:
-              journey.name ?? journey.abbreviation ?? `Journey ${journey.id}`,
-            semesterList,
-            mentionId: journey.id_mention
-              ? String(journey.id_mention)
-              : undefined
-          };
-        });
-
-        if (isMounted) {
-          setJourneyOptions(normalized);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setJourneyOptions([]);
-        }
-      }
-    };
-
-    loadJourneys();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [mentionId]);
+      return {
+        id: String(journey.id),
+        label: journey.name ?? journey.abbreviation ?? `Journey ${journey.id}`,
+        semesterList,
+        mentionId: journey.id_mention ? String(journey.id_mention) : undefined
+      };
+    });
+    setJourneyOptions(normalized);
+  }, [journeyData]);
   useEffect(() => {
     const normalized = annualRegister.map((annual) => ({
       ...annual,
@@ -417,8 +455,8 @@ export const ReinscriptionAnnualRegister = ({
     if (!dialogOpen) {
       return;
     }
-    const trimmed = cardNumber?.trim() ?? "";
-    if (!trimmed) {
+    const identifier = cardNumber?.trim() ?? "";
+    if (!identifier) {
       return;
     }
     const academicYearId =
@@ -429,7 +467,7 @@ export const ReinscriptionAnnualRegister = ({
     let isMounted = true;
     setAnnualRegisterLoading(true);
     fetchAnnualRegisterByCardNumber(
-      trimmed,
+      identifier,
       registerType,
       academicYearId ?? undefined
     )
@@ -504,11 +542,16 @@ export const ReinscriptionAnnualRegister = ({
 
   const handleAddAnnualRegister = async () => {
     setSaveError(null);
-    const cardValue = cardNumber?.trim() ?? "";
+    const identifier = cardNumber?.trim() ?? "";
     const academicYearId = Number(filters?.id_year ?? filters?.academicYearId);
 
-    if (!cardValue) {
-      setSaveError("Le numéro de carte est requis pour enregistrer.");
+    const idLabel =
+      registerType === "SELECTION"
+        ? "Le numéro de sélection est requis pour enregistrer."
+        : "Le numéro de carte est requis pour enregistrer.";
+
+    if (!identifier) {
+      setSaveError(idLabel);
       return;
     }
     if (!academicYearId) {
@@ -518,7 +561,9 @@ export const ReinscriptionAnnualRegister = ({
 
     try {
       const created = await createAnnualRegister({
-        num_carte: cardValue,
+        ...(registerType === "SELECTION"
+          ? { num_select: identifier }
+          : { num_carte: identifier }),
         id_academic_year: academicYearId,
         semester_count: 1,
         register_type: registerType
@@ -537,9 +582,22 @@ export const ReinscriptionAnnualRegister = ({
         }
       ]);
       const newKey = String(created.id);
+      const defaultFee = enrollmentFeeData?.data?.[0]?.price ?? 0;
+      const defaultPayment =
+        defaultFee > 0
+          ? [
+              {
+                id: undefined,
+                num_receipt: "",
+                date_receipt: "",
+                payed: defaultFee,
+                description: "Frais d'inscription"
+              }
+            ]
+          : [];
       setPaymentDrafts((previous) => ({
         ...previous,
-        [newKey]: []
+        [newKey]: defaultPayment
       }));
       setRegistrationDrafts((previous) => ({
         ...previous,

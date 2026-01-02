@@ -13,6 +13,7 @@ from sqlalchemy.orm import (
     joinedload,
     load_only,
     with_loader_criteria,
+    selectinload,
 )
 from app.db.base_class import Base
 
@@ -221,9 +222,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 attr = getattr(previous_model, relationship)
 
                 if result:
-                    result = result.joinedload(attr)
+                    result = result.selectinload(attr)
                 else:
-                    result = joinedload(attr)
+                    result = selectinload(attr)
 
                 # Use current model BEFORE updating previous_model
                 current_model = attr.property.mapper.class_
@@ -432,7 +433,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             query = self.apply_where_relation(query, where_relation)
 
         if base_columns is not None and len(base_columns) > 0:
-            print(base_columns)
             query = query.options(load_only(*[getattr(self.model, col) for col in base_columns]))
 
         if relations is not None and len(relations) > 0:

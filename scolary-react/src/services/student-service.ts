@@ -65,6 +65,29 @@ const buildWhereClause = (cardNumber: string) =>
     }
   ]);
 
+const buildWhereCustomClause = (
+  filter: ReinscriptionFilters,
+  registerType: string,
+  cardNumber: string
+) =>
+  JSON.stringify([
+    {
+      key: "id_academic_year",
+      operator: "==",
+      value: filter.id_year
+    },
+    {
+      key: "register_type",
+      operator: "==",
+      value: registerType
+    },
+    {
+      key: "num_carte",
+      operator: "==",
+      value: cardNumber
+    }
+  ]);
+
 const buildWhereRelationClause = (
   filter: ReinscriptionFilters,
   registerType: string
@@ -79,17 +102,12 @@ const buildWhereRelationClause = (
       key: "annual_register.register_semester.semester",
       operator: "==",
       value: filter.semester
-    },
-    {
-      key: "annual_register.register_type",
-      operator: "==",
-      value: registerType
     }
   ]);
 
 const extractStudent = (payload: OneStudentApiResponse): StudentProfile => {
   if (payload && typeof payload === "object" && "data" in payload) {
-    return payload.data ?? {};
+    return payload.data ?? { id: null };
   }
 
   return payload as StudentProfile;
@@ -113,6 +131,7 @@ export const fetchStudentByCardNumber = async (
         base_column: baseColumn,
         where: buildWhereClause(trimmed),
         where_relation: buildWhereRelationClause(filtes, registerType),
+        where_custom: buildWhereCustomClause(filtes, registerType, cardNumber),
         route_ui: "re-registration"
       }
     }

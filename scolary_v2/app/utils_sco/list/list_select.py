@@ -31,11 +31,17 @@ def add_title(pdf: FPDF, data: Any, title: str):
 
 
 def create_list_select(mention: str, data: Any, students: Any, university):
-    level = ["L1", "M1", "M2"]
+    # Determine levels present; fall back to common order
+    base_levels = ["L1", "L2", "L3", "M1", "M2"]
+    present_levels = [
+        lvl for lvl in base_levels if lvl in students and len(students.get(lvl, [])) > 0
+    ]
+    levels = present_levels if present_levels else base_levels
     pdf = FPDF("P", "mm", "a4")
 
-    for niv in level:
-        if len(students[niv]) != 0:
+    for niv in levels:
+        current_students = students.get(niv, [])
+        if len(current_students) != 0:
             titre = f"LISTE DES ÉTUDIANTS ADMIS PAR SÉLÉCTION DE DOSSIER EN {niv}"
             pdf.add_page()
             pdf.watermark(f"{str(university.department_name).capitalize()}", y=175, font_style="BI")
@@ -51,7 +57,7 @@ def create_list_select(mention: str, data: Any, students: Any, university):
             pdf.cell(1, 5, txt="")
             pdf.cell(163, 5, txt=full_name, border=1, ln=0, align="C")
             num_ = 1
-            for i, student in enumerate(students[niv]):
+            for i, student in enumerate(current_students):
                 num_select_ = student["num_select"]
                 name = (
                     f"{clear_name(student['last_name'])} {student['first_name']}"

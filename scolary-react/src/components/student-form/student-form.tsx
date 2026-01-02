@@ -9,9 +9,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
 import { fetchStudentByCardNumber } from "@/services/student-service";
-import { Check, Pencil, Layers, Eye, EyeOff } from "lucide-react";
+import { Pencil, Layers, Eye, EyeOff } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   EditableSection,
@@ -32,16 +31,9 @@ import {
 import { ReinscriptionFilters } from "@/services/reinscription-service";
 import { ReinscriptionAnnualRegister } from "@/pages/user/payment/model-payment-form";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
-import { Mention, MentionOption } from "@/models/mentions";
-import { fetchMentions } from "@/services/mention-service";
-import {
-  BaccalaureateSerie,
-  BaccalaureateSerieOption
-} from "@/models/baccalaureate-series";
-import {
-  fetchBaccalaureateSerie,
-  fetchBaccalaureateSeries
-} from "@/services/baccalaureate-series-service";
+import { MentionOption } from "@/models/mentions";
+import { BaccalaureateSerieOption } from "@/models/baccalaureate-series";
+import { useLookupOptions } from "@/hooks/use-lookup-options";
 
 type dialogMode = "edit" | "create";
 
@@ -95,6 +87,8 @@ interface StudentFormProps {
   mentionOptions?: MentionOption[];
   baccalaureateOptions?: BaccalaureateSerieOption[];
   disabledEditing?: boolean;
+  annualRegisterDisabled?: boolean;
+  annualRegisterDisabledMessage?: string;
   registerType: string;
 }
 
@@ -109,47 +103,47 @@ export const StudentForm = ({
   mentionOptions = [],
   baccalaureateOptions = [],
   disabledEditing = false,
+  annualRegisterDisabled = false,
+  annualRegisterDisabledMessage,
   registerType = "REGISTRATION"
 }: StudentFormProps) => {
-  const { data: fetchedMentions = [], isLoading: isLoadingMentions } = useQuery(
-    {
-      queryKey: ["student-form", "mentions"],
-      queryFn: () => fetchMentions({ user_only: true }),
-      enabled: mentionOptions.length === 0
-    }
-  );
-  const effectiveMentionOptions =
-    mentionOptions.length > 0
-      ? mentionOptions
-      : fetchedMentions.map((mention: Mention) => ({
-          id: String(mention.id),
-          label: mention.name ?? mention.abbreviation ?? `Mention ${mention.id}`
-        }));
-
   const {
-    data: baccalaureateSerieData = [],
-    isLoading: isLoadingBaccalaureateSerie
-  } = useQuery({
-    queryKey: ["student-form", "baccalaureateSeries"],
-    queryFn: () => fetchBaccalaureateSeries(),
-    enabled: baccalaureateOptions.length === 0
+    mentionOptions: cachedMentionOptions,
+    baccalaureateSerieOptions: cachedBaccalaureateOptions,
+    isLoadingMentions
+  } = useLookupOptions({
+    includeMentions: mentionOptions.length === 0,
+    includeBaccalaureateSeries: baccalaureateOptions.length === 0
   });
 
-  const baccalaureateSerieOptions: any[] = useMemo(
+  const levelOptions = ["L1", "L2", "L3", "M1", "M2"];
+  const effectiveMentionOptions = useMemo(
+    () => (mentionOptions.length > 0 ? mentionOptions : cachedMentionOptions),
+    [cachedMentionOptions, mentionOptions]
+  );
+
+  const effectiveBaccalaureateOptions = useMemo(
     () =>
-      baccalaureateOptions
-        ? baccalaureateSerieData?.data?.map((serie: BaccalaureateSerie) => ({
-            value: String(serie.id),
-            label: serie.name ?? serie.value ?? `Serie ${serie.id}`
-          }))
-        : [],
-    [baccalaureateSerieData?.data]
+      baccalaureateOptions.length > 0
+        ? baccalaureateOptions
+        : cachedBaccalaureateOptions,
+    [baccalaureateOptions, cachedBaccalaureateOptions]
+  );
+
+  const baccalaureateSerieOptions = useMemo(
+    () =>
+      effectiveBaccalaureateOptions.map((option) => ({
+        value: option.id,
+        label: option.label
+      })),
+    [effectiveBaccalaureateOptions]
   );
   const lastLookupKeyRef = useRef<string>("");
   const [studentLookupLoading, setStudentLookupLoading] = useState(false);
   const [annualRegister, setAnnualRegister] = useState<StudentAnnualProps[]>(
     []
   );
+
   const [studentLookupError, setStudentLookupError] = useState<string | null>(
     null
   );
@@ -341,6 +335,7 @@ export const StudentForm = ({
         semester: resolvedSemester || previous.semester,
         status: student.enrollment_status ?? previous.status,
         level: student.level ?? previous.level,
+        generatedLevel: student.generated_level ?? previous.generatedLevel,
         enrollmentStatus:
           student.enrollment_status ?? previous.enrollmentStatus,
         motherName: student.mother_name ?? previous.motherName,
@@ -459,91 +454,93 @@ export const StudentForm = ({
           </div>
         )}
         <div className="space-y-6">
-          <div
-            className={`flex ${showField ? "justify-center" : "justify-between"} gap-4`}
-          >
-            <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5  w-[80%]">
-              {enableLookup && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Numéro de carte étudiant
-                  </label>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input
-                      value={formState.cardNumber}
-                      onChange={(event) =>
-                        handleFormChange("cardNumber", event.target.value)
-                      }
-                      placeholder="Ex: SCT-000123"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => handleStudentLookup(true)}
-                      disabled={
-                        studentLookupLoading ||
-                        !formState.cardNumber?.trim().length
-                      }
-                    >
-                      {studentLookupLoading ? "Recherche..." : "Rechercher"}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Entrez le numéro pour charger automatiquement les
-                    informations enregistrées dans la base.
-                  </p>
-                  {studentLookupError && (
-                    <p className="text-sm text-destructive">
-                      {studentLookupError}
+          {registerType === "REGISTRATION" && (
+            <div
+              className={`flex ${showField ? "justify-center" : "justify-between"} gap-4`}
+            >
+              <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5  w-[80%]">
+                {enableLookup && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      Numéro de carte étudiant
+                    </label>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        value={formState.cardNumber}
+                        onChange={(event) =>
+                          handleFormChange("cardNumber", event.target.value)
+                        }
+                        placeholder="Ex: SCT-000123"
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => handleStudentLookup(true)}
+                        disabled={
+                          studentLookupLoading ||
+                          !formState.cardNumber?.trim().length
+                        }
+                      >
+                        {studentLookupLoading ? "Recherche..." : "Rechercher"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Entrez le numéro pour charger automatiquement les
+                      informations enregistrées dans la base.
                     </p>
+                    {studentLookupError && (
+                      <p className="text-sm text-destructive">
+                        {studentLookupError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {showField && (
+                <div className="flex justify-center w-[20%]">
+                  {enablePicture && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2"></div>
+                      <div className="flex items-center gap-4">
+                        <div className="relative h-36 w-36">
+                          {picturePreview || formState.picture ? (
+                            <img
+                              src={
+                                picturePreview ??
+                                resolveAssetUrl(formState.picture)
+                              }
+                              alt="Photo étudiant"
+                              className="h-36 w-36 rounded-full border object-cover"
+                            />
+                          ) : (
+                            <div className="h-36 w-36 rounded-full border bg-muted/20" />
+                          )}
+                          <label
+                            htmlFor={pictureInputId}
+                            className={`absolute -bottom-0 -right-0 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm ${
+                              disabledEditing
+                                ? "cursor-not-allowed opacity-50"
+                                : "hover:bg-muted/50 cursor-pointer"
+                            }`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </label>
+                          <input
+                            id={pictureInputId}
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePictureUpload}
+                            className="hidden"
+                            disabled={disabledEditing}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
             </div>
-
-            {showField && (
-              <div className="flex justify-center w-[20%]">
-                {enablePicture && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2"></div>
-                    <div className="flex items-center gap-4">
-                      <div className="relative h-36 w-36">
-                        {picturePreview || formState.picture ? (
-                          <img
-                            src={
-                              picturePreview ??
-                              resolveAssetUrl(formState.picture)
-                            }
-                            alt="Photo étudiant"
-                            className="h-36 w-36 rounded-full border object-cover"
-                          />
-                        ) : (
-                          <div className="h-36 w-36 rounded-full border bg-muted/20" />
-                        )}
-                        <label
-                          htmlFor={pictureInputId}
-                          className={`absolute -bottom-0 -right-0 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm ${
-                            disabledEditing
-                              ? "cursor-not-allowed opacity-50"
-                              : "hover:bg-muted/50 cursor-pointer"
-                          }`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </label>
-                        <input
-                          id={pictureInputId}
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePictureUpload}
-                          className="hidden"
-                          disabled={disabledEditing}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          )}
           {showField && (
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
               <div className="space-y-4">
@@ -558,46 +555,89 @@ export const StudentForm = ({
                   disabledEditing={disabledEditing}
                 />
 
-                {effectiveMentionOptions.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+                  {effectiveMentionOptions.length > 0 && (
+                    <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-muted-foreground" />
+                        <label className="text-sm font-medium">Mention</label>
+                      </div>
+                      <Select
+                        value={formState.mentionId}
+                        onValueChange={(value) =>
+                          handleFormChange("mentionId", value)
+                        }
+                        disabled={isLoadingMentions}
+                      >
+                        <SelectTrigger className="h-11">
+                          <SelectValue placeholder="Sélectionner la mention" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {effectiveMentionOptions.map(
+                            (mention: MentionOption) => (
+                              <SelectItem
+                                key={mention.id}
+                                value={mention.id.toString()}
+                                className="text-upper"
+                              >
+                                {mention.label}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
                     <div className="flex items-center gap-2">
                       <Layers className="h-4 w-4 text-muted-foreground" />
-                      <label className="text-sm font-medium">Mention</label>
+                      <label className="text-sm font-medium">Niveau</label>
                     </div>
                     <Select
-                      value={formState.mentionId}
-                      onValueChange={(value) =>
-                        handleFormChange("mentionId", value)
+                      value={
+                        registerType === "REGISTRATION"
+                          ? formState.generatedLevel
+                          : formState.level
                       }
-                      disabled={isLoadingMentions}
+                      onValueChange={(value) =>
+                        handleFormChange("level", value)
+                      }
+                      disabled={registerType === "REGISTRATION"}
                     >
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Sélectionner la mention" />
+                        <SelectValue placeholder="Sélectionner le niveau" />
                       </SelectTrigger>
                       <SelectContent>
-                        {effectiveMentionOptions.map(
-                          (mention: MentionOption) => (
-                            <SelectItem
-                              key={mention.id}
-                              value={mention.id.toString()}
-                            >
-                              {mention.label}
-                            </SelectItem>
-                          )
-                        )}
+                        {levelOptions.map((level: string) => (
+                          <SelectItem key={level} value={level}>
+                            {level}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                )}
+                </div>
               </div>
-              <ReinscriptionAnnualRegister
-                annualRegister={annualRegister}
-                editingSections={editingSections}
-                cardNumber={formState.cardNumber}
-                filters={filters}
-                disabledEditing={disabledEditing}
-                registerType={registerType}
-              />
+              <div className="space-y-3">
+                {annualRegisterDisabled && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+                    {annualRegisterDisabledMessage ??
+                      "Veuillez créer l'étudiant puis cliquez sur Suivant pour compléter la scolarité."}
+                  </div>
+                )}
+                <ReinscriptionAnnualRegister
+                  annualRegister={annualRegister}
+                  editingSections={editingSections}
+                  cardNumber={
+                    registerType === "SELECTION"
+                      ? formState.studentId || formState.cardNumber
+                      : formState.cardNumber
+                  }
+                  filters={filters}
+                  disabledEditing={disabledEditing || annualRegisterDisabled}
+                  registerType={registerType}
+                />
+              </div>
             </div>
           )}
           {showField && (

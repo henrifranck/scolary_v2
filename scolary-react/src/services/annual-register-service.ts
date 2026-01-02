@@ -17,15 +17,18 @@ const relations = JSON.stringify([
 const baseColumn = JSON.stringify(["last_name", "first_name"]);
 
 const buildWhereClause = (
-  cardNumber: string,
+  identifier: string,
   registerType: string,
   academicYearId?: string | number
-) =>
-  JSON.stringify([
+) => {
+  const identifierKey =
+    registerType === "SELECTION" ? "num_select" : "num_carte";
+
+  return JSON.stringify([
     {
-      key: "num_carte",
+      key: identifierKey,
       operator: "==",
-      value: cardNumber
+      value: identifier
     },
     ...(academicYearId
       ? [
@@ -37,11 +40,13 @@ const buildWhereClause = (
         ]
       : [])
   ]);
+};
 
 type ApiAnnualRegisterPayload = ApiListResponse<StudentAnnualProps>;
 
 export type AnnualRegisterPayload = {
-  num_carte: string;
+  num_carte?: string;
+  num_select?: string;
   id_academic_year: number;
   semester_count: number;
   id_enrollment_fee?: number;
@@ -64,13 +69,17 @@ export type PaymentPayload = {
 };
 
 export const fetchAnnualRegisterByCardNumber = async (
-  cardNumber: string,
+  identifier: string,
   registerType: string,
   academicYearId?: string | number
 ): Promise<ApiAnnualRegisterPayload> => {
-  const trimmed = cardNumber.trim();
+  const trimmed = identifier.trim();
   if (!trimmed) {
-    throw new Error("Le numéro de carte est requis.");
+    const label =
+      registerType === "SELECTION"
+        ? "Le numéro de sélection est requis."
+        : "Le numéro de carte est requis.";
+    throw new Error(label);
   }
 
   const response = await apiRequest<ApiAnnualRegisterPayload>(

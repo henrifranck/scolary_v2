@@ -125,8 +125,8 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
             roles: ["admin"]
           },
           {
-            to: "/admin/re-registration-trash",
-            label: "Re-inscription Trash",
+            to: "/admin/trash",
+            label: "Trash",
             icon: Trash2,
             roles: ["admin"]
           }
@@ -267,11 +267,11 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
 
   return [
     generalSection,
-    {
-      title: "Etudiant",
-      roles: ["user"],
-      items: [
-        { to: "/notes", label: "Notes", icon: NotepadText, roles: ["user"] },
+      {
+        title: "Etudiant",
+        roles: ["user"],
+        items: [
+          { to: "/notes", label: "Notes", icon: NotepadText, roles: ["user"] },
         {
           to: "/folder-selection",
           label: "Nouveau etudians",
@@ -291,8 +291,8 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
           roles: ["user"]
         },
         {
-          to: "/re-registration-trash",
-          label: "Re-inscription Trash",
+          to: "/trash",
+          label: "Trash",
           icon: Trash2,
           roles: ["admin"]
         },

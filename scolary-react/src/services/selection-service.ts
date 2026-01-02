@@ -14,6 +14,7 @@ export type SelectionStatus =
 
 export interface SelectionStudent {
   id: string;
+  apiId?: string;
   numSelect: string;
   recordId: string;
   fullName: string;
@@ -38,6 +39,7 @@ export interface SelectionFilters {
   deletedOnly?: boolean;
   limit?: number;
   offset?: number;
+  enrollmentStatus?: SelectionStatus | string;
 }
 
 const queryKeys = {
@@ -107,6 +109,7 @@ const normalizeStudent = (student: ApiSelectionStudent): SelectionStudent => {
   const phoneNumber = student.phone_number;
   return {
     id: student.num_carte ?? String(student.id),
+    apiId: student.id ? String(student.id) : undefined,
     numSelect: student.num_select ?? String(student.id),
     recordId: String(student.id ?? student.num_carte ?? ""),
     fullName: buildFullName(student),
@@ -126,6 +129,7 @@ const buildQueryParams = (filters: SelectionFilters) => {
   const mentionId = filters.mentionId ?? filters.id_mention;
   const academicYear = filters.academicYearId ?? filters.id_enter_year;
   const level = filters.level;
+  const enrollmentStatus = filters.enrollmentStatus;
   if (mentionId) {
     where.push({
       key: "id_mention",
@@ -146,6 +150,13 @@ const buildQueryParams = (filters: SelectionFilters) => {
       key: "level",
       operator: "==",
       value: level
+    });
+  }
+  if (enrollmentStatus) {
+    where.push({
+      key: "enrollment_status",
+      operator: "==",
+      value: enrollmentStatus
     });
   }
   if (filters.deletedOnly) {

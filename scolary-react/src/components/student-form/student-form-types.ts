@@ -52,6 +52,7 @@ export type StudentFormState = {
   parentAdress?: string;
   baccakaureateSerieLabel?: string;
   nationalityLabel?: string;
+  generatedLevel?: string;
 };
 
 export type ApiListResponse<T> = {
@@ -125,7 +126,7 @@ export type StudentSemesterState = {
 };
 
 export interface StudentProfile {
-  id?: number | string | null;
+  id?: string | null;
   num_carte?: string;
   num_select?: string | null;
   first_name?: string | null;
@@ -165,6 +166,7 @@ export interface StudentProfile {
   mean?: Number;
   baccalaureate_serie?: BaccalaureateSerie;
   nationality?: Nationality;
+  generated_level?: string;
 }
 
 // Backwards compatibility exports

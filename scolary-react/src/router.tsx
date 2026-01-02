@@ -101,7 +101,7 @@ const reinscriptionRoute = createRoute({
 
 const reinscriptionTrashRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "re-registration-trash",
+  path: "trash",
   component: ReinscriptionTrashPage,
   beforeLoad: ensureAuthenticated
 });
@@ -163,7 +163,7 @@ const adminReinscriptionRoute = createRoute({
 
 const adminReinscriptionTrashRoute = createRoute({
   getParentRoute: () => adminRoute,
-  path: "re-registration-trash",
+  path: "trash",
   component: ReinscriptionTrashPage
 });
 

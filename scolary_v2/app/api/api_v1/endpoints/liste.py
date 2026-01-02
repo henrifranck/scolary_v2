@@ -168,8 +168,8 @@ def list_registered(
     """
     create list registered
     """
-    college_years = crud.academic_year.get(db=db, id=id_year)
-    if not college_years:
+    accademic_years = crud.academic_year.get(db=db, id=id_year)
+    if not accademic_years:
         raise HTTPException(
             status_code=400,
             detail=f"college_year not found.",
@@ -227,7 +227,7 @@ def list_registered(
     data = {
         "mention": mention.name,
         "journey": journey.name,
-        "anne": college_years.name,
+        "anne": accademic_years.name,
     }
     lists = create_list_registered(
         semester, journey.abbreviation, data, all_student, university
@@ -246,8 +246,8 @@ def list_by_group(
     """
     create list registered
     """
-    college_years = crud.college_year.get(db=db, id=id_year)
-    if not college_years:
+    accademic_years = crud.college_year.get(db=db, id=id_year)
+    if not accademic_years:
         raise HTTPException(
             status_code=400,
             detail=f"college_year not found.",
@@ -274,7 +274,7 @@ def list_by_group(
     data = {
         "mention": mention.title,
         "journey": journey.title,
-        "anne": college_years.title,
+        "anne": accademic_years.title,
     }
 
     university = crud.university_info.get_university(db=db)
@@ -318,26 +318,26 @@ def list_selection(
     """
     create list au examen
     """
-    college_years = crud.college_year.get(db=db, id=id_year)
-    if not college_years:
+    accademic_years = crud.academic_year.get(db=db, id=id_year)
+    if not accademic_years:
         raise HTTPException(
             status_code=400,
             detail=f"year not found.",
         )
-    mention = crud.mention.get_by_id(db=db, uuid=id_mention)
+    mention = crud.mention.get(db=db, id=id_mention)
     if not mention:
         raise HTTPException(
             status_code=400,
             detail=f"Mention not found.",
         )
-    students = crud.new_student.get_all_admis_by_mention(
-        db=db, id_mention=id_mention, id_year=id_year
+    students = crud.student.get_selected_by_mention_year(
+        db=db, id_mention=mention.id, id_year=id_year
     )
 
     level = ["L1", "M1", "M2"]
     all_students = {}
 
-    university = crud.university_info.get_university(db=db)
+    university = crud.university.get_info(db=db)
     if students:
         for lev in level:
             student_lev = []
@@ -347,14 +347,15 @@ def list_selection(
                     "first_name": on_student.first_name,
                     "num_select": on_student.num_select,
                 }
-                if on_student.level == lev:
+                print(on_student.level.value)
+                if (on_student.level.value or "") == lev:
                     student_lev.append(student)
 
             all_students[lev] = student_lev
 
-    data = {"mention": mention.title, "anne": college_years.title}
+    data = {"mention": mention.name, "anne": accademic_years.name}
 
-    file = list_select.create_list_select(mention.title, data, all_students, university)
+    file = list_select.create_list_select(mention.name, data, all_students, university)
     return _build_pdf_response(file)
 
 

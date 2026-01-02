@@ -12,30 +12,48 @@ import ast
 from datetime import date
 import re
 
+from app.enum.register_type import RegisterTypeEnum
+from app.utils import get_level_from_number
+
 router = APIRouter()
 from app.api import deps
+
 UPLOAD_DIR = Path("files") / "pictures"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/jpg"}
 
 
-def generate_num_select(db: Session) -> str:
-    today = date.today()
-    prefix = f"{today.year}{today.strftime('%m%d')}"
+def generate_num_select(db: Session, id_mention: int) -> str:
+    """
+    Generate selection number: <AB>-<YYYY><NNN>
+    - AB: first two letters of mention abbreviation/name (uppercased)
+    - YYYY: current year
+    - NNN: zero-padded counter per mention/year
+    Example for Mathématiques in 2026: MA-2026001
+    """
+    mention = crud.mention.get(db=db, id=id_mention)
+    mention_label = mention.abbreviation or mention.name if mention else "XX"
+    prefix_letters = (
+        (mention_label or "XX")[:2].upper().ljust(2, "X")
+    )
+    current_year = date.today().year
+    base_prefix = f"{prefix_letters}-{current_year}"
+
     latest = (
         db.query(models.Student.num_select)
-        .filter(models.Student.num_select.like(f"{prefix}%"))
+        .filter(models.Student.num_select.like(f"{base_prefix}%"))
         .order_by(models.Student.num_select.desc())
         .first()
     )
+
     if latest and latest[0]:
-        match = re.search(r"(\d+)$", latest[0])
+        match = re.search(rf"{re.escape(base_prefix)}(\d+)$", latest[0])
         last_num = int(match.group(1)) if match else 0
     else:
         last_num = 0
 
     next_num = last_num + 1
-    return f"{prefix}-{next_num:04d}"
+    return f"{base_prefix}{next_num:03d}"
 
 
 @router.get('/', response_model=schemas.ResponseStudent)
@@ -95,6 +113,7 @@ def read_one_student(
         relation: str = "[]",
         where: str = "[]",
         where_relation: str = "[]",
+        where_custom: str = "[]",
         base_column: str = "[]",
         route_ui: str = "re-registration",
         db: Session = Depends(deps.get_db),
@@ -124,8 +143,8 @@ def read_one_student(
     if not student:
         raise HTTPException(status_code=404, detail='Student not found')
 
+    max_semester = 0
     # Compute document completion status for the given route_ui
-    document_status = None
     try:
         service = crud.available_service.get_by_field(
             db=db, field="route_ui", value=route_ui
@@ -141,7 +160,10 @@ def read_one_student(
             if required_ids:
                 annual_ids_subquery = (
                     db.query(models.AnnualRegister.id)
-                    .filter(models.AnnualRegister.num_carte == student.num_carte)
+                    .filter(
+                        models.AnnualRegister.num_carte == student.num_carte,
+                        models.AnnualRegister.register_type == RegisterTypeEnum.REGISTRATION
+                    )
                     .subquery()
                 )
                 uploaded_required_ids = {
@@ -178,13 +200,26 @@ def read_one_student(
                 "missing_required_document_ids": [],
                 "required_document_ids": [],
             }
+
     except Exception:
         # We deliberately swallow errors here to avoid breaking the endpoint
         document_status = None
 
+    wheres_customs = []
+    if where_custom is not None and where_custom != "" and where_custom != []:
+        wheres_customs += ast.literal_eval(where_custom)
+
+    annual_register = crud.annual_register.get_first_where_array(db=db, where=wheres_customs)
+    if annual_register:
+        print(annual_register.id)
+        max_semester_value = crud.register_semester.get_max_semester(db=db, id_annual_register=annual_register.id)
+        print(str(dict(max_semester_value)["S"]))
+        max_semester = int(dict(max_semester_value)["S"])
+
     data = jsonable_encoder(student)
     if document_status is not None:
         data["document_status"] = document_status
+        data["generated_level"] = get_level_from_number(max_semester)
 
     return data
 
@@ -201,7 +236,7 @@ def create_student(
     """
     data = student_in.model_dump()
     if not data.get("num_select"):
-        data["num_select"] = generate_num_select(db)
+        data["num_select"] = generate_num_select(db, data.get("id_mention"))
 
     student = crud.student.create(db=db, obj_in=schemas.StudentNewCreate(**data))
     return student
@@ -370,8 +405,13 @@ def hard_delete_student(
 
     annual_registers = crud.annual_register.get_multi_where_array(
         db=db,
-        where=[{"key": "num_carte", "operator": "==", "value": student.num_carte}],
-        limit=1000
+        where=[
+            [
+                {"key": "num_carte", "operator": "==", "value": student.num_carte},
+                {"key": "num_carte", "operator": "==", "value": student.num_select}
+            ]
+        ],
+        limit=10
     )
     annual_ids = [annual.id for annual in annual_registers if annual.id]
     if annual_ids:
@@ -390,6 +430,23 @@ def hard_delete_student(
             ).delete(synchronize_session=False)
             db.query(models.RegisterSemester).filter(
                 models.RegisterSemester.id.in_(register_ids)
+            ).delete(synchronize_session=False)
+
+        documents = db.query(models.Document).filter(
+            models.Document.id_annual_register.in_(annual_ids)
+        ).all()
+        for document in documents:
+            document_path = Path(document.url.lstrip("/"))
+            if document_path.parts[:2] == ("files", "documents"):
+                try:
+                    (Path(".") / document_path).unlink(missing_ok=True)
+                except TypeError:
+                    if (Path(".") / document_path).exists():
+                        (Path(".") / document_path).unlink()
+
+        if documents:
+            db.query(models.Document).filter(
+                models.Document.id_annual_register.in_(annual_ids)
             ).delete(synchronize_session=False)
 
         db.query(models.Payment).filter(

@@ -111,6 +111,14 @@ export const studentInformationPersonnel: FormItemComponentType = {
       inputType: "text",
       formKey: "email",
       placeHolder: "Saisir l'Email"
+    },
+
+    {
+      label: "Téléphone",
+      type: "input",
+      inputType: "text",
+      formKey: "phoneNumber",
+      placeHolder: "Numéro de téléphone"
     }
   ],
   key: "identity",
@@ -141,14 +149,6 @@ export const studentInformationSocial: FormItemComponentType = {
         { value: "Veuf/Veuve", label: "Veuf/Veuve" }
       ],
       placeHolder: "Célibataire / Marié(e) ..."
-    },
-
-    {
-      label: "Téléphone",
-      type: "input",
-      inputType: "text",
-      formKey: "phoneNumber",
-      placeHolder: "Numéro de téléphone"
     }
   ],
   key: "social",

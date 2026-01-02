@@ -2,10 +2,13 @@
 # ---write your code here--- #
 # end #
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, cast
+
+from sqlalchemy import func, Integer
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
+from app.models import RegisterSemester
 from app.models.annual_register import AnnualRegister
 from app.schemas.annual_register import AnnualRegisterCreate, AnnualRegisterUpdate
 
@@ -14,8 +17,8 @@ class CRUDAnnualRegister(CRUDBase[AnnualRegister, AnnualRegisterCreate, AnnualRe
     def get_by_field(self, db: Session, *, field: str, value: Any) -> Optional[AnnualRegister]:
         return db.query(AnnualRegister).filter(getattr(AnnualRegister, field) == value).first()
 
-annual_register = CRUDAnnualRegister(AnnualRegister)
 
+annual_register = CRUDAnnualRegister(AnnualRegister)
 
 # begin #
 # ---write your code here--- #

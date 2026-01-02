@@ -12,6 +12,7 @@ from app.models.register_semester import RegisterSemester
 from app.models.annual_register import AnnualRegister
 from app.models.journey import Journey
 from app.schemas.student import StudentCreate, StudentUpdate
+from app.enum.enrollment_status import EnrollmentStatusEnum
 
 
 class CRUDStudent(CRUDBase[Student, StudentCreate, StudentUpdate]):
@@ -70,6 +71,24 @@ class CRUDStudent(CRUDBase[Student, StudentCreate, StudentUpdate]):
         ).all()
 
         return [dict(row._mapping) for row in results]
+
+    def get_selected_by_mention_year(
+            self, db: Session, *, id_mention: int, id_year: int
+    ) -> List[Student]:
+        """
+        Return students admitted by dossier selection for a mention and entry year.
+        """
+        return (
+            db.query(Student)
+            .filter(
+                Student.id_mention == id_mention,
+                Student.id_enter_year == id_year,
+                Student.enrollment_status == EnrollmentStatusEnum.selected,
+                Student.deleted_at.is_(None),
+            )
+            .order_by(Student.last_name.asc(), Student.first_name.asc())
+            .all()
+        )
 
 
 student = CRUDStudent(Student)

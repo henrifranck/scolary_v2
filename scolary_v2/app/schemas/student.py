@@ -105,6 +105,7 @@ class StudentInDBBase(StudentBase):
     id_enter_year: Optional[int] = None
     id_nationality: Optional[int] = None
     id_baccalaureate_series: Optional[int] = None
+    deleted_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -120,6 +121,8 @@ class StudentWithRelation(StudentInDBBase):
     baccalaureate_serie: Optional[BaccalaureateSerie] = None
     annual_register: Optional[Any] = None
     document_status: Optional[Any] = None
+    generated_level: Optional[str] = None
+
 
 
 class StudentInDB(StudentInDBBase):

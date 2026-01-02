@@ -6,29 +6,39 @@ import { DataTable } from "@/components/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
-  fetchReinscriptionsWithMeta,
-  type ReinscriptionStudent
-} from "@/services/reinscription-service";
-import { hardDeleteStudent, restoreStudent } from "@/services/student-service";
+  hardDeleteStudentById,
+  restoreStudentById,
+  fetchTrashedStudents,
+  type TrashStudent
+} from "@/services/trash-service";
+import { StudentProfile } from "@/components/student-form/student-form-types";
+
+const formatDeletedAt = (deletedAt?: string) => {
+  if (!deletedAt) return "—";
+  const date = new Date(deletedAt);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
 
 export const ReinscriptionTrashPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [restoreTarget, setRestoreTarget] =
-    useState<ReinscriptionStudent | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ReinscriptionStudent | null>(
-    null
-  );
+  const [restoreTarget, setRestoreTarget] = useState<TrashStudent | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TrashStudent | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const offset = (page - 1) * pageSize;
 
   const trashQuery = useQuery({
-    queryKey: ["reinscription", "trash", { page, pageSize }],
+    queryKey: ["trash", { page, pageSize }],
     queryFn: () =>
-      fetchReinscriptionsWithMeta({
-        deletedOnly: true,
+      fetchTrashedStudents({
         limit: pageSize,
         offset
       })
@@ -37,11 +47,14 @@ export const ReinscriptionTrashPage = () => {
   const students = trashQuery.data?.data ?? [];
   const totalStudents = trashQuery.data?.count ?? 0;
 
-  const handleRestore = async (student: ReinscriptionStudent) => {
+  const handleRestore = async (student: TrashStudent) => {
     setActionError(null);
-    setActionLoadingId(student.recordId);
+    const targetId = student.recordId;
+    console.log(student);
+
+    setActionLoadingId(targetId);
     try {
-      await restoreStudent(student.recordId);
+      await restoreStudentById(targetId);
       void trashQuery.refetch();
     } catch (error) {
       setActionError(
@@ -54,11 +67,12 @@ export const ReinscriptionTrashPage = () => {
     }
   };
 
-  const handleHardDelete = async (student: ReinscriptionStudent) => {
+  const handleHardDelete = async (student: TrashStudent) => {
     setActionError(null);
-    setActionLoadingId(student.recordId);
+    const targetId = student.recordId;
+    setActionLoadingId(targetId);
     try {
-      await hardDeleteStudent(student.recordId);
+      await hardDeleteStudentById(targetId);
       void trashQuery.refetch();
     } catch (error) {
       setActionError(
@@ -71,7 +85,7 @@ export const ReinscriptionTrashPage = () => {
     }
   };
 
-  const columns = useMemo<ColumnDef<ReinscriptionStudent>[]>(
+  const columns = useMemo<ColumnDef<TrashStudent>[]>(
     () => [
       {
         accessorKey: "fullName",
@@ -80,7 +94,9 @@ export const ReinscriptionTrashPage = () => {
           <div className="flex flex-col">
             <span className="font-medium">{row.original.fullName}</span>
             <span className="text-xs text-muted-foreground">
-              {row.original.id}
+              {row.original.cardNumber ||
+                row.original.numSelect ||
+                row.original.recordId}
             </span>
           </div>
         )
@@ -90,7 +106,26 @@ export const ReinscriptionTrashPage = () => {
         header: "Supprimé le",
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground">
-            {row.original.deletedAt || "—"}
+            {formatDeletedAt(row.original.deletedAt)}
+          </span>
+        )
+      },
+      {
+        accessorKey: "mention",
+        header: "Mention",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">
+            {row.original.mention || "—"}
+          </span>
+        )
+      },
+
+      {
+        accessorKey: "level",
+        header: "Niveau",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">
+            {row.original.level || "—"}
           </span>
         )
       },

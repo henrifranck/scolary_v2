@@ -9,7 +9,6 @@ import {
 } from "../../../components/data-table/data-table";
 import {
   AcademicFilters,
-  AcademicYearOption,
   type AcademicFilterValue,
   type JourneyOption
 } from "../../../components/filters/academic-filters";
@@ -25,11 +24,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "../../../components/ui/dialog";
-import {
-  fetchMentions,
-  fetchJourneys as fetchJourneysByMention,
-  fetchCollegeYears
-} from "../../../services/inscription-service";
+import { fetchJourneys as fetchJourneysByMention } from "../../../services/inscription-service";
 import {
   updateStudentProfile,
   uploadStudentPicture,
@@ -44,8 +39,8 @@ import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { printStudentCards, printStudentsList } from "@/services/print-service";
 import { PdfViewerModal } from "@/components/pdf-viewer-modal";
-import { Mention, MentionOption } from "@/models/mentions";
 import { ActionButton } from "@/components/action-button";
+import { useLookupOptions } from "@/hooks/use-lookup-options";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -161,17 +156,6 @@ const getAvatarUrl = (fullName: string) => {
   return `https://ui-avatars.com/api/?name=${name}&background=random&color=fff&size=64`;
 };
 
-const InfoItem = ({ label, value }: { label: string; value?: string }) => (
-  <div className="space-y-1 rounded-md border border-dashed border-border/60 bg-background/50 p-3">
-    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-      {label}
-    </p>
-    <p className="text-sm font-semibold text-foreground">
-      {value?.trim() ? value : "—"}
-    </p>
-  </div>
-);
-
 const semesterToLevel = (semester?: string) => {
   const num = Number(String(semester ?? "").replace(/\D/g, ""));
   if (num <= 2) return "L1";
@@ -184,33 +168,17 @@ const semesterToLevel = (semester?: string) => {
 export const ReinscriptionPage = () => {
   const defaultSemester = semesters[0] ?? "";
 
-  const { data: mentionData = [] } = useQuery({
-    queryKey: ["reinscription", "mentions"],
-    queryFn: () => fetchMentions({ user_only: true })
+  const {
+    mentionOptions,
+    academicYearOptions: yearOptions,
+    isLoadingMentions,
+    isLoadingAcademicYears,
+    isLoadingAvailableModels
+  } = useLookupOptions({
+    includeMentions: true,
+    includeAcademicYears: true,
+    includeAvailableModels: true
   });
-
-  const { data: collegeYearData = [] } = useQuery({
-    queryKey: ["reinscription", "collegeYears"],
-    queryFn: fetchCollegeYears
-  });
-
-  const mentionOptions: MentionOption[] = useMemo(
-    () =>
-      mentionData.map((mention: Mention) => ({
-        id: String(mention.id),
-        label: mention.name ?? mention.name ?? `Mention ${mention.id}`
-      })),
-    [mentionData]
-  );
-
-  const yearOptions: AcademicYearOption[] = useMemo(
-    () =>
-      collegeYearData.map((year) => ({
-        id: String(year.id),
-        label: year.name ?? `Year ${year.id}`
-      })),
-    [collegeYearData]
-  );
 
   const FILTERS_STORAGE_KEY = "reinscription.filters";
 
@@ -240,9 +208,6 @@ export const ReinscriptionPage = () => {
     }
     return null;
   };
-
-  const [journeyOptions, setJourneyOptions] = useState<JourneyOption[]>([]);
-  const [journeysLoading, setJourneysLoading] = useState(false);
 
   const [filters, setFilters] = useState<AcademicFilterValue>(() => {
     const stored = readStoredFilters();
@@ -292,92 +257,95 @@ export const ReinscriptionPage = () => {
     }));
   }, [yearOptions, filters.id_year]);
 
+  const journeyQuery = useQuery({
+    queryKey: ["reinscription", "journeys", filters.id_mention],
+    queryFn: () => fetchJourneysByMention(Number(filters.id_mention)),
+    enabled: Boolean(filters.id_mention),
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 120,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false
+  });
+
+  const journeyOptions: JourneyOption[] = useMemo(() => {
+    const journeys = journeyQuery.data ?? [];
+    return journeys.map((journey) => {
+      const semesterList = Array.isArray(journey.semester_list)
+        ? journey.semester_list
+            .map((entry) =>
+              typeof entry === "string" ? entry : (entry?.semester ?? null)
+            )
+            .filter((semester): semester is string => Boolean(semester))
+        : [];
+
+      return {
+        id: String(journey.id),
+        label: journey.name ?? journey.abbreviation ?? `Journey ${journey.id}`,
+        id_mention: journey.id_mention
+          ? String(journey.id_mention)
+          : filters.id_mention,
+        semesterList
+      };
+    });
+  }, [filters.id_mention, journeyQuery.data]);
+
   useEffect(() => {
-    const currentMentionId = filters.id_mention;
-    if (!currentMentionId) {
-      setJourneyOptions([]);
-      setJourneysLoading(false);
+    if (!filters.id_mention) {
       setFilters((previous) =>
         previous.id_journey ? { ...previous, id_journey: "" } : previous
       );
       return;
     }
 
-    let cancelled = false;
-    const loadJourneys = async () => {
-      setJourneysLoading(true);
-      try {
-        const journeys = await fetchJourneysByMention(Number(currentMentionId));
-        if (cancelled) {
-          return;
-        }
+    if (!journeyOptions.length) {
+      setFilters((previous) =>
+        previous.id_journey ? { ...previous, id_journey: "" } : previous
+      );
+      return;
+    }
 
-        const mappedJourneys: JourneyOption[] = journeys.map((journey) => {
-          const semesterList = Array.isArray(journey.semester_list)
-            ? journey.semester_list
-                .map((entry) =>
-                  typeof entry === "string" ? entry : (entry?.semester ?? null)
-                )
-                .filter((semester): semester is string => Boolean(semester))
-            : [];
+    setFilters((previous) => {
+      const hasCurrentJourney = journeyOptions.some(
+        (journey) => journey.id === previous.id_journey
+      );
+      const nextJourneyId = hasCurrentJourney
+        ? previous.id_journey
+        : (journeyOptions[0]?.id ?? "");
+      const nextJourney = journeyOptions.find(
+        (journey) => journey.id === nextJourneyId
+      );
+      const allowedSemesters =
+        nextJourney?.semesterList?.length && semesters.length
+          ? nextJourney.semesterList
+          : semesters;
+      const resolvedSemester = allowedSemesters.includes(previous.semester)
+        ? previous.semester
+        : (allowedSemesters[0] ?? "");
 
-          return {
-            id: String(journey.id),
-            label:
-              journey.name ?? journey.abbreviation ?? `Journey ${journey.id}`,
-            id_mention: currentMentionId,
-            semesterList
-          };
-        });
-
-        setJourneyOptions(mappedJourneys);
-        setFilters((previous) => {
-          const hasCurrentJourney = mappedJourneys.some(
-            (journey) => journey.id === previous.id_journey
-          );
-          const nextJourneyId = hasCurrentJourney
-            ? previous.id_journey
-            : (mappedJourneys[0]?.id ?? "");
-          const nextJourney = mappedJourneys.find(
-            (journey) => journey.id === nextJourneyId
-          );
-          const allowedSemesters =
-            nextJourney?.semesterList?.length && semesters.length
-              ? nextJourney.semesterList
-              : semesters;
-          const resolvedSemester = allowedSemesters.includes(previous.semester)
-            ? previous.semester
-            : (allowedSemesters[0] ?? "");
-
-          return {
-            ...previous,
-            id_journey: nextJourneyId,
-            semester: resolvedSemester
-          };
-        });
-      } catch {
-        if (!cancelled) {
-          setJourneyOptions([]);
-          setFilters((previous) =>
-            previous.id_journey ? { ...previous, id_journey: "" } : previous
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setJourneysLoading(false);
-        }
+      if (
+        nextJourneyId === previous.id_journey &&
+        resolvedSemester === previous.semester
+      ) {
+        return previous;
       }
-    };
 
-    void loadJourneys();
-    return () => {
-      cancelled = true;
-    };
-  }, [filters.id_mention]);
+      return {
+        ...previous,
+        id_journey: nextJourneyId,
+        semester: resolvedSemester
+      };
+    });
+  }, [journeyOptions, filters.id_mention]);
 
   const handleFiltersChange = useCallback((next: AcademicFilterValue) => {
     setFilters(next);
   }, []);
+
+  const journeysLoading =
+    journeyQuery.isPending ||
+    journeyQuery.isFetching ||
+    journeyQuery.isRefetching;
 
   const availableJourneys = useMemo(
     () =>
@@ -423,6 +391,14 @@ export const ReinscriptionPage = () => {
     ? reinscriptionQuery.isFetching || reinscriptionQuery.isPending
     : false;
 
+  const isPageLoading =
+    journeysLoading ||
+    reinscriptionQuery.isFetching ||
+    reinscriptionQuery.isPending ||
+    isLoadingMentions ||
+    isLoadingAcademicYears ||
+    isLoadingAvailableModels;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<ReinscriptionFormMode>("create");
   const [formState, setFormState] = useState<StudentFormState>(() =>
@@ -451,6 +427,24 @@ export const ReinscriptionPage = () => {
     url?: string;
     title?: string;
   }>({ open: false });
+
+  useEffect(() => {
+    if (!formError) return;
+    const timer = window.setTimeout(() => setFormError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [formError]);
+
+  useEffect(() => {
+    if (!deleteError) return;
+    const timer = window.setTimeout(() => setDeleteError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [deleteError]);
+
+  useEffect(() => {
+    if (!printError) return;
+    const timer = window.setTimeout(() => setPrintError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [printError]);
 
   useEffect(() => {
     if (!dialogOpen) {
@@ -565,7 +559,8 @@ export const ReinscriptionPage = () => {
         semester: student.semester,
         baccalaureateSerieId: String(student.baccalaureateSerieId),
         baccalaureateYear: student.baccalaureateYear,
-        baccalaureateCenter: student.baccalaureateCenter
+        baccalaureateCenter: student.baccalaureateCenter,
+        generatedLevel: student.generatedLevel
       })
     );
     setDialogOpen(true);
@@ -660,7 +655,7 @@ export const ReinscriptionPage = () => {
           <div className="flex flex-col">
             <span className="font-medium">{row.original.fullName}</span>
             <span className="text-xs text-muted-foreground">
-              {row.original.studentRecordId}
+              {row.original.cardNumber}
             </span>
           </div>
         )
@@ -875,6 +870,12 @@ export const ReinscriptionPage = () => {
 
   return (
     <div className="space-y-6">
+      {isPageLoading && (
+        <div className="sticky top-0 z-20 flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground backdrop-blur">
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          Chargement des données...
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -1048,7 +1049,11 @@ export const ReinscriptionPage = () => {
       </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-4xl lg:max-w-6xl h-[90vh] max-h-[90vh] overflow-hidden p-0 flex flex-col min-h-0">
+        <DialogContent
+          className="sm:max-w-4xl lg:max-w-6xl h-[90vh] max-h-[90vh] overflow-hidden p-0 flex flex-col min-h-0"
+          onInteractOutside={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => event.preventDefault()}
+        >
           <form
             className="flex flex-1 flex-col min-h-0"
             onSubmit={handleFormSubmit}

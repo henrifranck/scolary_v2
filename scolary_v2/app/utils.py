@@ -318,6 +318,19 @@ def get_level(sems_a: str, sems_b: str) -> str:
         return "M2"
 
 
+def get_level_from_number(number: int) -> str:
+    if int(number) <= 2:
+        return "L1"
+    elif int(number) <= 4:
+        return "L2"
+    elif int(number) <= 6:
+        return "L3"
+    elif int(number) <= 8:
+        return "M1"
+    elif int(number) <= 10:
+        return "M2"
+
+
 def get_level_(sems_a: str, sems_b: str) -> str:
     if len(get_max(sems_a, sems_b)) == 0:
         return "Invalid semester"

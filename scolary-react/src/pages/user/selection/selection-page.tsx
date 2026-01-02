@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 
 import { Button } from "../../../components/ui/button";
@@ -15,7 +15,6 @@ import {
 } from "../../../components/data-table/data-table";
 import {
   AcademicFilters,
-  AcademicYearOption,
   type AcademicFilterValue,
   type JourneyOption
 } from "../../../components/filters/academic-filters";
@@ -24,10 +23,6 @@ import {
   type SelectionStudent,
   type SelectionStatus
 } from "../../../services/selection-service";
-import {
-  fetchCollegeYears,
-  fetchMentions
-} from "../../../services/inscription-service";
 import { StudentForm } from "@/components/student-form/student-form";
 import { StudentFormState } from "@/components/student-form/student-form-types";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -38,7 +33,11 @@ import {
   updateStudentProfile
 } from "@/services/student-service";
 import { Pencil, Trash2 } from "lucide-react";
-import { Mention, MentionOption } from "@/models/mentions";
+import { useLookupOptions } from "@/hooks/use-lookup-options";
+import { printSelectionList } from "@/services/print-service";
+import { resolveAssetUrl } from "@/lib/resolve-asset-url";
+import { PdfViewerModal } from "@/components/pdf-viewer-modal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -120,42 +119,61 @@ const getAvatarUrl = (fullName: string) => {
 export const DossierSelectionPage = () => {
   const defaultSemester = semesters[0] ?? "";
 
-  const { data: mentionData = [] } = useQuery({
-    queryKey: ["dossier-selection", "mentions"],
-    queryFn: () => fetchMentions({ user_only: true })
-  });
-
-  const { data: collegeYearData = [] } = useQuery({
-    queryKey: ["dossier-selection", "collegeYears"],
-    queryFn: fetchCollegeYears
-  });
-
-  const mentionOptions: MentionOption[] = useMemo(
-    () =>
-      mentionData.map((mention: Mention) => ({
-        id: String(mention.id),
-        label: mention.name ?? mention.abbreviation ?? `Mention ${mention.id}`
-      })),
-    [mentionData]
+  const { mentionOptions, academicYearOptions: yearOptions } = useLookupOptions(
+    { includeMentions: true, includeAcademicYears: true }
   );
 
-  const yearOptions: AcademicYearOption[] = useMemo(
-    () =>
-      collegeYearData.map((year) => ({
-        id: String(year.id),
-        label: year.name ?? `Year ${year.id}`
-      })),
-    [collegeYearData]
-  );
+  const FILTERS_STORAGE_KEY = "selection.filters";
 
-  const [filters, setFilters] = useState<AcademicFilterValue>({
-    id_mention: "",
-    id_journey: "",
-    semester: defaultSemester,
-    id_year: "",
-    level: "",
-    register_type: "SELECTION"
-  });
+  const readStoredFilters = (): {
+    filters: AcademicFilterValue | null;
+    enrollmentFilter: SelectionStatus | "All";
+  } => {
+    if (typeof window === "undefined") {
+      return { filters: null, enrollmentFilter: "All" };
+    }
+    const raw = window.localStorage.getItem(FILTERS_STORAGE_KEY);
+    if (!raw) {
+      return { filters: null, enrollmentFilter: "All" };
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        "id_mention" in parsed &&
+        "id_journey" in parsed &&
+        "semester" in parsed &&
+        "id_year" in parsed &&
+        "register_type" in parsed
+      ) {
+        const enrollmentFilter =
+          typeof parsed.enrollmentFilter === "string"
+            ? (parsed.enrollmentFilter as SelectionStatus | "All")
+            : "All";
+        return {
+          filters: parsed as AcademicFilterValue,
+          enrollmentFilter
+        };
+      }
+    } catch {
+      return { filters: null, enrollmentFilter: "All" };
+    }
+    return { filters: null, enrollmentFilter: "All" };
+  };
+
+  const stored = readStoredFilters();
+
+  const [filters, setFilters] = useState<AcademicFilterValue>(
+    stored.filters ?? {
+      id_mention: "",
+      id_journey: "",
+      semester: defaultSemester,
+      id_year: "",
+      level: "",
+      register_type: "SELECTION"
+    }
+  );
   const [formState, setFormState] = useState<StudentFormState>(
     createEmptyFormState()
   );
@@ -164,10 +182,45 @@ export const DossierSelectionPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
+  const [hasCreatedStudent, setHasCreatedStudent] = useState(false);
+  const [enrollmentFilter, setEnrollmentFilter] = useState<
+    SelectionStatus | "All"
+  >(stored.enrollmentFilter ?? "All");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [printError, setPrintError] = useState<string | null>(null);
+  const [printingList, setPrintingList] = useState(false);
+  const [pdfViewer, setPdfViewer] = useState<{
+    open: boolean;
+    url?: string;
+    title?: string;
+  }>({ open: false });
+  const [confirmDeleteStudent, setConfirmDeleteStudent] =
+    useState<SelectionStudent | null>(null);
   const handleFiltersChange = useCallback((next: AcademicFilterValue) => {
     setFilters(next);
   }, []);
+
+  useEffect(() => {
+    if (!formError) return;
+    const timer = window.setTimeout(() => setFormError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [formError]);
+
+  useEffect(() => {
+    if (!printError) return;
+    const timer = window.setTimeout(() => setPrintError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [printError]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.localStorage.setItem(
+      FILTERS_STORAGE_KEY,
+      JSON.stringify({ ...filters, enrollmentFilter })
+    );
+  }, [filters, enrollmentFilter]);
 
   useEffect(() => {
     if (filters.id_mention || !mentionOptions.length) {
@@ -193,14 +246,17 @@ export const DossierSelectionPage = () => {
     () => ({
       ...filters,
       id_enter_year: filters.id_year,
-      level: filters.level
+      level: filters.level,
+      enrollmentStatus:
+        enrollmentFilter === "All" ? undefined : enrollmentFilter
     }),
-    [filters]
+    [filters, enrollmentFilter]
   );
 
   const { data: students = [] } = useSelectionStudents(selectionFilters);
   const handleCreate = useCallback(() => {
     setDialogMode("create");
+    setHasCreatedStudent(false);
     setFormState((prev) => ({
       ...createEmptyFormState(),
       mentionId: filters.id_mention ?? "",
@@ -213,6 +269,7 @@ export const DossierSelectionPage = () => {
 
   const handleEdit = useCallback((student: SelectionStudent) => {
     setDialogMode("edit");
+    setHasCreatedStudent(false);
     const load = async () => {
       try {
         const profile = await fetchStudentByNumSelect(student.numSelect);
@@ -238,6 +295,15 @@ export const DossierSelectionPage = () => {
           baccalaureateSerieId: profile.id_baccalaureate_series ?? "",
           baccalaureateYear: profile.year_of_baccalaureate ?? "",
           job: profile.job ?? "",
+          fatherName: profile.father_name ?? "",
+          fatherJob: profile.father_job ?? "",
+          motherName: profile.mother_name ?? "",
+          motherJob: profile.mother_job ?? "",
+          parentAdress: profile.parent_address ?? "",
+          nationalityId: profile.id_nationality
+            ? String(profile.id_nationality)
+            : undefined,
+          picture: profile.picture ?? "",
           enrollmentStatus: profile.enrollment_status ?? "",
           mentionId: profile.id_mention
             ? String(profile.id_mention)
@@ -262,9 +328,10 @@ export const DossierSelectionPage = () => {
 
   const handleDelete = useCallback(
     async (student: SelectionStudent) => {
-      setDeletingId(student.recordId);
+      const targetId = student.apiId || student.recordId;
+      setDeletingId(targetId);
       try {
-        await softDeleteStudent(student.recordId);
+        await softDeleteStudent(targetId);
         await queryClient.invalidateQueries({ queryKey: ["selections"] });
       } finally {
         setDeletingId(null);
@@ -316,7 +383,7 @@ export const DossierSelectionPage = () => {
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => handleDelete(student)}
+              onClick={() => setConfirmDeleteStudent(student)}
               disabled={deletingId === student.recordId}
             >
               Delete
@@ -392,8 +459,8 @@ export const DossierSelectionPage = () => {
               size="icon"
               className="h-8 w-8 text-destructive hover:text-destructive"
               aria-label="Delete"
-              onClick={() => handleDelete(row.original)}
-              disabled={deletingId === row.original.recordId}
+              onClick={() => setConfirmDeleteStudent(row.original)}
+              disabled={deletingId === (row.original.apiId || row.original.recordId)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -415,6 +482,7 @@ export const DossierSelectionPage = () => {
 
       const payload = {
         num_select: formState.studentId || undefined,
+        num_carte: formState.cardNumber || undefined,
         first_name: formState.firstName || undefined,
         last_name: formState.lastName || undefined,
         email: formState.email || undefined,
@@ -429,26 +497,45 @@ export const DossierSelectionPage = () => {
         phone_number: formState.phoneNumber || undefined,
         num_of_baccalaureate: formState.baccalaureateNumber || undefined,
         center_of_baccalaureate: formState.baccalaureateCenter || undefined,
-        job: formState.job || undefined,
+        year_of_baccalaureate: formState.baccalaureateYear || undefined,
+        id_baccalaureate_series: formState.baccalaureateSerieId || undefined,
+        job: formState.job || "Etudiant",
         level: formState.level || filters.level || undefined,
         id_mention: formState.mentionId || filters.id_mention,
         id_journey: formState.journeyId || undefined,
         active_semester: formState.semester || filters.semester,
         enrollment_status: formState.enrollmentStatus || undefined,
-        id_enter_year: filters.id_year
+        id_enter_year: filters.id_year,
+        father_name: formState.fatherName || undefined,
+        father_job: formState.fatherJob || undefined,
+        mother_name: formState.motherName || undefined,
+        mother_job: formState.motherJob || undefined,
+        parent_address: formState.parentAdress || undefined,
+        nationality_id: formState.nationalityId || undefined,
+        picture: formState.picture || undefined
       };
 
       try {
         setFormSubmitting(true);
-        if (dialogMode === "edit" && formState.studentRecordId) {
-          await updateStudentProfile(formState.studentRecordId, payload);
-        } else {
-          await createStudent(payload);
-        }
-        await queryClient.invalidateQueries({ queryKey: ["selections"] });
-        setDialogOpen(false);
-      } catch (error) {
-        setFormError(
+      if (dialogMode === "edit" && formState.studentRecordId) {
+        await updateStudentProfile(formState.studentRecordId, payload);
+      } else {
+        const created = await createStudent(payload);
+        setHasCreatedStudent(true);
+        setDialogMode("edit");
+        setFormState((prev) => ({
+          ...prev,
+          studentRecordId: created.id ? String(created.id) : prev.studentRecordId,
+          studentId: created.num_select ?? prev.studentId,
+          cardNumber: created.num_carte ?? prev.cardNumber
+        }));
+        setFormSubmitting(false);
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["selections"] });
+      setDialogOpen(false);
+    } catch (error) {
+      setFormError(
           error instanceof Error
             ? error.message
             : "Erreur lors de l'enregistrement de l'étudiant."
@@ -475,10 +562,54 @@ export const DossierSelectionPage = () => {
           <Button size="sm" variant="outline" onClick={handleCreate}>
             Ajout étudiant
           </Button>
-          <Button size="sm">Export report</Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={!filters.id_mention || !filters.id_year}
+            onClick={async () => {
+              setPrintError(null);
+              if (!filters.id_year || !filters.id_mention) {
+                setPrintError(
+                  "Veuillez sélectionner une mention et une année pour imprimer la liste."
+                );
+                return;
+              }
+              setPrintingList(true);
+              try {
+                const result = await printSelectionList({
+                  idYear: filters.id_year,
+                  mentionId: filters.id_mention
+                });
+                const url = resolveAssetUrl(result.url || result.path);
+                if (!url) {
+                  throw new Error("Impossible de générer la liste.");
+                }
+                setPdfViewer({
+                  open: true,
+                  url,
+                  title: "Liste des étudiants admis (sélection)"
+                });
+              } catch (error) {
+                setPrintError(
+                  error instanceof Error
+                    ? error.message
+                    : "Impossible de générer la liste."
+                );
+              } finally {
+                setPrintingList(false);
+              }
+            }}
+          >
+            {printingList ? "Préparation..." : "Imprimer la liste"}
+          </Button>
         </div>
       </div>
       <div className="grid gap-4 rounded-lg border bg-background p-5 shadow-sm">
+        {printError && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+            {printError}
+          </div>
+        )}
         <AcademicFilters
           value={filters}
           onChange={handleFiltersChange}
@@ -499,7 +630,26 @@ export const DossierSelectionPage = () => {
           showActiveFilters={true}
           filterClassname="grid gap-4 lg:grid-cols-3"
           summarySlot={
-            <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground">
+            <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-medium text-foreground">Statut dossier</span>
+                <select
+                  className="h-9 rounded-md border bg-background px-2 text-sm text-foreground"
+                  value={enrollmentFilter}
+                  onChange={(e) =>
+                    setEnrollmentFilter(
+                      (e.target.value as SelectionStatus | "All") || "All"
+                    )
+                  }
+                >
+                  <option value="All">Tous</option>
+                  <option value="Selected">Admis</option>
+                  <option value="Pending">En attente</option>
+                  <option value="Rejected">Rejeté</option>
+                  <option value="Registered">Inscrit</option>
+                  <option value="Former">Ancien</option>
+                </select>
+              </div>
               <div className="grid gap-2 md:grid-cols-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">
@@ -535,10 +685,25 @@ export const DossierSelectionPage = () => {
             </div>
           }
         />
+        <PdfViewerModal
+          open={pdfViewer.open}
+          url={pdfViewer.url}
+          title={pdfViewer.title}
+          onOpenChange={(open) =>
+            setPdfViewer((prev) => ({
+              ...prev,
+              open
+            }))
+          }
+        />
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-5xl lg:max-w-6xl h-[80vh] max-h-[80vh] overflow-hidden p-0 flex flex-col min-h-0">
+        <DialogContent
+          className="sm:max-w-5xl lg:max-w-6xl h-[80vh] max-h-[80vh] overflow-hidden p-0 flex flex-col min-h-0"
+          onInteractOutside={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => event.preventDefault()}
+        >
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>
               {dialogMode === "edit" ? "Modifier étudiant" : "Ajout étudiant"}
@@ -548,6 +713,11 @@ export const DossierSelectionPage = () => {
             className="flex flex-1 flex-col min-h-0"
             onSubmit={handleCreateStudent}
           >
+            {hasCreatedStudent && dialogMode === "edit" && (
+              <div className="px-6 py-3 text-center text-sm font-semibold text-emerald-700 bg-emerald-50 border-b border-emerald-200">
+                Étudiant créé. Vous pouvez maintenant compléter la scolarité.
+              </div>
+            )}
             <div className="flex-1 overflow-y-auto">
               <StudentForm
                 formError={formError}
@@ -564,6 +734,10 @@ export const DossierSelectionPage = () => {
                 enablePicture={false}
                 mentionOptions={mentionOptions}
                 registerType="SELECTION"
+                annualRegisterDisabled={
+                  !hasCreatedStudent && dialogMode === "create"
+                }
+                annualRegisterDisabledMessage="Créez d'abord l'étudiant (bouton Suivant), puis complétez la scolarité."
               />
             </div>
             <DialogFooter className="px-6 py-4 border-t">
@@ -575,12 +749,41 @@ export const DossierSelectionPage = () => {
                 Annuler
               </Button>
               <Button type="submit" disabled={formSubmitting}>
-                {formSubmitting ? "Enregistrement..." : "Enregistrer"}
+                {formSubmitting
+                  ? "Enregistrement..."
+                  : dialogMode === "create" && !hasCreatedStudent
+                    ? "Suivant"
+                    : "Enregistrer"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(confirmDeleteStudent)}
+        title="Supprimer l'étudiant ?"
+        description={
+          confirmDeleteStudent
+            ? `Cette action masquera ${confirmDeleteStudent.fullName} de la liste.`
+            : undefined
+        }
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        destructive
+        isConfirming={
+          Boolean(confirmDeleteStudent) &&
+          deletingId ===
+            (confirmDeleteStudent?.apiId || confirmDeleteStudent?.recordId)
+        }
+        onCancel={() => setConfirmDeleteStudent(null)}
+        onConfirm={() => {
+          if (confirmDeleteStudent) {
+            handleDelete(confirmDeleteStudent);
+            setConfirmDeleteStudent(null);
+          }
+        }}
+      />
     </div>
   );
 };

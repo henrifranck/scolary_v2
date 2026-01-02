@@ -1,8 +1,9 @@
-import { Outlet, createRootRouteWithContext, useRouterState } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/router-devtools';
+import { Outlet, createRootRouteWithContext, useRouterState } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
-import { AppLayout } from '../layouts/app-layout';
-import type { AppRouterContext } from '../router-context';
+import { AppLayout } from "../layouts/app-layout";
+import type { AppRouterContext } from "../router-context";
+import { GlobalLoadingOverlay } from "@/components/global-loading-overlay";
 
 const RootComponent = () => {
   const { location } = useRouterState();
@@ -19,6 +20,7 @@ const RootComponent = () => {
           <Outlet />
         </AppLayout>
       )}
+      <GlobalLoadingOverlay />
       <TanStackRouterDevtools position="bottom-right" />
     </>
   );

@@ -61,7 +61,7 @@ class Student(Base):
     enter_year = relationship('AcademicYear', foreign_keys=[id_enter_year])
     nationality = relationship('Nationality', foreign_keys=[id_nationality])
     baccalaureate_serie = relationship('BaccalaureateSerie', foreign_keys=[id_baccalaureate_series])
-    annual_register = relationship('AnnualRegister')
+    annual_register = relationship('AnnualRegister', foreign_keys="AnnualRegister.num_carte")
 
 
 # begin #
