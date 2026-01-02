@@ -1,6 +1,4 @@
-import {
-  StudentAnnualProps
-} from "@/components/student-form/student-form-types";
+import { StudentAnnualProps } from "@/components/student-form/student-form-types";
 import { StudentFormInfoItem } from "@/components/student-form/student-form-info-item";
 import formatRepeatStatus from "@/lib/enum/repeat-status-enum";
 
@@ -11,7 +9,9 @@ type RegistrationSummaryProps = {
 };
 
 type RegistrationEditorProps = {
-  annualRegisterDrafts: Array<StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }>;
+  annualRegisterDrafts: Array<
+    StudentAnnualProps & { isEditing?: boolean; isNew?: boolean }
+  >;
   hasRegistrationEntries: boolean;
   mergeAnnualWithDrafts: (
     annual: StudentAnnualProps & { isEditing?: boolean; isNew?: boolean },
@@ -57,7 +57,7 @@ export const RegistrationSummary = ({
           annual.register_semester.map((semester, semesterIndex) => (
             <div
               key={`${index}-semester-${semesterIndex}`}
-              className="grid gap-4 rounded-lg border border-dashed bg-background/60 p-3"
+              className="grid gap-2 rounded-lg border border-dashed bg-background/60 p-3"
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <StudentFormInfoItem
@@ -132,8 +132,9 @@ export const RegistrationEditor = ({
               onUpdateRegistrationField={onUpdateRegistrationField}
               isSaving={savingIndex === index}
               isEditing={
-                editingRegistrationIndexByAnnual[getAnnualKey(annual, index)] ===
-                registrationIndex
+                editingRegistrationIndexByAnnual[
+                  getAnnualKey(annual, index)
+                ] === registrationIndex
               }
             />
           )

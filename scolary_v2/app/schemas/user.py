@@ -13,6 +13,8 @@ class UserBase(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     password: Optional[str] = None
+    address: Optional[str] = None
+    phone_number: Optional[str] = None
     is_superuser: Optional[bool] = None
     picture: Optional[str] = None
     is_active: Optional[bool] = None

@@ -5,7 +5,7 @@
 from app.db.base_class import Base
 from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_
 from sqlalchemy.orm import relationship, column_property, aliased
-from sqlalchemy import String, Boolean, Integer
+from sqlalchemy import String, Boolean, Integer, Text
 
 
 class User(Base):
@@ -15,6 +15,8 @@ class User(Base):
     first_name = Column(String(255))
     last_name = Column(String(255), nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    address = Column(Text)
+    phone_number = Column(String(20))
     is_superuser = Column(Boolean)
     picture = Column(String(255))
     is_active = Column(Boolean)
@@ -27,6 +29,7 @@ class User(Base):
     # Relations
     user_role = relationship('UserRole', back_populates="user")
     user_mention = relationship('UserMention', back_populates="user")
+    teacher = relationship('Teacher')
 
 # begin #
 # ---write your code here--- #

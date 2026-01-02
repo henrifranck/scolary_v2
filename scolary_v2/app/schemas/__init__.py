@@ -272,3 +272,11 @@ from .available_service_required_document import (
     AvailableServiceRequiredDocumentUpdate,
     ResponseAvailableServiceRequiredDocument
 )
+
+from .teacher import (
+    Teacher,
+    TeacherCreate,
+    TeacherUpdate,
+    TeacherWithRelation,
+    ResponseTeacher
+)

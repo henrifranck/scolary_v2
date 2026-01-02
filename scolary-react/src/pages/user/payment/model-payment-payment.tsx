@@ -56,7 +56,7 @@ export const PaymentSummary = ({
           annual.payment.map((payment, paymentIndex) => (
             <div
               key={`${index}-payment-${paymentIndex}`}
-              className="grid gap-4 rounded-lg border border-dashed bg-background/60 p-3"
+              className="grid gap-2 rounded-lg border border-dashed bg-background/60 p-3"
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <StudentFormInfoItem

@@ -143,10 +143,9 @@ export const ReinscriptionAnnualRegister = ({
     const timer = window.setTimeout(() => setDocumentUploadError(null), 5000);
     return () => window.clearTimeout(timer);
   }, [documentUploadError]);
-  const routeUi = registerType === "REGISTRATION" ? "re-registration" : "selection";
-  const {
-    data: availableServiceData
-  } = useQuery({
+  const routeUi =
+    registerType === "REGISTRATION" ? "re-registration" : "selection";
+  const { data: availableServiceData } = useQuery({
     queryKey: ["available-services", routeUi],
     queryFn: () =>
       fetchAvailableServices({
@@ -1406,7 +1405,7 @@ export const ReinscriptionAnnualRegister = ({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[400px] overflow-y-auto">
+    <div className="space-y-4 p-5 overflow-y-auto">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-foreground">Scolarité</p>
         <Button

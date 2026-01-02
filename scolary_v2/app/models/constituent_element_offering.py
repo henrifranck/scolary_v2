@@ -16,6 +16,7 @@ class ConstituentElementOffering(Base):
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
     id_constituent_element_optional_group = Column(Integer, ForeignKey('constituent_element_optional_group.id'))
     id_teching_unit_offering = Column(Integer, ForeignKey('teaching_unit_offering.id'))
+    id_teacher = Column(Integer, ForeignKey('teacher.id'))
 
     # default column
     created_at = Column(DateTime, nullable=False, default=func.now())
@@ -24,8 +25,10 @@ class ConstituentElementOffering(Base):
 
     # Relations
     constituent_element = relationship('ConstituentElement', foreign_keys=[id_constituent_element])
+    teacher = relationship('Teacher', foreign_keys=[id_teacher])
     academic_year = relationship('AcademicYear', foreign_keys=[id_academic_year])
-    constituent_element_optional_group = relationship('ConstituentElementOptionalGroup', foreign_keys=[id_constituent_element_optional_group])
+    constituent_element_optional_group = relationship('ConstituentElementOptionalGroup',
+                                                      foreign_keys=[id_constituent_element_optional_group])
     teching_unit_offering = relationship('TeachingUnitOffering', foreign_keys=[id_teching_unit_offering])
 
 

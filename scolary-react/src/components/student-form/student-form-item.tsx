@@ -51,7 +51,7 @@ export const StudentFormItem = ({
   );
 
   return (
-    <div className="space-y-4 rounded-xl border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
+    <div className="space-y-4 rounded-xl mt-3 border bg-muted/20 p-5 max-h-[320px] overflow-y-auto">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-foreground">{name}</p>
         <Button
