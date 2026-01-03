@@ -17,5 +17,9 @@ class AvailableServiceRequiredDocument(Base):
     deleted_at = Column(DateTime)
 
     # Relation
-    available_service = relationship('AvailableService', foreign_keys=[id_available_service])
+    available_service = relationship(
+        'AvailableService',
+        foreign_keys=[id_available_service],
+        back_populates='available_service_required_document',
+    )
     required_document = relationship('RequiredDocument', foreign_keys=[id_required_document])

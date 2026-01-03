@@ -42,6 +42,7 @@ const baseColumn = JSON.stringify([
   "num_of_baccalaureate",
   "center_of_baccalaureate",
   "job",
+  "level",
   "enrollment_status",
   "year_of_baccalaureate",
   "center_of_baccalaureate",
@@ -53,7 +54,8 @@ const baseColumn = JSON.stringify([
   "mother_job",
   "father_name",
   "father_job",
-  "parent_address"
+  "parent_address",
+  "id_enter_year"
 ]);
 
 const buildWhereClause = (cardNumber: string, newRegistration: boolean) =>

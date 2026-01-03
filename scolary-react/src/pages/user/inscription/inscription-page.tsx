@@ -117,7 +117,7 @@ const createEditingSectionsState = (): Record<EditableSection, boolean> => ({
 const buildStudentUpdatePayload = (state: StudentFormState): StudentProfile => {
   const payload: StudentProfile = {
     id: state.studentRecordId || undefined,
-    num_select: state.studentId || undefined,
+    num_select: state.selectNumber || undefined,
     num_carte: state.cardNumber || undefined,
     first_name: state.firstName || undefined,
     last_name: state.lastName || undefined,
@@ -137,11 +137,16 @@ const buildStudentUpdatePayload = (state: StudentFormState): StudentProfile => {
     job: state.job || undefined,
     picture: state.picture || undefined,
     id_mention: state.mentionId || undefined,
-    id_journey: state.journeyId || undefined,
-    active_semester: state.semester || undefined,
     id_nationality: state.nationalityId,
     enrollment_status: state.enrollmentStatus || state.status || undefined,
-    mean: state.mean || 0
+    mean: state.mean || 0,
+    mother_name: state.motherName || undefined,
+    mother_job: state.motherJob || undefined,
+    father_name: state.fatherName || undefined,
+    father_job: state.fatherJob || undefined,
+    parent_address: state.parentAdress || undefined,
+    annual_register: state.annualRegister || undefined,
+    phone_number: state.phoneNumber || undefined
   };
 
   return Object.fromEntries(
@@ -159,19 +164,23 @@ const getAvatarUrl = (fullName: string) => {
 export const InscriptionPage = () => {
   const defaultSemester = semesters[0] ?? "";
 
-  const {
-    mentionOptions,
-    academicYearOptions: yearOptions,
-    isLoadingMentions,
-    isLoadingAcademicYears,
-    isLoadingAvailableModels
-  } = useLookupOptions({
-    includeMentions: true,
-    includeAcademicYears: true,
-    includeAvailableModels: true
-  });
+  const { mentionOptions, isLoadingMentions, isLoadingAvailableModels } =
+    useLookupOptions({
+      includeMentions: true,
+      includeAvailableModels: true
+    });
 
   const FILTERS_STORAGE_KEY = "inscription.filters";
+  const resolveHeaderAcademicYear = () => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+    const stored = window.localStorage.getItem("selected_academic_year");
+    if (!stored || stored === "all") {
+      return "";
+    }
+    return stored;
+  };
 
   const readStoredFilters = (): AcademicFilterValue | null => {
     if (typeof window === "undefined") {
@@ -189,11 +198,14 @@ export const InscriptionPage = () => {
         "id_mention" in parsed &&
         "id_journey" in parsed &&
         "semester" in parsed &&
-        "id_year" in parsed &&
         "register_type" in parsed &&
         "level" in parsed
       ) {
-        return parsed as AcademicFilterValue;
+        const headerYear = resolveHeaderAcademicYear();
+        return {
+          ...(parsed as AcademicFilterValue),
+          id_year: headerYear || (parsed as AcademicFilterValue).id_year || ""
+        };
       }
     } catch {
       return null;
@@ -208,7 +220,7 @@ export const InscriptionPage = () => {
         id_mention: "",
         id_journey: "",
         semester: defaultSemester,
-        id_year: "",
+        id_year: resolveHeaderAcademicYear(),
         level: "",
         register_type: "REGISTRATION"
       }
@@ -240,15 +252,28 @@ export const InscriptionPage = () => {
   }, [mentionOptions]);
 
   useEffect(() => {
-    if (filters.id_year || !yearOptions.length) {
-      return;
-    }
+    const headerYear = resolveHeaderAcademicYear();
+    if (!headerYear) return;
+    setFilters((previous) => {
+      if (previous.id_year === headerYear) {
+        return previous;
+      }
+      return { ...previous, id_year: headerYear };
+    });
+  }, []);
 
-    setFilters((previous) => ({
-      ...previous,
-      id_year: yearOptions[0].id
-    }));
-  }, [yearOptions, filters.id_year]);
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent ? String(event.detail ?? "") : "";
+      const next =
+        detail === "all" ? "" : detail || resolveHeaderAcademicYear();
+      setFilters((previous) => ({ ...previous, id_year: next }));
+    };
+    if (typeof window === "undefined") return;
+    window.addEventListener("academicYearChanged", handler);
+    return () => window.removeEventListener("academicYearChanged", handler);
+  }, []);
 
   const journeyQuery = useQuery({
     queryKey: ["reinscription", "journeys", filters.id_mention],
@@ -390,7 +415,6 @@ export const InscriptionPage = () => {
     reinscriptionQuery.isFetching ||
     reinscriptionQuery.isPending ||
     isLoadingMentions ||
-    isLoadingAcademicYears ||
     isLoadingAvailableModels;
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -398,6 +422,7 @@ export const InscriptionPage = () => {
   const [formState, setFormState] = useState<StudentFormState>(() =>
     createFormState({ semester: defaultSemester })
   );
+  const [hasRegisterSemester, setHasRegisterSemester] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<StudentFormState[]>([]);
@@ -443,6 +468,7 @@ export const InscriptionPage = () => {
       setEditingSections(createEditingSectionsState());
       setFormError(null);
       setFormSubmitting(false);
+      setHasRegisterSemester(false);
     }
   }, [dialogOpen]);
 
@@ -532,22 +558,33 @@ export const InscriptionPage = () => {
         studentRecordId: student.studentRecordId,
         studentId: student.studentId,
         cardNumber: student.cardNumber,
+        selectNumber: student.selectNumber,
         firstName: student.firstName,
         lastName: student.lastName,
-        email: "",
-        address: "",
-        cinNumber: "",
-        cinIssueDate: "",
-        cinIssuePlace: "",
-        birthDate: "",
-        birthPlace: "",
+        email: student.email,
+        address: student.address,
+        cinNumber: student.cinNumber,
+        cinIssueDate: student.cinIssueDate,
+        cinIssuePlace: student.cinIssuePlace,
+        birthDate: student.birthDate,
+        birthPlace: student.birthPlace,
         mentionId: student.mentionId,
         journeyId: student.journeyId,
         semester: student.semester,
         baccalaureateSerieId: String(student.baccalaureateSerieId),
         baccalaureateYear: student.baccalaureateYear,
         baccalaureateCenter: student.baccalaureateCenter,
-        generatedLevel: student.generatedLevel
+        generatedLevel: student.generatedLevel,
+        status: student.status,
+        lastUpdate: student.lastUpdate,
+        picture: student.picture,
+        fullName: student.fullName,
+        enrollmentStatus: student.enrollmentStatus,
+        job: student.job,
+        maritalStatus: student.maritalStatus,
+        phoneNumber: student.phoneNumber,
+        mean: student.mean,
+        annualRegister: student.annualRegister
       })
     );
     setDialogOpen(true);
@@ -558,9 +595,9 @@ export const InscriptionPage = () => {
     setFormError(null);
 
     const trimmedCardNumber = (formState.cardNumber || "").trim();
-    if (!trimmedCardNumber && !allowRegisterForm) {
+    const missingCardNumber = !trimmedCardNumber;
+    if (missingCardNumber && !allowRegisterForm) {
       setAllowRegisterForm(true);
-      return;
     }
 
     const recordId = (formState.studentRecordId || "").trim();
@@ -580,7 +617,39 @@ export const InscriptionPage = () => {
         }),
         new_registration: dialogMode !== "edit"
       };
-      await updateStudentProfile(recordId, payload);
+      const updatedStudent = await updateStudentProfile(recordId, payload);
+
+      // Keep the form in sync with the generated card/selection numbers so warnings disappear.
+      setFormState((previous) => {
+        const resolvedCard = updatedStudent.num_carte ?? previous.cardNumber;
+        const resolvedSelect =
+          updatedStudent.num_select ?? previous.selectNumber;
+        const resolvedId = updatedStudent.id
+          ? String(updatedStudent.id)
+          : previous.studentId;
+
+        return {
+          ...previous,
+          cardNumber: resolvedCard ?? "",
+          selectNumber: resolvedSelect ?? "",
+          studentId: resolvedId,
+          fullName:
+            `${updatedStudent.last_name ?? previous.lastName ?? ""} ${updatedStudent.first_name ?? previous.firstName ?? ""}`.trim() ||
+            previous.fullName
+        };
+      });
+
+      const resolvedCardNumber = (
+        updatedStudent.num_carte ?? trimmedCardNumber
+      ).trim();
+      const shouldCloseDialog =
+        dialogMode === "edit" ||
+        (!missingCardNumber &&
+          hasRegisterSemester &&
+          Boolean(resolvedCardNumber));
+      if (shouldCloseDialog) {
+        setDialogOpen(false);
+      }
       if (formState.pictureFile) {
         const updatedStudent = await uploadStudentPicture(
           recordId,
@@ -592,7 +661,7 @@ export const InscriptionPage = () => {
           pictureFile: null
         }));
       }
-      setDialogOpen(false);
+      // setDialogOpen(false);
       void reinscriptionQuery.refetch();
     } catch (error) {
       setFormError(
@@ -779,7 +848,6 @@ export const InscriptionPage = () => {
           onChange={handleFiltersChange}
           mentionOptions={mentionOptions}
           journeyOptions={journeyOptions}
-          academicYearOptions={yearOptions}
           semesters={semesters}
           journeysLoading={journeysLoading}
           showResetButton={true}
@@ -787,7 +855,7 @@ export const InscriptionPage = () => {
           collapsed={filtersCollapsed}
           onCollapsedChange={setFiltersCollapsed}
           showLevel={true}
-          filterClassname="grid gap-4 lg:grid-cols-4"
+          filterClassname="grid gap-4 lg:grid-cols-3"
           summarySlot={
             <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground">
               <div className="grid gap-2 md:grid-cols-3">
@@ -937,6 +1005,7 @@ export const InscriptionPage = () => {
               disabledEditing={!formState.studentRecordId}
               registerType="REGISTRATION"
               newRegistration={true}
+              onRegistrationStatusChange={setHasRegisterSemester}
               annualRegisterDisabled={
                 !allowRegisterForm && !(formState.cardNumber || "").trim()
               }
@@ -951,14 +1020,26 @@ export const InscriptionPage = () => {
               >
                 Annuler
               </Button>
-              <Button type="submit" disabled={formSubmitting}>
+              <Button
+                type="submit"
+                disabled={
+                  formSubmitting ||
+                  ((formState.cardNumber || "").trim() !== "" &&
+                    !hasRegisterSemester) ||
+                  (!allowRegisterForm &&
+                    !(formState.cardNumber || "").trim() &&
+                    formState.enrollmentStatus === "pending")
+                }
+              >
                 {formSubmitting
                   ? "Enregistrement..."
                   : dialogMode === "edit"
                     ? "Enregistrer les modifications"
                     : (formState.cardNumber || "").trim() || allowRegisterForm
                       ? "Confirmer l'inscription"
-                      : "Suivant"}
+                      : formState.enrollmentStatus === "pending"
+                        ? "Etudiant n'a pas séléctionné"
+                        : "Suivant"}
               </Button>
             </DialogFooter>
           </form>

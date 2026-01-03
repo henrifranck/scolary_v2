@@ -319,7 +319,9 @@ def get_level(sems_a: str, sems_b: str) -> str:
 
 
 def get_level_from_number(number: int) -> str:
-    if int(number) <= 2:
+    if int(number) == 0:
+        return None
+    elif int(number) <= 2:
         return "L1"
     elif int(number) <= 4:
         return "L2"

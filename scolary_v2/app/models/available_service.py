@@ -16,4 +16,6 @@ class AvailableService(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime)
 
-    available_service_required_document = relationship('AvailableServiceRequiredDocument')
+    available_service_required_document = relationship(
+        'AvailableServiceRequiredDocument', back_populates='available_service'
+    )

@@ -42,3 +42,4 @@ from .service_required_document import AvailableServiceRequiredDocument
 from .available_model import AvailableModel
 from .cms_page import CmsPage
 from .teacher import Teacher
+from .plugged import Plugged

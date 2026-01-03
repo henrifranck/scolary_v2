@@ -211,10 +211,9 @@ def read_one_student(
 
     annual_register = crud.annual_register.get_first_where_array(db=db, where=wheres_customs)
     if annual_register:
-        print(annual_register.id)
         max_semester_value = crud.register_semester.get_max_semester(db=db, id_annual_register=annual_register.id)
-        print(str(dict(max_semester_value)["S"]))
-        max_semester = int(dict(max_semester_value)["S"])
+        if max_semester_value != (None,):
+            max_semester = int(dict(max_semester_value)["S"])
 
     data = jsonable_encoder(student)
     if document_status is not None:
@@ -235,6 +234,7 @@ def create_student(
     Create new student.
     """
     data = student_in.model_dump()
+    data.pop("new_registration", None)
     if not data.get("num_select"):
         data["num_select"] = generate_num_select(db, data.get("id_mention"))
 
@@ -261,11 +261,21 @@ def update_student(
 
     if new_registration and not student.num_carte:
         mention_id = data.get("id_mention") or getattr(student, "id_mention", None)
-        prefix = "S"
+        prefix = "F"
         if mention_id:
-            mention = crud.mention.get(db=db, id=mention_id)
-            if mention and mention.name:
-                prefix = mention.name[0].upper()
+            where = [
+                {
+                    "key":"id",
+                    "operator":"==",
+                    "value":mention_id
+                }
+            ]
+            mention = crud.mention.get_first_where_array(db=db, where=where, relations=["plugged{name}"])
+            plugged = mention.plugged
+            if plugged and plugged.name:
+                prefix = plugged.name[0].upper()
+            else:
+                raise HTTPException(status_code=404, detail='Branch not found')
         latest = (
             db.query(models.Student.num_carte)
             .filter(models.Student.num_carte.like(f"{prefix}%"))

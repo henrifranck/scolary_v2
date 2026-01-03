@@ -280,3 +280,10 @@ from .teacher import (
     TeacherWithRelation,
     ResponseTeacher
 )
+
+from .plugged import (
+    Plugged,
+    PluggedCreate,
+    PluggedUpdate,
+    ResponsePlugged
+)

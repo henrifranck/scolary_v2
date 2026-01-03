@@ -91,6 +91,7 @@ interface StudentFormProps {
   annualRegisterDisabledMessage?: string;
   registerType: string;
   newRegistration: boolean;
+  onRegistrationStatusChange?: (hasRegistration: boolean) => void;
 }
 
 export const StudentForm = ({
@@ -107,7 +108,8 @@ export const StudentForm = ({
   annualRegisterDisabled = false,
   annualRegisterDisabledMessage,
   registerType = "REGISTRATION",
-  newRegistration = false
+  newRegistration = false,
+  onRegistrationStatusChange
 }: StudentFormProps) => {
   const {
     mentionOptions: cachedMentionOptions,
@@ -265,8 +267,6 @@ export const StudentForm = ({
         [key]: nextValue
       }));
 
-      console.log(formState.selectNumber);
-
       if (key === "cardNumber") {
         setStudentLookupError(null);
       }
@@ -304,6 +304,7 @@ export const StudentForm = ({
           student.num_select ??
           (student.id ? String(student.id) : previous.studentId),
         cardNumber: student.num_carte ?? previous.cardNumber,
+        selectNumber: student.num_select ?? previous.selectNumber,
         firstName: student.first_name ?? previous.firstName,
         lastName: student.last_name ?? previous.lastName,
         email: student.email ?? previous.email,
@@ -464,6 +465,16 @@ export const StudentForm = ({
       void handleStudentLookup(false);
     }
   }, [dialogMode, enableLookup, formState.cardNumber, handleStudentLookup]);
+
+  useEffect(() => {
+    if (!onRegistrationStatusChange) return;
+    const hasRegistration = annualRegister.some(
+      (entry) =>
+        Array.isArray(entry.register_semester) &&
+        entry.register_semester.length > 0
+    );
+    onRegistrationStatusChange(hasRegistration);
+  }, [annualRegister, onRegistrationStatusChange]);
 
   return (
     <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0 overflow-y-hide">
@@ -656,7 +667,9 @@ export const StudentForm = ({
                     <Select
                       value={
                         registerType === "REGISTRATION"
-                          ? formState.generatedLevel
+                          ? !newRegistration
+                            ? formState.generatedLevel
+                            : formState.level
                           : formState.level
                       }
                       onValueChange={(value) =>
@@ -694,10 +707,14 @@ export const StudentForm = ({
                       : formState.cardNumber
                   }
                   filters={filters}
+                  defaultMentionId={formState.mentionId}
                   disabledEditing={
-                    disabledEditing || annualRegisterDisabled || isNewStudentWithoutCard
+                    disabledEditing ||
+                    annualRegisterDisabled ||
+                    isNewStudentWithoutCard
                   }
                   registerType={registerType}
+                  onRegistrationStatusChange={onRegistrationStatusChange}
                 />
               </div>
             </div>

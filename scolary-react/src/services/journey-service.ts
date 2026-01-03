@@ -36,7 +36,7 @@ const normalizePaginatedList = <T>(
       };
 
 const defaultRelation = JSON.stringify([
-  "mention{name,abbreviation}",
+  "mention{name,abbreviation,id_plugged}",
   "semester_list{id,semester}"
 ]);
 

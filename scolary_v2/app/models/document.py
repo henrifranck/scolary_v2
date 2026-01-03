@@ -21,7 +21,7 @@ class Document(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime)
 
-    annual_register = relationship('AnnualRegister', foreign_keys=[id_annual_register])
+    annual_register = relationship('AnnualRegister', foreign_keys=[id_annual_register], back_populates='document')
     required_document = relationship('RequiredDocument', foreign_keys=[id_required_document])
 
     required_document_name = column_property(

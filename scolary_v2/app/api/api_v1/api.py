@@ -48,6 +48,7 @@ from app.api.api_v1.endpoints import available_models
 from app.api.api_v1.endpoints import available_service_required_documents
 from app.api.api_v1.endpoints import cms_pages
 from app.api.api_v1.endpoints import teacher
+from app.api.api_v1.endpoints import plugged
 
 api_router = APIRouter()
 api_router.include_router(classrooms.router, prefix="/classrooms", tags=["classrooms"])
@@ -63,6 +64,7 @@ api_router.include_router(login.router, prefix="/login", tags=["login"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(teacher.router, prefix="/teacher", tags=["teacher"])
+api_router.include_router(plugged.router, prefix="/plugged", tags=["plugged"])
 api_router.include_router(documents.router, prefix="/documents", tags=["documents"])
 api_router.include_router(user_roles.router, prefix="/user_roles", tags=["user_roles"])
 api_router.include_router(roles.router, prefix="/roles", tags=["roles"])
@@ -86,7 +88,6 @@ api_router.include_router(
     prefix="/available_service_required_documents",
     tags=["available_service_required_documents"],
 )
-
 api_router.include_router(available_models.router, prefix="/available_models", tags=["available_models"])
 api_router.include_router(cms_pages.router, prefix="/cms_pages", tags=["cms_pages"])
 api_router.include_router(exam_dates.router, prefix="/exam_dates", tags=["exam_dates"])

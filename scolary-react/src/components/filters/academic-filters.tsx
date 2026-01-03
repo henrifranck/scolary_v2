@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  GraduationCap,
-  BookOpen,
-  Calendar,
-  Filter,
-  Eye,
-  EyeOff
-} from "lucide-react";
+import { GraduationCap, BookOpen, Filter, Eye, EyeOff } from "lucide-react";
 import { Layers } from "lucide-react";
 
 import { cn } from "../../lib/utils";
@@ -23,8 +16,7 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import {
   fetchMentions as fetchMentionOptions,
-  fetchJourneys as fetchJourneyOptions,
-  fetchCollegeYears
+  fetchJourneys as fetchJourneyOptions
 } from "../../services/inscription-service";
 import { MentionOption } from "@/models/mentions";
 
@@ -39,11 +31,6 @@ export interface JourneyOption {
 export interface LevelOption {
   label: string;
   value: string;
-}
-
-export interface AcademicYearOption {
-  id: string;
-  label: string;
 }
 
 export interface AcademicFilterValue {
@@ -64,7 +51,6 @@ interface AcademicFiltersProps {
   mentionOptions?: MentionOption[];
   journeyOptions?: JourneyOption[];
   levelOptions?: LevelOption[];
-  academicYearOptions?: AcademicYearOption[];
   semesters: string[];
   className?: string;
   summarySlot?: ReactNode;
@@ -85,7 +71,6 @@ export const AcademicFilters = ({
   mentionOptions: mentionOptionsProp = [],
   journeyOptions: journeyOptionsProp = [],
   levelOptions: levelOptionsProp = [],
-  academicYearOptions: academicYearOptionsProp = [],
   semesters,
   className,
   summarySlot,
@@ -129,25 +114,6 @@ export const AcademicFilters = ({
               `Mention ${mention.id}`
           })),
     [mentionOptionsProp, fetchedMentions]
-  );
-
-  const shouldFetchAcademicYears = academicYearOptionsProp.length === 0;
-  const { data: fetchedAcademicYears = [], isFetching: academicYearsFetching } =
-    useQuery({
-      queryKey: ["academic-filters", "academic-years"],
-      queryFn: fetchCollegeYears,
-      enabled: shouldFetchAcademicYears
-    });
-
-  const resolvedAcademicYearOptions = useMemo<AcademicYearOption[]>(
-    () =>
-      academicYearOptionsProp.length
-        ? academicYearOptionsProp
-        : fetchedAcademicYears.map((year) => ({
-            id: String(year.id),
-            label: year.name ?? `Year ${year.id}`
-          })),
-    [academicYearOptionsProp, fetchedAcademicYears]
   );
 
   const resolvedLevelOptions: LevelOption[] =
@@ -301,13 +267,6 @@ export const AcademicFilters = ({
     });
   };
 
-  const handleYearChange = (id_year: string) => {
-    onChange({
-      ...value,
-      id_year
-    });
-  };
-
   const handleSemesterChange = (semester: string) => {
     onChange({
       ...value,
@@ -321,7 +280,6 @@ export const AcademicFilters = ({
     if (showJourney && value.id_journey) count++;
     if (showSemester && value.semester) count++;
     if (showLevel && value.level) count++;
-    if (value.id_year) count++;
     return count;
   };
 
@@ -337,22 +295,10 @@ export const AcademicFilters = ({
     );
   };
 
-  const getSelectedYearLabel = () => {
-    return (
-      resolvedAcademicYearOptions.find((y) => y.id === value.id_year)?.label ||
-      ""
-    );
-  };
-
   const mentionPlaceholder =
     shouldFetchMentions && mentionsFetching
       ? "Loading mentions..."
       : "Select mention";
-
-  const academicYearPlaceholder =
-    shouldFetchAcademicYears && academicYearsFetching
-      ? "Loading years..."
-      : "Select year";
 
   const journeyPlaceholder = resolvedJourneysLoading
     ? "Loading journeys..."
@@ -420,12 +366,6 @@ export const AcademicFilters = ({
                 <Badge variant="outline" className="gap-1">
                   <Layers className="h-3 w-3" />
                   {value.level}
-                </Badge>
-              )}
-              {getSelectedYearLabel() && (
-                <Badge variant="outline" className="gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {getSelectedYearLabel()}
                 </Badge>
               )}
               {showSemester && value.semester && (
@@ -542,44 +482,6 @@ export const AcademicFilters = ({
               </div>
             )}
 
-            {/* Academic Year Selection */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Academic Year</label>
-              </div>
-              <Select
-                value={value.id_year}
-                onValueChange={handleYearChange}
-                disabled={!resolvedAcademicYearOptions.length}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue
-                    placeholder={
-                      resolvedAcademicYearOptions.length
-                        ? academicYearPlaceholder
-                        : "No year available"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {resolvedAcademicYearOptions.length ? (
-                    resolvedAcademicYearOptions.map((year) => (
-                      <SelectItem key={year.id} value={year.id}>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {year.label}
-                        </div>
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="__no_year" disabled>
-                      No year available
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           {/* Semester Selection */}

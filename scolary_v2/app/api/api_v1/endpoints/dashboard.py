@@ -3,7 +3,7 @@ from datetime import datetime, date
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, literal_column, and_
+from sqlalchemy import func, literal_column, and_, select
 
 from app.api import deps
 from app import crud, models, schemas
@@ -26,11 +26,12 @@ def get_dashboard_summary(
     Aggregate high-level counts for the dashboard.
     """
     latest_academic_year_ids = (
-        db.query(models.AcademicYear.id)
+        select(models.AcademicYear.id)
         .order_by(models.AcademicYear.name.desc())
         .limit(5)
         .subquery()
     )
+    latest_academic_year_ids_select = select(latest_academic_year_ids.c.id)
 
     mention_rows = (
         db.query(
@@ -86,7 +87,7 @@ def get_dashboard_summary(
             models.AcademicYear.id == models.AnnualRegister.id_academic_year,
         )
         .filter(
-            models.AcademicYear.id.in_(latest_academic_year_ids)
+            models.AcademicYear.id.in_(latest_academic_year_ids_select)
             if not academic_year_id
             else models.AcademicYear.id == academic_year_id
         )
@@ -110,9 +111,10 @@ def get_dashboard_summary(
             models.AcademicYear,
             models.AcademicYear.id == models.AnnualRegister.id_academic_year,
         )
+        .join(models.Student, models.Student.num_carte == models.AnnualRegister.num_carte)
         .filter(
-            models.AcademicYear.id.in_(latest_academic_year_ids),
-            models.Student.id_enter_year.in_(latest_academic_year_ids)
+            models.AcademicYear.id.in_(latest_academic_year_ids_select),
+            models.Student.id_enter_year.in_(latest_academic_year_ids_select),
         )
         .group_by(models.AcademicYear.id, models.AcademicYear.name)
         .order_by(models.AcademicYear.name.asc())
@@ -138,7 +140,7 @@ def get_dashboard_summary(
         )
         .join(models.Student, models.Student.num_carte == models.AnnualRegister.num_carte)
         .join(models.Mention, models.Mention.id == models.Student.id_mention)
-        .filter(models.AcademicYear.id.in_(latest_academic_year_ids))
+        .filter(models.AcademicYear.id.in_(latest_academic_year_ids_select))
         .group_by(
             models.AcademicYear.id,
             models.AcademicYear.name,
@@ -170,8 +172,8 @@ def get_dashboard_summary(
         .join(models.Mention, models.Mention.id == models.Student.id_mention)
         .filter(
             and_(
-                models.AcademicYear.id.in_(latest_academic_year_ids),
-                models.Student.id_enter_year.in_(latest_academic_year_ids)
+                models.AcademicYear.id.in_(latest_academic_year_ids_select),
+                models.Student.id_enter_year.in_(latest_academic_year_ids_select),
             )
         )
         .group_by(

@@ -119,11 +119,19 @@ const getAvatarUrl = (fullName: string) => {
 export const DossierSelectionPage = () => {
   const defaultSemester = semesters[0] ?? "";
 
-  const { mentionOptions, academicYearOptions: yearOptions } = useLookupOptions(
-    { includeMentions: true, includeAcademicYears: true }
-  );
+  const { mentionOptions } = useLookupOptions({
+    includeMentions: true
+  });
 
   const FILTERS_STORAGE_KEY = "selection.filters";
+  const resolveHeaderAcademicYear = () => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+    const stored = window.localStorage.getItem("selected_academic_year");
+    if (!stored || stored === "all") return "";
+    return stored;
+  };
 
   const readStoredFilters = (): {
     filters: AcademicFilterValue | null;
@@ -144,7 +152,6 @@ export const DossierSelectionPage = () => {
         "id_mention" in parsed &&
         "id_journey" in parsed &&
         "semester" in parsed &&
-        "id_year" in parsed &&
         "register_type" in parsed
       ) {
         const enrollmentFilter =
@@ -152,7 +159,13 @@ export const DossierSelectionPage = () => {
             ? (parsed.enrollmentFilter as SelectionStatus | "All")
             : "All";
         return {
-          filters: parsed as AcademicFilterValue,
+          filters: {
+            ...(parsed as AcademicFilterValue),
+            id_year:
+              resolveHeaderAcademicYear() ||
+              (parsed as AcademicFilterValue).id_year ||
+              ""
+          },
           enrollmentFilter
         };
       }
@@ -169,7 +182,7 @@ export const DossierSelectionPage = () => {
       id_mention: "",
       id_journey: "",
       semester: defaultSemester,
-      id_year: "",
+      id_year: resolveHeaderAcademicYear(),
       level: "",
       register_type: "SELECTION"
     }
@@ -233,14 +246,26 @@ export const DossierSelectionPage = () => {
   }, [filters.id_mention, mentionOptions]);
 
   useEffect(() => {
-    if (filters.id_year || !yearOptions.length) {
-      return;
-    }
-    setFilters((previous) => ({
-      ...previous,
-      id_year: yearOptions[0].id
-    }));
-  }, [filters.id_year, yearOptions]);
+    const headerYear = resolveHeaderAcademicYear();
+    if (!headerYear) return;
+    setFilters((previous) => {
+      if (previous.id_year === headerYear) return previous;
+      return { ...previous, id_year: headerYear };
+    });
+  }, []);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent ? String(event.detail ?? "") : "";
+      const next =
+        detail === "all" ? "" : detail || resolveHeaderAcademicYear();
+      setFilters((previous) => ({ ...previous, id_year: next }));
+    };
+    if (typeof window === "undefined") return;
+    window.addEventListener("academicYearChanged", handler);
+    return () => window.removeEventListener("academicYearChanged", handler);
+  }, []);
 
   const selectionFilters = useMemo(
     () => ({
@@ -626,13 +651,12 @@ export const DossierSelectionPage = () => {
             { value: "M1", label: "M1" },
             { value: "M2", label: "M2" }
           ]}
-          academicYearOptions={yearOptions}
           semesters={semesters}
           showJourney={false}
           showLevel={true}
           showResetButton={true}
           showActiveFilters={true}
-          filterClassname="grid gap-4 lg:grid-cols-3"
+          filterClassname="grid gap-4 lg:grid-cols-2"
           summarySlot={
             <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground space-y-3">
               <div className="flex flex-wrap items-center gap-3">

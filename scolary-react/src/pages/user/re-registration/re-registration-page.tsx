@@ -168,19 +168,23 @@ const semesterToLevel = (semester?: string) => {
 export const ReinscriptionPage = () => {
   const defaultSemester = semesters[0] ?? "";
 
-  const {
-    mentionOptions,
-    academicYearOptions: yearOptions,
-    isLoadingMentions,
-    isLoadingAcademicYears,
-    isLoadingAvailableModels
-  } = useLookupOptions({
-    includeMentions: true,
-    includeAcademicYears: true,
-    includeAvailableModels: true
-  });
+  const { mentionOptions, isLoadingMentions, isLoadingAvailableModels } =
+    useLookupOptions({
+      includeMentions: true,
+      includeAvailableModels: true
+    });
 
   const FILTERS_STORAGE_KEY = "reinscription.filters";
+  const resolveHeaderAcademicYear = () => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+    const stored = window.localStorage.getItem("selected_academic_year");
+    if (!stored || stored === "all") {
+      return "";
+    }
+    return stored;
+  };
 
   const readStoredFilters = (): AcademicFilterValue | null => {
     if (typeof window === "undefined") {
@@ -198,10 +202,13 @@ export const ReinscriptionPage = () => {
         "id_mention" in parsed &&
         "id_journey" in parsed &&
         "semester" in parsed &&
-        "id_year" in parsed &&
         "register_type" in parsed
       ) {
-        return parsed as AcademicFilterValue;
+        const headerYear = resolveHeaderAcademicYear();
+        return {
+          ...(parsed as AcademicFilterValue),
+          id_year: headerYear || (parsed as AcademicFilterValue).id_year || ""
+        };
       }
     } catch {
       return null;
@@ -216,7 +223,7 @@ export const ReinscriptionPage = () => {
         id_mention: "",
         id_journey: "",
         semester: defaultSemester,
-        id_year: "",
+        id_year: resolveHeaderAcademicYear(),
         register_type: "REGISTRATION"
       }
     );
@@ -247,15 +254,26 @@ export const ReinscriptionPage = () => {
   }, [mentionOptions]);
 
   useEffect(() => {
-    if (filters.id_year || !yearOptions.length) {
-      return;
-    }
+    const headerYear = resolveHeaderAcademicYear();
+    if (!headerYear) return;
+    setFilters((previous) => {
+      if (previous.id_year === headerYear) return previous;
+      return { ...previous, id_year: headerYear };
+    });
+  }, []);
 
-    setFilters((previous) => ({
-      ...previous,
-      id_year: yearOptions[0].id
-    }));
-  }, [yearOptions, filters.id_year]);
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent ? String(event.detail ?? "") : "";
+      const next =
+        detail === "all" ? "" : detail || resolveHeaderAcademicYear();
+      setFilters((previous) => ({ ...previous, id_year: next }));
+    };
+    if (typeof window === "undefined") return;
+    window.addEventListener("academicYearChanged", handler);
+    return () => window.removeEventListener("academicYearChanged", handler);
+  }, []);
 
   const journeyQuery = useQuery({
     queryKey: ["reinscription", "journeys", filters.id_mention],
@@ -396,7 +414,6 @@ export const ReinscriptionPage = () => {
     reinscriptionQuery.isFetching ||
     reinscriptionQuery.isPending ||
     isLoadingMentions ||
-    isLoadingAcademicYears ||
     isLoadingAvailableModels;
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -923,7 +940,6 @@ export const ReinscriptionPage = () => {
           onChange={handleFiltersChange}
           mentionOptions={mentionOptions}
           journeyOptions={journeyOptions}
-          academicYearOptions={yearOptions}
           semesters={semesters}
           journeysLoading={journeysLoading}
           showResetButton={true}
@@ -931,7 +947,7 @@ export const ReinscriptionPage = () => {
           collapsed={filtersCollapsed}
           onCollapsedChange={setFiltersCollapsed}
           showLevel={false}
-          filterClassname="grid gap-4 lg:grid-cols-3"
+          filterClassname="grid gap-4 lg:grid-cols-2"
           summarySlot={
             <div className="rounded-md border bg-muted/10 p-4 text-sm text-muted-foreground">
               <div className="grid gap-2 md:grid-cols-3">

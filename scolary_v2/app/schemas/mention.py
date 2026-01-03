@@ -7,12 +7,14 @@ from typing import Any
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from .plugged import Plugged
+
 
 class MentionBase(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     abbreviation: Optional[str] = None
-    plugged: Optional[str] = None
+    id_plugged: Optional[int] = None
     background: Optional[str] = None
 
 
@@ -20,7 +22,7 @@ class MentionCreate(MentionBase):
     name: str
     slug: str
     abbreviation: str
-    plugged: str
+    id_plugged: int
 
 
 class MentionUpdate(MentionBase):
@@ -29,6 +31,7 @@ class MentionUpdate(MentionBase):
 
 class MentionInDBBase(MentionBase):
     id: Optional[int]
+    id_plugged: Optional[int]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -38,7 +41,7 @@ class Mention(MentionInDBBase):
 
 
 class MentionWithRelation(MentionInDBBase):
-    pass
+    plugged: Optional[Plugged] = None
 
 
 class MentionInDB(MentionInDBBase):

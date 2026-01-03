@@ -19,6 +19,7 @@ import {
   Menu,
   Moon,
   NotepadText,
+  PlugZap,
   RefreshCcw,
   Route,
   Search,
@@ -165,6 +166,12 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
             to: "/admin/mentions",
             label: "Mentions",
             icon: Waypoints,
+            roles: ["admin"]
+          },
+          {
+            to: "/admin/plugged",
+            label: "Plugged",
+            icon: PlugZap,
             roles: ["admin"]
           },
           {

@@ -5,17 +5,13 @@
 from app.db.base_class import Base
 from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_
 from sqlalchemy.orm import relationship, column_property, aliased
-from sqlalchemy import String, Integer
+from sqlalchemy import String, Integer, Boolean
 
 
-class Mention(Base):
-    __tablename__ = 'mention'
+class Plugged(Base):
+    __tablename__ = 'plugged'
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
-    name = Column(String(255), nullable=False, unique=True)
-    slug = Column(String(255), nullable=False, unique=True, index=True)
-    abbreviation = Column(String(255), nullable=False)
-    id_plugged = Column(Integer, ForeignKey('plugged.id'))
-    background = Column(String(255))
+    name = Column(String(255), nullable=False, unique=True, index=True)
 
     # default column
     created_at = Column(DateTime, nullable=False, default=func.now())
@@ -23,7 +19,7 @@ class Mention(Base):
     deleted_at = Column(DateTime)
 
     # Relations
-    plugged = relationship('Plugged', foreign_keys=[id_plugged], uselist=False)
+    mention = relationship('Mention', back_populates="plugged")
 
 
 # begin #

@@ -16,6 +16,8 @@ class PermissionBase(BaseModel):
     method_put: Optional[bool] = False
     method_delete: Optional[bool] = False
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class PermissionCreate(PermissionBase):
     name: str
@@ -29,7 +31,7 @@ class PermissionUpdate(PermissionBase):
 class PermissionInDBBase(PermissionBase):
     id: Optional[int]
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 class Permission(PermissionInDBBase):

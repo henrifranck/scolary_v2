@@ -14,8 +14,8 @@ class CRUDMention(CRUDBase[Mention, MentionCreate, MentionUpdate]):
     def get_by_field(self, db: Session, *, field: str, value: Any) -> Optional[Mention]:
         return db.query(Mention).filter(getattr(Mention, field) == value).first()
 
-mention = CRUDMention(Mention)
 
+mention = CRUDMention(Mention)
 
 # begin #
 # ---write your code here--- #

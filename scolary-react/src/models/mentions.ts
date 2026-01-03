@@ -3,7 +3,8 @@ export interface Mention {
   name: string;
   slug: string;
   abbreviation: string;
-  plugged: string;
+  id_plugged?: number | string | null;
+  plugged?: string;
   background: string;
 }
 
@@ -23,8 +24,8 @@ export interface MentionUser {
 
 export type MentionPayload = Pick<
   Mention,
-  "name" | "slug" | "abbreviation" | "plugged" | "background"
->;
+  "name" | "slug" | "abbreviation" | "background"
+> & { id_plugged: number | string };
 
 export type MentionListQuery = Record<
   string,

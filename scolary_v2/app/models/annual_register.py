@@ -2,10 +2,15 @@
 # ---write your code here--- #
 # end #
 from app.db.base_class import Base
-from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_, Integer, cast, Enum
-from sqlalchemy.orm import relationship, column_property, aliased, deferred
+from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, Integer, cast, Enum
+from sqlalchemy.orm import relationship, column_property
 from sqlalchemy import String, UniqueConstraint
 from app.enum.register_type import RegisterTypeEnum
+from app.models.enrollment_fee import EnrollmentFee
+from app.models.journey import Journey
+from app.models.payment import Payment
+from app.models.register_semester import RegisterSemester
+from app.enum.level import LevelEnum
 
 
 class AnnualRegister(Base):
@@ -37,91 +42,82 @@ class AnnualRegister(Base):
     academic_year = relationship('AcademicYear', foreign_keys=[id_academic_year])
     register_semester = relationship('RegisterSemester')
     payment = relationship('Payment')
-    document = relationship('Document')
+    document = relationship('Document', back_populates='annual_register')
     user = relationship('User')
 
-# begin #
-# ---write your code here--- #
-    # Max semester number across related register_semester (S1 -> 1, etc.)
-    from app.models.register_semester import RegisterSemester
-    from app.models.payment import Payment
-    from app.models.enrollment_fee import EnrollmentFee
-    from app.models.journey import Journey
-    from app.enum.level import LevelEnum
-
-    _max_semester_expr = (
-        select(
-            func.max(
-                cast(func.replace(RegisterSemester.semester, "S", ""), Integer)
-            )
-        )
-        .where(RegisterSemester.id_annual_register == id)
-        .correlate_except(RegisterSemester)
-        .scalar_subquery()
-    )
-
-    max_semester_number = column_property(_max_semester_expr)
-
-    # Derived level based on max semester
-    level_from_semester = column_property(
-        case(
-            (_max_semester_expr <= 2, LevelEnum.L1.value),
-            (_max_semester_expr <= 4, LevelEnum.L2.value),
-            (_max_semester_expr <= 6, LevelEnum.L3.value),
-            (_max_semester_expr <= 8, LevelEnum.M1.value),
-            (_max_semester_expr <= 10, LevelEnum.M2.value),
-            else_="",
+# Computed properties declared after class definition to avoid mapper warnings
+max_semester_number_expr = (
+    select(
+        func.max(
+            cast(func.replace(RegisterSemester.semester, "S", ""), Integer)
         )
     )
+    .where(RegisterSemester.id_annual_register == AnnualRegister.id)
+    .correlate_except(RegisterSemester)
+    .scalar_subquery()
+)
 
-    _total_payment_expr = (
-        select(func.coalesce(func.sum(Payment.payed), 0.0))
-        .where(Payment.id_annual_register == id)
-        .correlate_except(Payment)
-        .scalar_subquery()
+AnnualRegister.max_semester_number = column_property(max_semester_number_expr)
+
+AnnualRegister.level_from_semester = column_property(
+    case(
+        (max_semester_number_expr <= 2, LevelEnum.L1.value),
+        (max_semester_number_expr <= 4, LevelEnum.L2.value),
+        (max_semester_number_expr <= 6, LevelEnum.L3.value),
+        (max_semester_number_expr <= 8, LevelEnum.M1.value),
+        (max_semester_number_expr <= 10, LevelEnum.M2.value),
+        else_="",
     )
+)
 
-    total_payment = column_property(_total_payment_expr)
+total_payment_expr = (
+    select(func.coalesce(func.sum(Payment.payed), 0.0))
+    .where(Payment.id_annual_register == AnnualRegister.id)
+    .correlate_except(Payment)
+    .scalar_subquery()
+)
 
-    # resolve journey + mention from the semester with highest number
-    _max_semester_journey_id = (
-        select(RegisterSemester.id_journey)
-        .where(
-            RegisterSemester.id_annual_register == id,
-            cast(func.replace(RegisterSemester.semester, "S", ""), Integer) == _max_semester_expr,
-        )
-        .limit(1)
-        .correlate_except(RegisterSemester)
-        .scalar_subquery()
+AnnualRegister.total_payment = column_property(total_payment_expr)
+
+max_semester_journey_id_expr = (
+    select(RegisterSemester.id_journey)
+    .where(
+        RegisterSemester.id_annual_register == AnnualRegister.id,
+        cast(func.replace(RegisterSemester.semester, "S", ""), Integer) == max_semester_number_expr,
     )
+    .limit(1)
+    .correlate_except(RegisterSemester)
+    .scalar_subquery()
+)
 
-    mention_id_from_max_semester = column_property(
-        select(Journey.id_mention)
-        .where(Journey.id == _max_semester_journey_id)
-        .correlate_except(Journey)
-        .scalar_subquery()
+AnnualRegister.max_semester_journey_id = column_property(max_semester_journey_id_expr)
+
+AnnualRegister.mention_id_from_max_semester = column_property(
+    select(Journey.id_mention)
+    .where(Journey.id == max_semester_journey_id_expr)
+    .correlate_except(Journey)
+    .scalar_subquery()
+)
+
+enrollment_fee_amount_expr = (
+    select(EnrollmentFee.price)
+    .where(
+        EnrollmentFee.level == AnnualRegister.level_from_semester,
+        EnrollmentFee.id_academic_year == AnnualRegister.id_academic_year,
+        EnrollmentFee.id_mention == AnnualRegister.mention_id_from_max_semester,
     )
+    .limit(1)
+    .correlate_except(EnrollmentFee)
+    .scalar_subquery()
+)
 
-    _enrollment_fee_amount_expr = (
-        select(EnrollmentFee.price)
-        .where(
-            EnrollmentFee.level == level_from_semester,
-            EnrollmentFee.id_academic_year == id_academic_year,
-            EnrollmentFee.id_mention == mention_id_from_max_semester,
-        )
-        .limit(1)
-        .correlate_except(EnrollmentFee)
-        .scalar_subquery()
+AnnualRegister.enrollment_fee_amount = column_property(enrollment_fee_amount_expr)
+
+AnnualRegister.payment_status = column_property(
+    case(
+        (enrollment_fee_amount_expr.is_(None), "not_applicable"),
+        (total_payment_expr >= enrollment_fee_amount_expr, "complete"),
+        (total_payment_expr == 0, "none"),
+        else_="partial",
     )
-
-    enrollment_fee_amount = column_property(_enrollment_fee_amount_expr)
-
-    payment_status = column_property(
-        case(
-            (_enrollment_fee_amount_expr.is_(None), "not_applicable"),
-            (_total_payment_expr >= _enrollment_fee_amount_expr, "complete"),
-            (_total_payment_expr == 0, "none"),
-            else_="partial",
-        )
-    )
-# end #
+)

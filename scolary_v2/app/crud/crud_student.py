@@ -12,10 +12,39 @@ from app.models.register_semester import RegisterSemester
 from app.models.annual_register import AnnualRegister
 from app.models.journey import Journey
 from app.schemas.student import StudentCreate, StudentUpdate
+from pydantic import BaseModel
 from app.enum.enrollment_status import EnrollmentStatusEnum
 
 
 class CRUDStudent(CRUDBase[Student, StudentCreate, StudentUpdate]):
+    def create(
+            self,
+            db: Session,
+            *,
+            obj_in: BaseModel,
+            user_id: int = None,
+            commit: bool = True,
+            refresh: bool = True,
+    ) -> Student:
+        """
+        Override to strip non-model fields like new_registration before construction.
+        """
+        obj_in_data = obj_in.model_dump()
+        obj_in_data.pop("new_registration", None)
+
+        db_obj = (
+            self.model(**obj_in_data)
+            if not user_id
+            else self.model(**obj_in_data, last_user_to_interact=user_id)
+        )
+
+        db.add(db_obj)
+        if commit:
+            db.commit()
+        if refresh:
+            db.refresh(db_obj)
+        return db_obj
+
     def get_by_field(self, db: Session, *, field: str, value: Any) -> Optional[Student]:
         return db.query(Student).filter(getattr(Student, field) == value).first()
 

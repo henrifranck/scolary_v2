@@ -25,12 +25,21 @@ import {
 } from "../../../services/mention-service";
 import { ActionButton } from "@/components/action-button";
 import { Mention, MentionPayload } from "@/models/mentions";
+import { usePluggeds } from "@/services/plugged-service";
+import { Plugged } from "@/models/plugged";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 type MentionFormValues = {
   name: string;
   slug: string;
   abbreviation: string;
-  plugged: string;
+  id_plugged: string;
   background: string;
 };
 
@@ -38,7 +47,7 @@ const defaultFormValues: MentionFormValues = {
   name: "",
   slug: "",
   abbreviation: "",
-  plugged: "",
+  id_plugged: "",
   background: ""
 };
 
@@ -46,7 +55,7 @@ const toFormValues = (mention?: Mention | null): MentionFormValues => ({
   name: mention?.name ?? "",
   slug: mention?.slug ?? "",
   abbreviation: mention?.abbreviation ?? "",
-  plugged: mention?.plugged ?? "",
+  id_plugged: mention?.id_plugged ? String(mention.id_plugged) : "",
   background: mention?.background ?? ""
 });
 
@@ -54,7 +63,7 @@ const toPayload = (values: MentionFormValues): MentionPayload => ({
   name: values.name.trim(),
   slug: values.slug.trim(),
   abbreviation: values.abbreviation.trim(),
-  plugged: values.plugged.trim(),
+  id_plugged: Number(values.id_plugged),
   background: values.background.trim()
 });
 
@@ -62,6 +71,7 @@ interface MentionFormProps {
   mode: "create" | "edit";
   initialValues?: MentionFormValues;
   isSubmitting: boolean;
+  pluggedOptions: Plugged[];
   onSubmit: (values: MentionFormValues) => Promise<void>;
   onCancel: () => void;
 }
@@ -71,20 +81,30 @@ const MentionForm = ({
   initialValues,
   onSubmit,
   onCancel,
-  isSubmitting
+  isSubmitting,
+  pluggedOptions
 }: MentionFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
+    watch,
+    setValue
   } = useForm<MentionFormValues>({
     defaultValues: initialValues ?? defaultFormValues
   });
+  const selectedPlugged = watch("id_plugged");
 
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
   }, [initialValues, reset]);
+
+  useEffect(() => {
+    if (!selectedPlugged && pluggedOptions.length > 0) {
+      setValue("id_plugged", String(pluggedOptions[0].id));
+    }
+  }, [pluggedOptions, selectedPlugged, setValue]);
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -143,16 +163,36 @@ const MentionForm = ({
           <label className="text-sm font-medium" htmlFor="mention-plugged">
             Plugged
           </label>
-          <Input
-            id="mention-plugged"
-            placeholder="e.g. Computer science"
-            className={cn(
-              errors.plugged && "border-destructive text-destructive"
-            )}
-            {...register("plugged", { required: "Plugged value is required" })}
+          <input
+            type="hidden"
+            {...register("id_plugged", {
+              required: "Plugged value is required"
+            })}
           />
-          {errors.plugged ? (
-            <p className="text-xs text-destructive">{errors.plugged.message}</p>
+          <Select
+            value={watch("id_plugged")}
+            onValueChange={(value) => setValue("id_plugged", value)}
+          >
+            <SelectTrigger
+              className={cn(
+                "h-11",
+                errors.id_plugged && "border-destructive text-destructive"
+              )}
+            >
+              <SelectValue placeholder="Select plugged" />
+            </SelectTrigger>
+            <SelectContent>
+              {pluggedOptions.map((plug) => (
+                <SelectItem key={plug.id} value={String(plug.id)}>
+                  {plug.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.id_plugged ? (
+            <p className="text-xs text-destructive">
+              {errors.id_plugged.message}
+            </p>
           ) : null}
         </div>
         <div className="space-y-2">
@@ -219,6 +259,18 @@ export const MentionsPage = () => {
   const createMention = useCreateMention();
   const updateMention = useUpdateMention();
   const deleteMention = useDeleteMention();
+  const {
+    data: pluggedResponse,
+    isPending: pluggedLoading
+  } = usePluggeds({ limit: 1000 });
+  const pluggedOptions = pluggedResponse?.data ?? [];
+  const pluggedById = useMemo(
+    () =>
+      new Map<number | string, string>(
+        (pluggedOptions ?? []).map((entry) => [entry.id, entry.name])
+      ),
+    [pluggedOptions]
+  );
 
   const openCreateForm = useCallback(() => {
     setEditingMention(null);
@@ -238,6 +290,13 @@ export const MentionsPage = () => {
   const handleSubmit = useCallback(
     async (values: MentionFormValues) => {
       try {
+        if (!values.id_plugged) {
+          setFeedback({
+            type: "error",
+            text: "Please select a plugged value."
+          });
+          return;
+        }
         if (editingMention) {
           await updateMention.mutateAsync({
             id: Number(editingMention.id),
@@ -317,11 +376,13 @@ export const MentionsPage = () => {
         )
       },
       {
-        accessorKey: "plugged",
+        accessorKey: "id_plugged",
         header: "Plugged",
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.plugged}
+            {pluggedById.get(row.original.id_plugged ?? "") ??
+              row.original.plugged ??
+              "—"}
           </span>
         )
       },
@@ -352,7 +413,7 @@ export const MentionsPage = () => {
         )
       }
     ];
-  }, [handleEdit]);
+  }, [handleEdit, pluggedById]);
 
   const isSubmitting = createMention.isPending || updateMention.isPending;
 
@@ -416,6 +477,7 @@ export const MentionsPage = () => {
             onSubmit={handleSubmit}
             onCancel={closeForm}
             isSubmitting={isSubmitting}
+            pluggedOptions={pluggedOptions}
           />
         </DialogContent>
       </Dialog>

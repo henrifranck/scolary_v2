@@ -52,8 +52,10 @@ interface ReinscriptionAnnualFormProps {
   editingSections: Record<EditableSection, boolean>;
   cardNumber?: string;
   filters?: any;
+  defaultMentionId?: string;
   disabledEditing?: boolean;
   registerType: string;
+  onRegistrationStatusChange?: (hasRegistration: boolean) => void;
 }
 
 export const handleFormSubmit = (e: React.FormEvent) => {};
@@ -63,8 +65,10 @@ export const ReinscriptionAnnualRegister = ({
   editingSections,
   cardNumber,
   filters,
+  defaultMentionId,
   disabledEditing = false,
-  registerType
+  registerType,
+  onRegistrationStatusChange
 }: ReinscriptionAnnualFormProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [annualRegisterDrafts, setAnnualRegisterDrafts] = useState<
@@ -143,6 +147,17 @@ export const ReinscriptionAnnualRegister = ({
     const timer = window.setTimeout(() => setDocumentUploadError(null), 5000);
     return () => window.clearTimeout(timer);
   }, [documentUploadError]);
+
+  useEffect(() => {
+    if (!onRegistrationStatusChange) return;
+    const hasDrafts = Object.values(registrationDrafts).some(
+      (entries) => Array.isArray(entries) && entries.length > 0
+    );
+    const hasSaved = Object.values(savedRegistrationDrafts).some(
+      (entries) => Array.isArray(entries) && entries.length > 0
+    );
+    onRegistrationStatusChange(hasDrafts || hasSaved);
+  }, [registrationDrafts, savedRegistrationDrafts, onRegistrationStatusChange]);
   const routeUi =
     registerType === "REGISTRATION" ? "re-registration" : "selection";
   const { data: availableServiceData } = useQuery({
@@ -191,17 +206,23 @@ export const ReinscriptionAnnualRegister = ({
       "enrollment-fees",
       registerType,
       filters?.id_year,
-      filters?.id_mention
+      defaultMentionId ?? filters?.id_mention
     ],
     queryFn: () =>
       fetchEnrollmentFees({
         where: JSON.stringify([
           { key: "id_academic_year", operator: "==", value: filters?.id_year },
-          { key: "id_mention", operator: "==", value: filters?.id_mention },
+          {
+            key: "id_mention",
+            operator: "==",
+            value: defaultMentionId ?? filters?.id_mention
+          },
           { key: "register_type", operator: "==", value: registerType }
         ])
       }),
-    enabled: Boolean(filters?.id_year && filters?.id_mention),
+    enabled: Boolean(
+      filters?.id_year && (defaultMentionId ?? filters?.id_mention)
+    ),
     staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 120,
     refetchOnWindowFocus: false,
@@ -279,7 +300,8 @@ export const ReinscriptionAnnualRegister = ({
     isNew: true
   });
 
-  const mentionId = filters?.id_mention ?? filters?.mentionId ?? "";
+  const mentionId =
+    defaultMentionId ?? filters?.id_mention ?? filters?.mentionId ?? "";
   const currentAcademicYear =
     annualRegisterDrafts[0]?.academic_year ?? annualRegister[0]?.academic_year;
   const currentAcademicYearName = currentAcademicYear?.name ?? "";

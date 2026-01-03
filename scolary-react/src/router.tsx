@@ -40,6 +40,7 @@ import { Route as rootRoute } from "./routes/__root";
 import { BaccalaureateSeriesPage } from "./pages/admin/baccalaureate-series/baccalaureate-series";
 import { NationalitysPage } from "./pages/admin/nationality/nationality";
 import { ClassroomsPage } from "./pages/admin/classroom/classroom";
+import { PluggedPage } from "./pages/admin/plugged/plugged-page";
 
 const ensureAuthenticated = ({ context }: { context: AppRouterContext }) => {
   const { status } = context.authStore.getState();
@@ -298,6 +299,11 @@ const groupsUserRoute = createRoute({
   component: GroupsPage,
   beforeLoad: ensureAuthenticated
 });
+const pluggedRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "plugged",
+  component: PluggedPage
+});
 const availableServicesRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: "available-services",
@@ -476,6 +482,7 @@ const routeTree = rootRoute.addChildren([
     teachingUnitRoute,
     constituentElementsRoute,
     groupsRoute,
+    pluggedRoute,
     availableServicesRoute,
     requiredDocumentsRoute,
     enrollmentFeesRoute,
