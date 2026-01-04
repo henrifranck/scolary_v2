@@ -15,7 +15,7 @@ import { HomePage } from "./pages/home/home-page";
 import { CmsPublicPage } from "./pages/home/cms-public-page";
 import { PublicationsPage } from "./pages/home/publications-page";
 import { WorkingTimePublicPage } from "./pages/home/working-time-public-page";
-import { AcademicYearsPage } from "./pages/admin/academic-years-page";
+import { AcademicYearsPage } from "./pages/admin/academic-years/academic-years-page";
 import { WorkingTimePage } from "./pages/admin/working-time-page";
 import { UsersPage } from "./pages/admin/users-page";
 import { RolesPage } from "./pages/admin/roles/roles-page";
@@ -23,9 +23,9 @@ import { SubjectsPage } from "./pages/admin/subjects/subjects-page";
 import { MentionsPage } from "./pages/admin/mentions/mentions-page";
 import { JourneysPage } from "./pages/admin/journeys/journeys-page";
 import { PermissionsPage } from "./pages/admin/permissions/permissions-page";
-import { UniversityInfoPage } from "./pages/admin/university-info-page";
-import { TeachingUnitPage } from "./pages/admin/teaching-unit-page";
-import { ConstituentElementsPage } from "./pages/admin/constituent-elements-page";
+import { UniversityInfoPage } from "./pages/admin/university-info/university-info-page";
+import { TeachingUnitPage } from "./pages/admin/teaching-unit/teaching-unit-page";
+import { ConstituentElementPage } from "./pages/admin/constituent-elements/constituent-elements-page";
 import { GroupsPage } from "./pages/admin/groups-page";
 import { AvailableServicesPage } from "./pages/admin/available-services/available-services-page";
 import { RequiredDocumentsPage } from "./pages/admin/required-documents/required-documents-page";
@@ -277,13 +277,13 @@ const teachingUnitUserRoute = createRoute({
 const constituentElementsRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: "constituent-elements",
-  component: ConstituentElementsPage
+  component: ConstituentElementPage
 });
 
 const constituentElementsUserRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "constituent-elements",
-  component: ConstituentElementsPage,
+  component: ConstituentElementPage,
   beforeLoad: ensureAuthenticated
 });
 

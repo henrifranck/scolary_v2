@@ -31,7 +31,7 @@ class MentionUpdate(MentionBase):
 
 class MentionInDBBase(MentionBase):
     id: Optional[int]
-    id_plugged: Optional[int]
+    id_plugged: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 

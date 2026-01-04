@@ -37,9 +37,9 @@ export interface AcademicFilterValue {
   id_mention: string;
   id_journey: string;
   semester: string;
-  id_year: string;
+  id_year?: string;
   level?: string;
-  register_type: string;
+  register_type?: string;
 }
 
 const getJourneyMentionId = (journey: JourneyOption) =>
@@ -481,7 +481,6 @@ export const AcademicFilters = ({
                 </Select>
               </div>
             )}
-
           </div>
 
           {/* Semester Selection */}

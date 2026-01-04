@@ -194,7 +194,7 @@ export const StudentForm = ({
         type: "select",
         inputType: "text",
         formKey: "baccalaureateSerieId",
-        selectValue: "baccakaureateSerieLabel",
+        selectValue: "baccalaureateSerieLabel",
         options: baccalaureateSerieOptions
       }
     ],
@@ -316,12 +316,12 @@ export const StudentForm = ({
           student.num_of_baccalaureate ?? previous.baccalaureateNumber,
         baccalaureateCenter:
           student.center_of_baccalaureate ?? previous.baccalaureateCenter,
-        baccakaureateYear:
+        baccalaureateYear:
           student.year_of_baccalaureate ?? previous.baccalaureateYear,
-        baccakaureateSerieId:
+        baccalaureateSerieId:
           student.id_baccalaureate_series ?? previous.baccalaureateSerieId,
-        baccakaureateSerieLabel:
-          student.baccalaureate_serie?.name ?? previous.baccakaureateSerieLabel,
+        baccalaureateSerieLabel:
+          student.baccalaureate_serie?.name ?? previous.baccalaureateSerieLabel,
         nationalityLabel:
           student.nationality?.name ?? previous.nationalityLabel,
         job: student.job ?? previous.job,
@@ -386,6 +386,7 @@ export const StudentForm = ({
           newRegistration
         );
         const student = (profile as any).data ?? profile;
+        console.log(student);
 
         setShowField(student.id !== undefined);
         const rawAnnual = Array.isArray(student.annual_register)
@@ -499,7 +500,7 @@ export const StudentForm = ({
                         </label>
                         <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
-                            value={formState.selectNumber}
+                            value={formState.selectNumber ?? ""}
                             onChange={(event) =>
                               handleFormChange(
                                 "selectNumber",
@@ -533,7 +534,7 @@ export const StudentForm = ({
                         </label>
                         <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
-                            value={formState.cardNumber}
+                            value={formState.cardNumber ?? ""}
                             onChange={(event) =>
                               handleFormChange("cardNumber", event.target.value)
                             }

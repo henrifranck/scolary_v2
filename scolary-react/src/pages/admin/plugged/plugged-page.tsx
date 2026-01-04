@@ -3,10 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import {
-  DataTable,
-  type ColumnDef
-} from "@/components/data-table/data-table";
+import { DataTable, type ColumnDef } from "@/components/data-table/data-table";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +21,7 @@ import {
   useDeletePlugged
 } from "@/services/plugged-service";
 import { Plugged, PluggedPayload } from "@/models/plugged";
+import { ActionButton } from "@/components/action-button";
 
 type PluggedFormValues = {
   name: string;
@@ -50,7 +48,12 @@ export const PluggedPage = () => {
   const [pluggedToDelete, setPluggedToDelete] = useState<Plugged | null>(null);
 
   const offset = (page - 1) * pageSize;
-  const { data: pluggedResponse, isPending, isError, error } = usePluggeds({
+  const {
+    data: pluggedResponse,
+    isPending,
+    isError,
+    error
+  } = usePluggeds({
     offset,
     limit: pageSize
   });
@@ -94,10 +97,16 @@ export const PluggedPage = () => {
             id: editingPlugged.id,
             payload: toPayload(values)
           });
-          setFeedback({ type: "success", text: "Plugged updated successfully." });
+          setFeedback({
+            type: "success",
+            text: "Plugged updated successfully."
+          });
         } else {
           await createPlugged.mutateAsync(toPayload(values));
-          setFeedback({ type: "success", text: "Plugged created successfully." });
+          setFeedback({
+            type: "success",
+            text: "Plugged created successfully."
+          });
         }
         closeForm();
       } catch (mutationError) {
@@ -148,22 +157,27 @@ export const PluggedPage = () => {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleEdit(row.original)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setPluggedToDelete(row.original)}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
+          // <div className="flex items-center gap-2">
+          //   <Button
+          //     variant="ghost"
+          //     size="icon"
+          //     onClick={() => handleEdit(row.original)}
+          //   >
+          //     <Pencil className="h-4 w-4" />
+          //   </Button>
+          //   <Button
+          //     variant="ghost"
+          //     size="icon"
+          //     onClick={() => setPluggedToDelete(row.original)}
+          //   >
+          //     <Trash2 className="h-4 w-4 text-destructive" />
+          //   </Button>
+          // </div>
+          <ActionButton
+            row={row}
+            handleEdit={handleEdit}
+            setConfirmDelete={setPluggedToDelete}
+          />
         )
       }
     ],
@@ -171,7 +185,9 @@ export const PluggedPage = () => {
   );
 
   const isSubmitting =
-    createPlugged.isPending || updatePlugged.isPending || deletePlugged.isPending;
+    createPlugged.isPending ||
+    updatePlugged.isPending ||
+    deletePlugged.isPending;
 
   return (
     <div className="space-y-6">
@@ -205,8 +221,6 @@ export const PluggedPage = () => {
           data={pluggedList}
           columns={columns}
           isLoading={isPending}
-          isError={isError}
-          error={error instanceof Error ? error.message : undefined}
           totalItems={totalPlugged}
           page={page}
           pageSize={pageSize}

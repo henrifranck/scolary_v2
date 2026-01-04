@@ -2,27 +2,27 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { Button } from "../../components/ui/button";
+import { Button } from "../../../components/ui/button";
 import {
   DataTable,
   type ColumnDef
-} from "../../components/data-table/data-table";
-import { ConfirmDialog } from "../../components/confirm-dialog";
-import { Input } from "../../components/ui/input";
+} from "../../../components/data-table/data-table";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { Input } from "../../../components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from "../../components/ui/dialog";
-import { cn } from "../../lib/utils";
+} from "../../../components/ui/dialog";
+import { cn } from "../../../lib/utils";
 import {
   useAcademicYears,
   useCreateAcademicYear,
   useUpdateAcademicYear,
   useDeleteAcademicYear
-} from "../../services/academic-year-service";
+} from "../../../services/academic-year-service";
 import { AcademicYear, AcademicYearPayload } from "@/models/academic-year";
 import { ActionButton } from "@/components/action-button";
 

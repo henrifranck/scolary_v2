@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { useForm } from "react-hook-form";
 
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Textarea } from "../../components/ui/textarea";
-import { cn } from "../../lib/utils";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Textarea } from "../../../components/ui/textarea";
+import { cn } from "../../../lib/utils";
 import { Eye, EyeOff, Pencil } from "lucide-react";
 import {
   type University,
   type UniversityPayload,
   useSaveUniversity,
   useUniversityInfo
-} from "../../services/university-service";
-import { useUploadFile } from "../../services/file-manager-service";
+} from "../../../services/university-service";
+import { useUploadFile } from "../../../services/file-manager-service";
 
 type UniversityFormValues = {
   province: string;
@@ -114,6 +114,7 @@ export const UniversityInfoPage = () => {
     const apiBase = import.meta.env.VITE_SCOLARY_API_URL;
     try {
       const base = new URL(apiBase);
+
       return `${base.origin}/${finalPath}`;
     } catch {
       return `/${finalPath}`;

@@ -38,6 +38,7 @@ import { printSelectionList } from "@/services/print-service";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ActionButton } from "@/components/action-button";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -469,29 +470,34 @@ export const DossierSelectionPage = () => {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              aria-label="Edit"
-              onClick={() => handleEdit(row.original)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              aria-label="Delete"
-              onClick={() => setConfirmDeleteStudent(row.original)}
-              disabled={
-                deletingId === (row.original.apiId || row.original.recordId)
-              }
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          // <div className="flex items-center gap-2">
+          //   <Button
+          //     variant="ghost"
+          //     size="icon"
+          //     className="h-8 w-8"
+          //     aria-label="Edit"
+          //     onClick={() => handleEdit(row.original)}
+          //   >
+          //     <Pencil className="h-4 w-4" />
+          //   </Button>
+          //   <Button
+          //     variant="ghost"
+          //     size="icon"
+          //     className="h-8 w-8 text-destructive hover:text-destructive"
+          //     aria-label="Delete"
+          //     onClick={() => setConfirmDeleteStudent(row.original)}
+          //     disabled={
+          //       deletingId === (row.original.apiId || row.original.recordId)
+          //     }
+          //   >
+          //     <Trash2 className="h-4 w-4" />
+          //   </Button>
+          // </div>
+          <ActionButton
+            row={row}
+            handleEdit={handleEdit}
+            setConfirmDelete={setConfirmDeleteStudent}
+          />
         )
       }
     ],

@@ -51,7 +51,7 @@ export type StudentFormState = {
   motherName?: string;
   motherJob?: string;
   parentAdress?: string;
-  baccakaureateSerieLabel?: string;
+  baccalaureateSerieLabel?: string;
   nationalityLabel?: string;
   generatedLevel?: string;
 };

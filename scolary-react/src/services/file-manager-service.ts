@@ -23,6 +23,7 @@ export interface FileAsset {
   mime_type?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  path?: string;
 }
 
 export type FileAssetPayload = {
@@ -78,7 +79,10 @@ export const fetchFiles = async (
 export const fetchFile = (id: number): Promise<FileAsset> =>
   apiRequest<FileAsset>(`/files/${id}/`);
 
-export const uploadFile = ({ file, payload }: UploadFileInput): Promise<FileAsset> => {
+export const uploadFile = ({
+  file,
+  payload
+}: UploadFileInput): Promise<FileAsset> => {
   const formData = new FormData();
   formData.append("file", file);
   if (payload?.name) formData.append("name", payload.name);
@@ -132,13 +136,8 @@ export const useUpdateFile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      payload
-    }: {
-      id: number;
-      payload: FileAssetPayload;
-    }) => updateFileMetadata(id, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: FileAssetPayload }) =>
+      updateFileMetadata(id, payload),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: filesKey });
       queryClient.invalidateQueries({
