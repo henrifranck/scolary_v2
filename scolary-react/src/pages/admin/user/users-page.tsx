@@ -3,34 +3,34 @@ import { useForm } from "react-hook-form";
 import type { Row } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 
-import { Button } from "../../components/ui/button";
+import { Button } from "../../../components/ui/button";
 import {
   DataTable,
   type ColumnDef
-} from "../../components/data-table/data-table";
-import { ConfirmDialog } from "../../components/confirm-dialog";
-import { Input } from "../../components/ui/input";
+} from "../../../components/data-table/data-table";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { Input } from "../../../components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from "../../components/ui/select";
+} from "../../../components/ui/select";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger
-} from "../../components/ui/tabs";
+} from "../../../components/ui/tabs";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from "../../components/ui/dialog";
-import { cn } from "../../lib/utils";
+} from "../../../components/ui/dialog";
+import { cn } from "../../../lib/utils";
 import {
   type User,
   type UserPayload,
@@ -39,9 +39,9 @@ import {
   useUpdateUser,
   useUsers,
   uploadUserPicture
-} from "../../services/user-service";
-import { useRoles } from "../../services/role-service";
-import { useMentions } from "../../services/mention-service";
+} from "../../../services/user-service";
+import { useRoles } from "../../../services/role-service";
+import { useMentions } from "../../../services/mention-service";
 import { ActionButton } from "@/components/action-button";
 import { createTeacher, type Grade } from "@/services/teacher-service";
 import { Switch } from "@/components/ui/switch";
