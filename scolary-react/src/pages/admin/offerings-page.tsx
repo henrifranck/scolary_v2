@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -27,10 +28,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLookupOptions } from "@/hooks/use-lookup-options";
 import { Textarea } from "@/components/ui/textarea";
+import { Input as ShadInput } from "@/components/ui/input";
 import { ConstituentElement } from "@/models/constituent-element";
 import { ConstituentElementOffering } from "@/models/constituent-element-offering";
 import { TeachingUnitOffering } from "@/models/teaching-unit-offering";
 import { TeachingUnit } from "@/models/teaching-unit";
+import { useUsers } from "@/services/user-service";
 import { fetchJourneys as fetchJourneysByMention } from "@/services/inscription-service";
 import { fetchConstituentElements } from "@/services/constituent-element-service";
 import {
@@ -586,6 +589,42 @@ export const OfferingsPage = () => {
     ceOptionalGroupsQuery.data?.data ?? ceOptionalGroupsQuery.data ?? [];
   const tuOptionalGroupOptions =
     tuOptionalGroupsQuery.data?.data ?? tuOptionalGroupsQuery.data ?? [];
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const [debouncedTeacherSearch, setDebouncedTeacherSearch] = useState("");
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedTeacherSearch(teacherSearch.trim());
+    }, 2000);
+    return () => clearTimeout(handle);
+  }, [teacherSearch]);
+
+  const teacherWhere = useMemo(() => {
+    const wheres: Array<Record<string, any>> = [
+      { key: "teacher.id", operator: "isNotNull", value: "" }
+    ];
+    if (debouncedTeacherSearch) {
+      wheres.push([
+        {
+          key: "first_name",
+          operator: "like",
+          value: `%${debouncedTeacherSearch}%`
+        },
+        {
+          key: "last_name",
+          operator: "like",
+          value: `%${debouncedTeacherSearch}%`
+        }
+      ]);
+    }
+
+    return wheres;
+  }, [debouncedTeacherSearch]);
+  const teacherQuery = useUsers({
+    where: JSON.stringify(teacherWhere),
+    limit: 30
+  });
+  const teacherOptions = teacherQuery.data?.data ?? [];
   const currentJourneyId =
     optionalGroupForm.watch("id_journey") || filters.id_journey;
   const currentSemester =
@@ -593,6 +632,12 @@ export const OfferingsPage = () => {
   const currentJourneyLabel =
     availableJourneys.find((journey) => journey.id === currentJourneyId)
       ?.label ?? "Non défini";
+  const selectedCE = ceOptions.find(
+    (ce) => String(ce.id) === ceForm.watch("id_constituent_element")
+  );
+  const selectedTU = tuOptions.find(
+    (tu) => String(tu.id) === tuForm.watch("id_teaching_unit")
+  );
 
   const resetOfferingForms = useCallback(() => {
     ceForm.reset(defaultCEOfferingValues);
@@ -651,7 +696,10 @@ export const OfferingsPage = () => {
           linkedUE && linkedUE !== emptySelectValue
             ? Number(linkedUE)
             : undefined,
-        id_teacher: values.id_teacher ? Number(values.id_teacher) : undefined
+        id_teacher:
+          values.id_teacher && values.id_teacher !== emptySelectValue
+            ? Number(values.id_teacher)
+            : undefined
       };
       if (editingCEOfferingId) {
         await updateCEOffering.mutateAsync({
@@ -1098,6 +1146,12 @@ export const OfferingsPage = () => {
 
           {offeringTab === "ec" ? (
             <form className="space-y-3" onSubmit={handleCreateCEOffering}>
+              <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground">
+                <div className="flex flex-col gap-1">
+                  <span>Parcours : {currentJourneyLabel}</span>
+                  <span>Semestre : {currentSemester || "N/A"}</span>
+                </div>
+              </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <Select
                   value={ceForm.watch("id_constituent_element")}
@@ -1197,14 +1251,40 @@ export const OfferingsPage = () => {
                 <Select
                   value={ceForm.watch("id_teacher")}
                   onValueChange={(value) =>
-                    ceForm.setValue("id_teacher", value)
+                    ceForm.setValue(
+                      "id_teacher",
+                      value === emptySelectValue ? "" : value
+                    )
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Enseignant (facultatif)" />
                   </SelectTrigger>
                   <SelectContent>
+                    <div className="p-2">
+                      <ShadInput
+                        placeholder="Rechercher un enseignant"
+                        value={teacherSearch}
+                        onChange={(event) =>
+                          setTeacherSearch(event.target.value)
+                        }
+                        onKeyDown={(event) => event.stopPropagation()}
+                      />
+                    </div>
                     <SelectItem value={emptySelectValue}>Aucun</SelectItem>
+                    {teacherOptions.map((teacher: any) => (
+                      <SelectItem key={teacher.id} value={String(teacher.id)}>
+                        {teacher.first_name} {teacher.last_name}{" "}
+                        {teacher.teacher?.grade
+                          ? `· ${teacher.teacher.grade}`
+                          : ""}
+                      </SelectItem>
+                    ))}
+                    {teacherQuery.isFetching ? (
+                      <SelectItem value="loading" disabled>
+                        Chargement…
+                      </SelectItem>
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>
@@ -1219,12 +1299,20 @@ export const OfferingsPage = () => {
                 <Button type="submit" disabled={createCEOffering.isPending}>
                   {createCEOffering.isPending
                     ? "Création…"
-                    : "Créer l'offre EC"}
+                    : editingCEOfferingId
+                      ? "Modifier l'offre EC"
+                      : "Créer l'offre EC"}
                 </Button>
               </div>
             </form>
           ) : (
             <form className="space-y-3" onSubmit={handleCreateTUOffering}>
+              <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground">
+                <div className="flex flex-col gap-1">
+                  <span>Parcours : {currentJourneyLabel}</span>
+                  <span>Semestre : {currentSemester || "N/A"}</span>
+                </div>
+              </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <Select
                   value={tuForm.watch("id_teaching_unit")}
@@ -1290,7 +1378,9 @@ export const OfferingsPage = () => {
                 <Button type="submit" disabled={createTUOffering.isPending}>
                   {createTUOffering.isPending
                     ? "Création…"
-                    : "Créer l'offre UE"}
+                    : editingTUOfferingId
+                      ? "Modifier l'offre UE"
+                      : "Créer l'offre UE"}
                 </Button>
               </div>
             </form>
@@ -1371,7 +1461,11 @@ export const OfferingsPage = () => {
                 Annuler
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Création…" : "Créer le groupe"}
+                {isSubmitting
+                  ? "Création…"
+                  : editingOptionalGroupId
+                    ? "Modifier le groupe"
+                    : "Créer le groupe"}
               </Button>
             </div>
           </form>

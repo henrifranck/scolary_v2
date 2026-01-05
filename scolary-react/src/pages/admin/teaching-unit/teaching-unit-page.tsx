@@ -30,7 +30,6 @@ import { ActionButton } from "@/components/action-button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 type TeachingUnitFilters = {
   id_mention: string;
@@ -129,11 +128,10 @@ const TeachingUnitForm = ({
           <p className="text-xs text-destructive">{errors.name.message}</p>
         ) : null}
       </div>
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Parcours &amp; Semestre</p>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{journeyLabel}</Badge>
-          <Badge variant="outline">{semesterLabel}</Badge>
+      <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground">
+        <div className="flex flex-col gap-1">
+          <span>Parcours : {journeyLabel}</span>
+          <span>Semestre : {semesterLabel}</span>
         </div>
       </div>
       <div className="flex items-center justify-end gap-2">

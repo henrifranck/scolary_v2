@@ -55,6 +55,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             filter_condition = attribute < value
         elif operator == "like":
             filter_condition = attribute.like("%" + str(value) + "%")
+        elif operator == "ilike":
+            filter_condition = attribute.ilike("%" + str(value) + "%")
         elif operator == "month":
             if value is None:
                 filter_condition = extract("month", attribute).is_(None)
