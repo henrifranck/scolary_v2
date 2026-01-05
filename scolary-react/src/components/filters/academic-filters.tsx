@@ -20,6 +20,11 @@ import {
 } from "../../services/inscription-service";
 import { MentionOption } from "@/models/mentions";
 
+export interface AcademicYearOption {
+  id: string;
+  label: string;
+}
+
 export interface JourneyOption {
   id: string;
   label: string;

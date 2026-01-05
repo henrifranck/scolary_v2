@@ -1,0 +1,39 @@
+import { Classroom } from "./classroom";
+import { ConstituentElementOffering } from "./constituent-element-offering";
+import { Group } from "./group";
+
+export type WorkingTimeType = "COURSE" | "TP" | "TD" | "EXAM";
+export type WorkingSessionType = "Normal" | "Rattrapage";
+
+export interface WorkingTime {
+  id: number;
+  id_constituent_element_offering: number;
+  id_classroom?: number | null;
+  working_time_type: WorkingTimeType;
+  day?: string | null;
+  start?: string | null;
+  end?: string | null;
+  id_group?: number | null;
+  date?: string | null;
+  session?: WorkingSessionType | null;
+  constituent_element_offering?: ConstituentElementOffering | null;
+  classroom?: Classroom | null;
+  group?: Group | null;
+}
+
+export type WorkingTimePayload = {
+  id_constituent_element_offering: number | string;
+  id_classroom?: number | string | null;
+  working_time_type: WorkingTimeType;
+  day?: string | null;
+  start?: string | null;
+  end?: string | null;
+  id_group?: number | string | null;
+  date?: string | null;
+  session?: WorkingSessionType | null;
+};
+
+export type WorkingTimeListQuery = Record<
+  string,
+  string | number | boolean | undefined
+>;

@@ -235,6 +235,7 @@ const ConstituentElementForm = ({
           value={watch("color")}
           className={cn(errors.color && "border-destructive text-destructive")}
           {...register("color", { required: "Name is required" })}
+          disabled={true}
         />
         {errors.color ? (
           <p className="text-xs text-destructive">{errors.color.message}</p>

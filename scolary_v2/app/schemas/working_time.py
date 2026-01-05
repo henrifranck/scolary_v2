@@ -9,17 +9,19 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic import field_validator
 from app.enum.working_time_type import WorkingTimeTypeEnum
 from app.enum.session_type import SessionTypeEnum
+from .classroom import Classroom
 from .constituent_element_offering import ConstituentElementOffering
 from .group import Group
 
 
 class WorkingTimeBase(BaseModel):
-    id_constituent_element: Optional[int] = None
+    id_constituent_element_offering: Optional[int] = None
     working_time_type: Optional[WorkingTimeTypeEnum] = None
     day: Optional[str] = None
     start: Optional[Any] = None
     end: Optional[Any] = None
     id_group: Optional[int] = None
+    id_classroom: Optional[int] = None
     date: Optional[datetime] = None
     session: Optional[SessionTypeEnum] = None
 
@@ -33,7 +35,6 @@ class WorkingTimeBase(BaseModel):
             except ValueError:
                 raise ValueError("Invalid datetime format")
         return value
-
 
     @field_validator('start', 'end', mode='before')
     def parse_time(cls, value):
@@ -51,7 +52,6 @@ class WorkingTimeBase(BaseModel):
         return value
 
 
-
 class WorkingTimeCreate(WorkingTimeBase):
     working_time_type: WorkingTimeTypeEnum
 
@@ -62,8 +62,9 @@ class WorkingTimeUpdate(WorkingTimeBase):
 
 class WorkingTimeInDBBase(WorkingTimeBase):
     id: Optional[int]
-    id_constituent_element: Optional[int]
-    id_group: Optional[int]
+    id_constituent_element_offering: Optional[int] = None
+    id_group: Optional[int] = None
+    id_classroom: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -73,8 +74,9 @@ class WorkingTime(WorkingTimeInDBBase):
 
 
 class WorkingTimeWithRelation(WorkingTimeInDBBase):
-    constituent_element: Optional[ConstituentElementOffering] = None
+    constituent_element_offering: Optional[ConstituentElementOffering] = None
     group: Optional[Group] = None
+    classroom: Optional[Classroom] = None
 
 
 class WorkingTimeInDB(WorkingTimeInDBBase):
@@ -84,7 +86,6 @@ class WorkingTimeInDB(WorkingTimeInDBBase):
 class ResponseWorkingTime(BaseModel):
     count: int
     data: Optional[List[WorkingTimeWithRelation]]
-
 
 # begin #
 # ---write your code here--- #

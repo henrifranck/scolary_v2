@@ -3,13 +3,17 @@
 # end #
 
 from app.db.base_class import Base
-from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_
+from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_, UniqueConstraint
 from sqlalchemy.orm import relationship, column_property, aliased
 from sqlalchemy import String, Integer
 
 
 class TeachingUnit(Base):
     __tablename__ = 'teaching_unit'
+    __table_args__ = (
+        UniqueConstraint('name', 'semester', 'id_journey',
+                         name='uq_name_semester_journey_teaching_unit'),
+    )
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     name = Column(String(255), nullable=False)
     semester = Column(String(255), nullable=False)

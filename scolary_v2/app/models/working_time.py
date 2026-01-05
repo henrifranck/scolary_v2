@@ -13,7 +13,7 @@ from app.enum.session_type import SessionTypeEnum
 class WorkingTime(Base):
     __tablename__ = 'working_time'
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
-    id_constituent_element = Column(Integer, ForeignKey('constituent_element_offering.id'))
+    id_constituent_element_offering = Column(Integer, ForeignKey('constituent_element_offering.id'))
     id_classroom = Column(Integer, ForeignKey('classroom.id'))
     working_time_type = Column(Enum(WorkingTimeTypeEnum), nullable=False)
     day = Column(String(255))
@@ -29,7 +29,7 @@ class WorkingTime(Base):
     deleted_at = Column(DateTime)
 
     # Relations
-    constituent_element = relationship('ConstituentElementOffering', foreign_keys=[id_constituent_element])
+    constituent_element_offering = relationship('ConstituentElementOffering', foreign_keys=[id_constituent_element_offering])
     classroom = relationship('Classroom', foreign_keys=[id_classroom])
     group = relationship('Group', foreign_keys=[id_group])
 

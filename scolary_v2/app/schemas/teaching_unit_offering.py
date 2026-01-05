@@ -15,7 +15,7 @@ class TeachingUnitOfferingBase(BaseModel):
     id_teaching_unit: Optional[int] = None
     credit: Optional[int] = None
     id_academic_year: Optional[int] = None
-    id_teaching_unit_goup: Optional[int] = None
+    id_teaching_unit_optional_group: Optional[int] = None
 
 
 class TeachingUnitOfferingCreate(TeachingUnitOfferingBase):
@@ -30,7 +30,7 @@ class TeachingUnitOfferingInDBBase(TeachingUnitOfferingBase):
     id: Optional[int]
     id_teaching_unit: Optional[int]
     id_academic_year: Optional[int]
-    id_teaching_unit_goup: Optional[int]
+    id_teaching_unit_optional_group: Optional[int]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -42,7 +42,7 @@ class TeachingUnitOffering(TeachingUnitOfferingInDBBase):
 class TeachingUnitOfferingWithRelation(TeachingUnitOfferingInDBBase):
     teaching_unit: Optional[TeachingUnit] = None
     academic_year: Optional[AcademicYear] = None
-    teaching_unit_group: Optional[TeachingUnitOptionalGroup] = None
+    teaching_unit_optional_group: Optional[TeachingUnitOptionalGroup] = None
 
 
 class TeachingUnitOfferingInDB(TeachingUnitOfferingInDBBase):

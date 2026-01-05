@@ -43,7 +43,11 @@ class ConstituentElementOfferingInDBBase(ConstituentElementOfferingBase):
 
 
 class ConstituentElementOffering(ConstituentElementOfferingInDBBase):
-    pass
+    constituent_element: Optional[ConstituentElement] = None
+    academic_year: Optional[AcademicYear] = None
+    teacher: Optional[Teacher] = None
+    constituent_element_optional_group: Optional[ConstituentElementOptionalGroup] = None
+    teching_unit_offering: Optional[TeachingUnitOffering] = None
 
 
 class ConstituentElementOfferingWithRelation(ConstituentElementOfferingInDBBase):

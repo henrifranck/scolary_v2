@@ -79,6 +79,44 @@ type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 };
 
+const extractErrorMessage = (
+  detail: unknown,
+  fallbackStatus: number
+): string => {
+  if (!detail) {
+    return `Request failed with status ${fallbackStatus}`;
+  }
+  if (typeof detail === "string") {
+    return detail;
+  }
+  if (
+    Array.isArray(detail) &&
+    detail.length > 0 &&
+    typeof detail[0] === "object"
+  ) {
+    const messages = detail
+      .map((item: any) => item?.msg || item?.message || item?.detail)
+      .filter(Boolean);
+    if (messages.length) {
+      return messages.join("; ");
+    }
+  }
+  if (typeof detail === "object") {
+    const asObj = detail as Record<string, unknown>;
+    if (asObj.message) return String(asObj.message);
+    if (Array.isArray(asObj.detail)) {
+      const messages = (asObj.detail as any[])
+        .map((item) => item?.msg || item?.message || item?.detail)
+        .filter(Boolean);
+      if (messages.length) {
+        return messages.join("; ");
+      }
+    }
+    if (asObj.detail) return String(asObj.detail);
+  }
+  return `Request failed with status ${fallbackStatus}`;
+};
+
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {}
@@ -106,13 +144,9 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const detail = await safeReadJson(response);
     const message =
-      typeof detail === "object" && detail && "message" in detail
-        ? String(detail.message)
-        : typeof detail === "object" && detail && "detail" in detail
-          ? String(detail.detail)
-          : response.status === 403
-            ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
-            : `Request failed with status ${response.status}`;
+      response.status === 403
+        ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
+        : extractErrorMessage(detail, response.status);
     throw new Error(message);
   }
 
@@ -158,13 +192,9 @@ export async function apiRequestBlob(
   if (!response.ok) {
     const detail = await safeReadJson(response);
     const message =
-      typeof detail === "object" && detail && "message" in detail
-        ? String((detail as { message: unknown }).message)
-        : typeof detail === "object" && detail && "detail" in detail
-          ? String((detail as { detail: unknown }).detail)
-          : response.status === 403
-            ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
-            : `Request failed with status ${response.status}`;
+      response.status === 403
+        ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
+        : extractErrorMessage(detail, response.status);
     throw new Error(message);
   }
 
