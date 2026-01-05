@@ -51,11 +51,17 @@ import {
   useUpdateWorkingTime
 } from "@/services/working-time-service";
 import {
+  useExamDates,
+  useCreateExamDate,
+  useUpdateExamDate,
+  useDeleteExamDate
+} from "@/services/exam-date-service";
+import { ExamDate } from "@/models/exam-date";
+import {
   WorkingSessionType,
   WorkingTime,
   WorkingTimePayload,
-  WorkingTimeType,
-  WorkingTimeTypeValue
+  WorkingTimeType
 } from "@/models/working-time";
 import { ConstituentElementOffering } from "@/models/constituent-element-offering";
 import { Classroom } from "@/models/classroom";
@@ -72,14 +78,19 @@ type WorkingTimeFormValues = {
   id_constituent_element_offering: string;
   id_classroom: string;
   id_group: string;
-  working_time_type:
-    | WorkingTimeTypeValue[keyof WorkingTimeTypeValue]
-    | keyof WorkingTimeTypeValue;
+  working_time_type: WorkingTimeType;
   session: WorkingSessionType;
   day: string;
   date: string;
   start: string;
   end: string;
+};
+
+type ExamDateFormValues = {
+  id_academic_year: string;
+  date_from: string;
+  date_to: string;
+  session: WorkingSessionType;
 };
 
 type Feedback = { type: "success" | "error"; text: string };
@@ -129,12 +140,18 @@ const dayAliases: Record<string, string> = {
 };
 
 const workingTypeOptions: { value: string; label: string }[] = [
-  { value: "COURSE", label: "Cours" },
-  { value: "TP", label: "Travaux pratiques" },
-  { value: "TD", label: "Travaux dirigés" },
-  { value: "EXAM", label: "Examen" }
+  { value: "cours", label: "Cours" },
+  { value: "tp", label: "Travaux pratiques" },
+  { value: "td", label: "Travaux dirigés" },
+  { value: "exam", label: "Examen" }
 ];
 const workingTypeTabs = workingTypeOptions;
+const workingTypeValueOptions = {
+  cours: "Cours",
+  tp: "Travaux pratiques",
+  td: "Travaux dirigés",
+  exam: "Examen"
+};
 
 const sessionOptions: { value: WorkingSessionType; label: string }[] = [
   { value: "Normal", label: "Session normale" },
@@ -187,6 +204,22 @@ const normalizeDay = (day?: string | null, date?: string | null) => {
   return direct ?? null;
 };
 
+const normalizeWorkingTypeValue = (value?: string | null): WorkingTimeType =>
+  value && ["cours", "tp", "td", "exam"].includes(value.toLowerCase())
+    ? (value.toLowerCase() as WorkingTimeType)
+    : ("cours" as WorkingTimeType);
+
+const toApiWorkingTypeKey = (value?: string | null) => {
+  const normalized = normalizeWorkingTypeValue(value);
+  const mapping: Record<WorkingTimeType, string> = {
+    cours: "COURSE",
+    tp: "TP",
+    td: "TD",
+    exam: "EXAM"
+  };
+  return mapping[normalized] ?? "COURSE";
+};
+
 const timeToMinutes = (value?: string | null) => {
   if (!value) return null;
   const [hours, minutes] = value.split(":").map(Number);
@@ -218,20 +251,13 @@ const toFormValues = (
     ? String(workingTime.id_classroom)
     : "",
   id_group: workingTime?.id_group ? String(workingTime.id_group) : "",
-  working_time_type: workingTime?.working_time_type ?? "cours",
+  working_time_type: normalizeWorkingTypeValue(workingTime?.working_time_type),
   session: workingTime?.session ?? "Normal",
-  day: normalizeDay(workingTime?.day, workingTime?.date) ?? "Monday",
+  day: normalizeDay(workingTime?.day, workingTime?.date) ?? "Lundi",
   date: workingTime?.date ? workingTime.date.split("T")[0] : "",
   start: workingTime?.start ?? "08:00",
   end: workingTime?.end ?? "10:00"
 });
-
-const workingTimeTypeValue = {
-  COURSE: "cours",
-  TP: "tp",
-  TD: "td",
-  EXAM: "exam"
-} as const;
 
 const toPayload = (values: WorkingTimeFormValues): WorkingTimePayload => ({
   id_constituent_element_offering: Number(
@@ -239,12 +265,9 @@ const toPayload = (values: WorkingTimeFormValues): WorkingTimePayload => ({
   ),
   id_classroom: values.id_classroom ? Number(values.id_classroom) : undefined,
   id_group: values.id_group ? Number(values.id_group) : undefined,
-  working_time_type:
-    workingTimeTypeValue[
-      values.working_time_type.toUpperCase() as keyof typeof workingTimeTypeValue
-    ],
+  working_time_type: values.working_time_type,
   session: values.session,
-  day: values.day,
+  day: values.day || undefined,
   start: values.start,
   end: values.end,
   date: values.date ? new Date(values.date).toISOString() : undefined
@@ -259,6 +282,12 @@ interface WorkingTimeFormProps {
   groups: Group[];
   onSubmit: (values: WorkingTimeFormValues) => Promise<void>;
   onCancel: () => void;
+  fixedWorkingType: WorkingTimeType;
+  contextLabels: {
+    journey: string;
+    semester: string;
+    year: string;
+  };
 }
 
 const WorkingTimeForm = ({
@@ -269,7 +298,9 @@ const WorkingTimeForm = ({
   isSubmitting,
   offerings,
   classrooms,
-  groups
+  groups,
+  fixedWorkingType,
+  contextLabels
 }: WorkingTimeFormProps) => {
   const {
     register,
@@ -284,6 +315,8 @@ const WorkingTimeForm = ({
 
   const dateValue = watch("date");
   const selectedOffering = watch("id_constituent_element_offering");
+  const workingType = watch("working_time_type");
+  const isExam = workingType === "exam";
 
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
@@ -305,60 +338,32 @@ const WorkingTimeForm = ({
     }
   }, [offerings, selectedOffering, setValue]);
 
+  useEffect(() => {
+    setValue("working_time_type", fixedWorkingType);
+  }, [fixedWorkingType, setValue]);
+
+  useEffect(() => {
+    if (isExam) {
+      setValue("id_classroom", "");
+      setValue("id_group", "");
+      setValue("day", "");
+    } else {
+      setValue("date", "");
+      setValue("session", "Normal");
+    }
+  }, [isExam, setValue]);
+
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="working-time-type">
-            Type de séance
-          </label>
-          <Select
-            value={watch("working_time_type")}
-            onValueChange={(value: WorkingTimeType) =>
-              setValue("working_time_type", value)
-            }
-          >
-            <SelectTrigger
-              id="working-time-type"
-              className={cn(
-                "h-11",
-                errors.working_time_type &&
-                  "border-destructive text-destructive"
-              )}
-            >
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              {workingTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground space-y-1">
+        <div>
+          Type de séance :{" "}
+          {workingTypeValueOptions[workingType as keyof typeof workingTypeValueOptions] ??
+            "—"}
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="working-time-session">
-            Session
-          </label>
-          <Select
-            value={watch("session")}
-            onValueChange={(value: WorkingSessionType) =>
-              setValue("session", value)
-            }
-          >
-            <SelectTrigger id="working-time-session" className="h-11">
-              <SelectValue placeholder="Select session" />
-            </SelectTrigger>
-            <SelectContent>
-              {sessionOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <div>Parcours : {contextLabels.journey}</div>
+        <div>Semestre : {contextLabels.semester}</div>
+        <div>Année : {contextLabels.year}</div>
       </div>
 
       <div className="space-y-2">
@@ -411,39 +416,82 @@ const WorkingTimeForm = ({
         ) : null}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="working-time-date">
-            Date
-          </label>
-          <Input
-            id="working-time-date"
-            type="date"
-            value={watch("date")}
-            onChange={(event) => setValue("date", event.target.value)}
-          />
+      {isExam ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="working-time-date">
+              Date
+            </label>
+            <Input
+              id="working-time-date"
+              type="date"
+              className={cn(
+                errors.date && "border-destructive text-destructive"
+              )}
+              {...register("date", {
+                validate: (val) =>
+                  isExam
+                    ? Boolean(val?.trim()) ||
+                      "La date est requise pour un examen"
+                    : true
+              })}
+            />
+            {errors.date ? (
+              <p className="text-xs text-destructive">
+                {errors.date.message as string}
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-2">
+            <label
+              className="text-sm font-medium"
+              htmlFor="working-time-session"
+            >
+              Session
+            </label>
+            <Select
+              value={watch("session")}
+              onValueChange={(value: WorkingSessionType) =>
+                setValue("session", value)
+              }
+            >
+              <SelectTrigger id="working-time-session" className="h-11">
+                <SelectValue placeholder="Select session" />
+              </SelectTrigger>
+              <SelectContent>
+                {sessionOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="working-time-day">
-            Jour de la semaine
-          </label>
-          <Select
-            value={watch("day")}
-            onValueChange={(value) => setValue("day", value)}
-          >
-            <SelectTrigger id="working-time-day" className="h-11">
-              <SelectValue placeholder="Choisir un jour" />
-            </SelectTrigger>
-            <SelectContent>
-              {daysOfWeek.map((day) => (
-                <SelectItem key={day} value={day}>
-                  {day}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="working-time-day">
+              Jour de la semaine
+            </label>
+            <Select
+              value={watch("day")}
+              onValueChange={(value) => setValue("day", value)}
+            >
+              <SelectTrigger id="working-time-day" className="h-11">
+                <SelectValue placeholder="Choisir un jour" />
+              </SelectTrigger>
+              <SelectContent>
+                {daysOfWeek.map((day) => (
+                  <SelectItem key={day} value={day}>
+                    {day}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
@@ -482,57 +530,62 @@ const WorkingTimeForm = ({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="working-time-room">
-            Salle (optionnel)
-          </label>
-          <Select
-            value={watch("id_classroom") || emptySelectValue}
-            onValueChange={(value) =>
-              setValue("id_classroom", value === emptySelectValue ? "" : value)
-            }
-          >
-            <SelectTrigger id="working-time-room" className="h-11">
-              <SelectValue placeholder="Assigner une salle" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={emptySelectValue}>Pas de salle</SelectItem>
-              {classrooms.map((room) => (
-                <SelectItem key={room.id} value={String(room.id)}>
-                  {room.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {!isExam ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="working-time-room">
+              Salle (optionnel)
+            </label>
+            <Select
+              value={watch("id_classroom") || emptySelectValue}
+              onValueChange={(value) =>
+                setValue(
+                  "id_classroom",
+                  value === emptySelectValue ? "" : value
+                )
+              }
+            >
+              <SelectTrigger id="working-time-room" className="h-11">
+                <SelectValue placeholder="Assigner une salle" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={emptySelectValue}>Pas de salle</SelectItem>
+                {classrooms.map((room) => (
+                  <SelectItem key={room.id} value={String(room.id)}>
+                    {room.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="working-time-group">
+              Groupe (optionnel)
+            </label>
+            <Select
+              value={watch("id_group") || emptySelectValue}
+              onValueChange={(value) =>
+                setValue("id_group", value === emptySelectValue ? "" : value)
+              }
+            >
+              <SelectTrigger id="working-time-group" className="h-11">
+                <SelectValue placeholder="Associer un groupe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={emptySelectValue}>Pas de groupe</SelectItem>
+                {groups.map((group) => (
+                  <SelectItem key={group.id} value={String(group.id)}>
+                    {group.group_number
+                      ? `Group ${group.group_number}`
+                      : `Group ${group.id}`}
+                    {group.semester ? ` · ${group.semester}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="working-time-group">
-            Groupe (optionnel)
-          </label>
-          <Select
-            value={watch("id_group") || emptySelectValue}
-            onValueChange={(value) =>
-              setValue("id_group", value === emptySelectValue ? "" : value)
-            }
-          >
-            <SelectTrigger id="working-time-group" className="h-11">
-              <SelectValue placeholder="Associer un groupe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={emptySelectValue}>Pas de groupe</SelectItem>
-              {groups.map((group) => (
-                <SelectItem key={group.id} value={String(group.id)}>
-                  {group.group_number
-                    ? `Group ${group.group_number}`
-                    : `Group ${group.id}`}
-                  {group.semester ? ` · ${group.semester}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      ) : null}
 
       <div className="flex items-center justify-end gap-2">
         <Button
@@ -562,6 +615,9 @@ export const WorkingTimePage = () => {
   const createWorkingTime = useCreateWorkingTime();
   const updateWorkingTime = useUpdateWorkingTime();
   const deleteWorkingTime = useDeleteWorkingTime();
+  const createExamDate = useCreateExamDate();
+  const updateExamDate = useUpdateExamDate();
+  const deleteExamDate = useDeleteExamDate();
 
   const { mentionOptions, academicYearOptions } = useLookupOptions({
     includeMentions: true,
@@ -614,6 +670,13 @@ export const WorkingTimePage = () => {
   const [editing, setEditing] = useState<WorkingTime | null>(null);
   const [workingTimeToDelete, setWorkingTimeToDelete] =
     useState<WorkingTime | null>(null);
+  const [isExamDateOpen, setIsExamDateOpen] = useState(false);
+  const [editingExamDate, setEditingExamDate] = useState<ExamDate | null>(
+    null
+  );
+  const [examDateToDelete, setExamDateToDelete] = useState<ExamDate | null>(
+    null
+  );
 
   const journeyQuery = useQuery({
     queryKey: ["working-time", "journeys", filters.id_mention],
@@ -727,7 +790,14 @@ export const WorkingTimePage = () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
   }, [filters]);
 
-  const [calendarType, setCalendarType] = useState<WorkingTimeType>("cours");
+  const readStoredWorkingType = () => {
+    if (typeof window === "undefined") return "cours" as WorkingTimeType;
+    const stored = window.localStorage.getItem("working-time.calendarType");
+    return normalizeWorkingTypeValue(stored);
+  };
+
+  const [calendarType, setCalendarType] =
+    useState<WorkingTimeType>(readStoredWorkingType);
 
   const workingTimeQuery = useQuery({
     queryKey: ["working-times", { filters, calendarType }],
@@ -778,7 +848,7 @@ export const WorkingTimePage = () => {
         wheres.push({
           key: "working_time_type",
           operator: "==",
-          value: calendarType
+          value: toApiWorkingTypeKey(calendarType)
         });
       }
 
@@ -876,11 +946,89 @@ export const WorkingTimePage = () => {
     enabled: Boolean(filters.id_journey)
   });
 
+  const examDateDefaultValues = useMemo<ExamDateFormValues>(
+    () => ({
+      id_academic_year: filters.id_year || "",
+      date_from: "",
+      date_to: "",
+      session: "Normal"
+    }),
+    [filters.id_year]
+  );
+
+  const {
+    register: registerExamDate,
+    handleSubmit: handleSubmitExamDate,
+    reset: resetExamDate,
+    formState: { errors: examDateErrors },
+    watch: watchExamDate,
+    setValue: setExamDateValue
+  } = useForm<ExamDateFormValues>({
+    defaultValues: examDateDefaultValues
+  });
+
+  useEffect(() => {
+    registerExamDate("session");
+  }, [registerExamDate]);
+
+  const examDateToFormValues = useCallback(
+    (examDate?: ExamDate | null): ExamDateFormValues => ({
+      id_academic_year: examDate?.id_academic_year
+        ? String(examDate.id_academic_year)
+        : filters.id_year || "",
+      date_from: examDate?.date_from
+        ? examDate.date_from.split("T")[0]
+        : "",
+      date_to: examDate?.date_to ? examDate.date_to.split("T")[0] : "",
+      session: (examDate?.session as WorkingSessionType) ?? "Normal"
+    }),
+    [filters.id_year]
+  );
+
+  const examDateQueryParams = useMemo(() => {
+    const wheres: Array<Record<string, any>> = [];
+    if (filters.id_year) {
+      wheres.push({
+        key: "id_academic_year",
+        operator: "==",
+        value: Number(filters.id_year)
+      });
+    }
+    return {
+      where: JSON.stringify(wheres),
+      relation: JSON.stringify(["year{id,name}"]),
+      limit: 200
+    };
+  }, [filters.id_year]);
+
+  const examDatesQuery = useExamDates(examDateQueryParams);
+
+  useEffect(() => {
+    resetExamDate(
+      editingExamDate
+        ? examDateToFormValues(editingExamDate)
+        : examDateDefaultValues
+    );
+  }, [
+    editingExamDate,
+    examDateDefaultValues,
+    examDateToFormValues,
+    resetExamDate
+  ]);
+
   const workingTimes = workingTimeQuery.data?.data ?? [];
   const offerings = offeringsQuery.data?.data ?? [];
   const classrooms = classroomsQuery.data?.data ?? [];
   const groups = groupsQuery.data?.data ?? [];
+  const examDates = examDatesQuery.data?.data ?? [];
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  const currentJourneyLabel =
+    availableJourneys.find((journey) => journey.id === filters.id_journey)
+      ?.label ?? "Parcours";
+  const currentSemesterLabel = filters.semester || "Semestre";
+  const currentYearLabel =
+    academicYearOptions.find((year) => year.id === filters.id_year)?.label ??
+    (filters.id_year ? `Année ${filters.id_year}` : "Année académique");
 
   const handleFiltersChange = useCallback((next: any) => {
     setFilters((prev) => ({
@@ -891,6 +1039,11 @@ export const WorkingTimePage = () => {
     }));
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("working-time.calendarType", calendarType);
+  }, [calendarType]);
+
   const openCreate = () => {
     setEditing(null);
     setIsFormOpen(true);
@@ -899,6 +1052,11 @@ export const WorkingTimePage = () => {
   const closeForm = useCallback(() => {
     setEditing(null);
     setIsFormOpen(false);
+  }, []);
+
+  const closeExamDateModal = useCallback(() => {
+    setEditingExamDate(null);
+    setIsExamDateOpen(false);
   }, []);
 
   const handleSubmit = useCallback(
@@ -953,6 +1111,75 @@ export const WorkingTimePage = () => {
     }
   }, [deleteWorkingTime, workingTimeQuery, workingTimeToDelete]);
 
+  const handleExamDateSubmit = useCallback(
+    async (values: ExamDateFormValues) => {
+      try {
+        const idYearValue = values.id_academic_year || filters.id_year;
+        const payload: Partial<ExamDate> = {
+          ...(idYearValue
+            ? { id_academic_year: Number(idYearValue) }
+            : {}),
+          date_from: values.date_from || undefined,
+          date_to: values.date_to || undefined,
+          session: values.session
+        };
+
+        if (editingExamDate) {
+          await updateExamDate.mutateAsync({
+            id: Number(editingExamDate.id),
+            payload
+          });
+          setFeedback({
+            type: "success",
+            text: "Date d'examen mise à jour."
+          });
+        } else {
+          await createExamDate.mutateAsync(payload);
+          setFeedback({
+            type: "success",
+            text: "Date d'examen créée."
+          });
+        }
+        await examDatesQuery.refetch();
+        closeExamDateModal();
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Impossible d'enregistrer la date d'examen.";
+        setFeedback({ type: "error", text: message });
+      }
+    },
+    [
+      closeExamDateModal,
+      createExamDate,
+      editingExamDate,
+      examDatesQuery,
+      filters.id_year,
+      updateExamDate
+    ]
+  );
+
+  const handleDeleteExamDate = useCallback(async () => {
+    if (!examDateToDelete) return;
+    try {
+      await deleteExamDate.mutateAsync(Number(examDateToDelete.id));
+      await examDatesQuery.refetch();
+      setFeedback({
+        type: "success",
+        text: "Date d'examen supprimée."
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Impossible de supprimer la date d'examen.";
+      setFeedback({ type: "error", text: message });
+    } finally {
+      setExamDateToDelete(null);
+    }
+  }, [deleteExamDate, examDateToDelete, examDatesQuery]);
+
   const eventsByDay = useMemo(() => {
     const acc: Record<string, WorkingTime[]> = {};
     for (const day of daysOfWeek) {
@@ -986,6 +1213,8 @@ export const WorkingTimePage = () => {
 
   const isSubmitting =
     createWorkingTime.isPending || updateWorkingTime.isPending;
+  const isExamDateSubmitting =
+    createExamDate.isPending || updateExamDate.isPending;
 
   return (
     <div className="space-y-6">
@@ -1000,6 +1229,14 @@ export const WorkingTimePage = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setIsExamDateOpen(true)}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            Dates d&apos;examen
+          </Button>
           <Button className="gap-2" onClick={openCreate}>
             <Plus className="h-4 w-4" />
             Ajouter un horaire
@@ -1080,7 +1317,9 @@ export const WorkingTimePage = () => {
           </div>
           <Tabs
             value={calendarType}
-            onValueChange={(value) => setCalendarType(value as WorkingTimeType)}
+            onValueChange={(value) =>
+              setCalendarType(normalizeWorkingTypeValue(value))
+            }
           >
             <TabsList className="grid grid-cols-4 bg-muted">
               {workingTypeTabs.map((type) => (
@@ -1182,7 +1421,9 @@ export const WorkingTimePage = () => {
                                   className="h-8 w-8"
                                   onClick={() => {
                                     setCalendarType(
-                                      item.working_time_type ?? "cours"
+                                      normalizeWorkingTypeValue(
+                                        item.working_time_type
+                                      )
                                     );
                                     setFilters((prev) => ({
                                       ...prev,
@@ -1293,14 +1534,210 @@ export const WorkingTimePage = () => {
           </DialogHeader>
           <WorkingTimeForm
             mode={editing ? "edit" : "create"}
-            initialValues={toFormValues(editing)}
+            initialValues={
+              editing
+                ? toFormValues(editing)
+                : { ...defaultFormValues, working_time_type: calendarType }
+            }
             onSubmit={handleSubmit}
             onCancel={closeForm}
             isSubmitting={isSubmitting}
             offerings={offerings}
             classrooms={classrooms}
             groups={groups}
+            fixedWorkingType={calendarType}
+            contextLabels={{
+              journey: currentJourneyLabel,
+              semester: currentSemesterLabel,
+              year: currentYearLabel
+            }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isExamDateOpen}
+        onOpenChange={(open) => {
+          setIsExamDateOpen(open);
+          if (!open) {
+            setEditingExamDate(null);
+            resetExamDate(examDateDefaultValues);
+          } else {
+            resetExamDate(
+              editingExamDate
+                ? examDateToFormValues(editingExamDate)
+                : examDateDefaultValues
+            );
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Gérer les dates d&apos;examen</DialogTitle>
+            <DialogDescription>
+              Créez ou modifiez les périodes d&apos;examen pour l&apos;année
+              académique sélectionnée.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground space-y-1">
+              <div>Année académique : {currentYearLabel}</div>
+              <div>Session par défaut : {sessionOptions[0]?.label}</div>
+            </div>
+
+            <form
+              className="space-y-4"
+              onSubmit={handleSubmitExamDate(handleExamDateSubmit)}
+            >
+              <input
+                type="hidden"
+                {...registerExamDate("id_academic_year")}
+              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="exam-date-from">
+                    Date de début
+                  </label>
+                  <Input
+                    id="exam-date-from"
+                    type="date"
+                    className={cn(
+                      examDateErrors.date_from &&
+                        "border-destructive text-destructive"
+                    )}
+                    {...registerExamDate("date_from", {
+                      required: "La date de début est obligatoire"
+                    })}
+                  />
+                  {examDateErrors.date_from ? (
+                    <p className="text-xs text-destructive">
+                      {examDateErrors.date_from.message as string}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="exam-date-to">
+                    Date de fin
+                  </label>
+                  <Input
+                    id="exam-date-to"
+                    type="date"
+                    className={cn(
+                      examDateErrors.date_to &&
+                        "border-destructive text-destructive"
+                    )}
+                    {...registerExamDate("date_to", {
+                      required: "La date de fin est obligatoire"
+                    })}
+                  />
+                  {examDateErrors.date_to ? (
+                    <p className="text-xs text-destructive">
+                      {examDateErrors.date_to.message as string}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="exam-session">
+                  Session
+                </label>
+                <Select
+                  value={watchExamDate("session") || "Normal"}
+                  onValueChange={(value: WorkingSessionType) =>
+                    setExamDateValue("session", value)
+                  }
+                >
+                  <SelectTrigger id="exam-session" className="h-11">
+                    <SelectValue placeholder="Session" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sessionOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={closeExamDateModal}
+                  disabled={isExamDateSubmitting}
+                >
+                  Fermer
+                </Button>
+                <Button type="submit" disabled={isExamDateSubmitting}>
+                  {isExamDateSubmitting
+                    ? "Enregistrement…"
+                    : editingExamDate
+                      ? "Modifier"
+                      : "Créer"}
+                </Button>
+              </div>
+            </form>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">Dates existantes</h4>
+                <span className="text-xs text-muted-foreground">
+                  {examDates.length
+                    ? `${examDates.length} entrée${examDates.length > 1 ? "s" : ""}`
+                    : "Aucune entrée"}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {examDatesQuery.isFetching ? (
+                  <p className="text-xs text-muted-foreground">Chargement…</p>
+                ) : examDates.length ? (
+                  examDates.map((examDate) => (
+                    <div
+                      key={examDate.id}
+                      className="flex items-center justify-between rounded-md border p-3"
+                    >
+                      <div className="space-y-1 text-sm">
+                        <div className="font-medium">
+                          {examDate.session ?? "Session"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDateLabel(examDate.date_from)} →{" "}
+                          {formatDateLabel(examDate.date_to)}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {examDate.year?.name ?? currentYearLabel ?? "Année"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingExamDate(examDate)}
+                        >
+                          Modifier
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => setExamDateToDelete(examDate)}
+                        >
+                          Supprimer
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Aucune date d&apos;examen pour cette année académique.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1324,6 +1761,24 @@ export const WorkingTimePage = () => {
         isConfirming={deleteWorkingTime.isPending}
         onCancel={() => setWorkingTimeToDelete(null)}
         onConfirm={handleDelete}
+      />
+      <ConfirmDialog
+        open={Boolean(examDateToDelete)}
+        title="Supprimer la date d'examen"
+        description={
+          examDateToDelete ? (
+            <>
+              Supprimer la plage d&apos;examen du{" "}
+              {formatDateLabel(examDateToDelete.date_from)} au{" "}
+              {formatDateLabel(examDateToDelete.date_to)} ?
+            </>
+          ) : null
+        }
+        confirmLabel="Supprimer"
+        destructive
+        isConfirming={deleteExamDate.isPending}
+        onCancel={() => setExamDateToDelete(null)}
+        onConfirm={handleDeleteExamDate}
       />
     </div>
   );
