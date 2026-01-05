@@ -3,13 +3,16 @@
 # end #
 
 from app.db.base_class import Base
-from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_
+from sqlalchemy import Column, ForeignKey, DateTime, func, select, case, or_, and_, UniqueConstraint
 from sqlalchemy.orm import relationship, column_property, aliased
 from sqlalchemy import String, Integer, Date
 
 
 class ExamDate(Base):
     __tablename__ = 'exam_date'
+    __table_args__ = (
+        UniqueConstraint('id_academic_year', 'session', name='uq_annual_register_session'),
+    )
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
     date_from = Column(Date, nullable=False)
@@ -23,7 +26,6 @@ class ExamDate(Base):
 
     # Relations
     year = relationship('AcademicYear', foreign_keys=[id_academic_year])
-
 
 # begin #
 # ---write your code here--- #

@@ -283,6 +283,7 @@ interface WorkingTimeFormProps {
   onSubmit: (values: WorkingTimeFormValues) => Promise<void>;
   onCancel: () => void;
   fixedWorkingType: WorkingTimeType;
+  examDateRanges?: Record<WorkingSessionType, { from: string; to: string } | null>;
   contextLabels: {
     journey: string;
     semester: string;
@@ -300,6 +301,7 @@ const WorkingTimeForm = ({
   classrooms,
   groups,
   fixedWorkingType,
+  examDateRanges,
   contextLabels
 }: WorkingTimeFormProps) => {
   const {
@@ -316,7 +318,10 @@ const WorkingTimeForm = ({
   const dateValue = watch("date");
   const selectedOffering = watch("id_constituent_element_offering");
   const workingType = watch("working_time_type");
+  const selectedSession = watch("session");
   const isExam = workingType === "exam";
+  const activeExamRange =
+    isExam && examDateRanges ? examDateRanges[selectedSession] ?? null : null;
 
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
@@ -364,6 +369,11 @@ const WorkingTimeForm = ({
         <div>Parcours : {contextLabels.journey}</div>
         <div>Semestre : {contextLabels.semester}</div>
         <div>Année : {contextLabels.year}</div>
+        {isExam && activeExamRange ? (
+          <div>
+            Plage d&apos;examen : {activeExamRange.from} → {activeExamRange.to}
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -425,14 +435,29 @@ const WorkingTimeForm = ({
             <Input
               id="working-time-date"
               type="date"
+              min={activeExamRange?.from}
+              max={activeExamRange?.to}
               className={cn(
                 errors.date && "border-destructive text-destructive"
               )}
               {...register("date", {
                 validate: (val) =>
                   isExam
-                    ? Boolean(val?.trim()) ||
-                      "La date est requise pour un examen"
+                    ? (() => {
+                        if (!val?.trim()) {
+                          return "La date est requise pour un examen";
+                        }
+                        if (!activeExamRange) {
+                          return "Veuillez d'abord configurer une plage de dates d'examen";
+                        }
+                        if (val < activeExamRange.from) {
+                          return `La date doit être après le ${activeExamRange.from}`;
+                        }
+                        if (val > activeExamRange.to) {
+                          return `La date doit être avant le ${activeExamRange.to}`;
+                        }
+                        return true;
+                      })()
                     : true
               })}
             />
@@ -956,6 +981,11 @@ export const WorkingTimePage = () => {
     [filters.id_year]
   );
 
+  const todayDateString = useMemo(
+    () => new Date().toISOString().split("T")[0],
+    []
+  );
+
   const {
     register: registerExamDate,
     handleSubmit: handleSubmitExamDate,
@@ -1016,11 +1046,11 @@ export const WorkingTimePage = () => {
     resetExamDate
   ]);
 
-  const workingTimes = workingTimeQuery.data?.data ?? [];
   const offerings = offeringsQuery.data?.data ?? [];
   const classrooms = classroomsQuery.data?.data ?? [];
   const groups = groupsQuery.data?.data ?? [];
   const examDates = examDatesQuery.data?.data ?? [];
+  const examDateLimitReached = (examDates?.length ?? 0) >= 2;
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const currentJourneyLabel =
     availableJourneys.find((journey) => journey.id === filters.id_journey)
@@ -1180,12 +1210,89 @@ export const WorkingTimePage = () => {
     }
   }, [deleteExamDate, examDateToDelete, examDatesQuery]);
 
+  const computeRange = (
+    entries: ExamDate[]
+  ): { from: string; to: string } | null => {
+    if (!entries.length) return null;
+    const validDates = entries
+      .map((entry) => ({
+        from: entry.date_from ? new Date(entry.date_from) : null,
+        to: entry.date_to ? new Date(entry.date_to) : null
+      }))
+      .filter((entry) => entry.from && !Number.isNaN(entry.from.getTime()));
+    if (!validDates.length) return null;
+    const minFrom = new Date(
+      Math.min(...validDates.map((d) => (d.from as Date).getTime()))
+    );
+    const maxTo = new Date(
+      Math.max(
+        ...validDates
+          .map((d) => d.to?.getTime() ?? d.from?.getTime() ?? 0)
+          .filter(Boolean) as number[]
+      )
+    );
+    if (Number.isNaN(minFrom.getTime()) || Number.isNaN(maxTo.getTime()))
+      return null;
+    const toISODate = (value: Date) => value.toISOString().split("T")[0];
+    return {
+      from: toISODate(minFrom),
+      to: toISODate(maxTo)
+    };
+  };
+
+  const examDateRanges = useMemo(() => {
+    const bySession: Record<WorkingSessionType, { from: string; to: string } | null> = {
+      Normal: null,
+      Rattrapage: null
+    };
+    const normalEntries = examDates.filter(
+      (d) => (d.session ?? "Normal") === "Normal"
+    );
+    const rattrapageEntries = examDates.filter(
+      (d) => (d.session ?? "Normal") === "Rattrapage"
+    );
+    bySession.Normal = computeRange(normalEntries);
+    bySession.Rattrapage = computeRange(rattrapageEntries);
+    return bySession;
+  }, [examDates]);
+
+  const examDateRange = useMemo(() => {
+    const ranges = Object.values(examDateRanges).filter(
+      (r): r is { from: string; to: string } => Boolean(r)
+    );
+    if (!ranges.length) return null;
+    const minFrom = ranges.reduce(
+      (min, curr) => (curr.from < min ? curr.from : min),
+      ranges[0].from
+    );
+    const maxTo = ranges.reduce(
+      (max, curr) => (curr.to > max ? curr.to : max),
+      ranges[0].to
+    );
+    return { from: minFrom, to: maxTo };
+  }, [examDateRanges]);
+
+  const filteredWorkingTimes = useMemo(() => {
+    const list = workingTimeQuery.data?.data ?? [];
+    if (calendarType === "exam" && examDateRange) {
+      return list.filter((item) => {
+        if (!item.date) return false;
+        const dateOnly = item.date.split("T")[0];
+        return dateOnly >= examDateRange.from && dateOnly <= examDateRange.to;
+      });
+    }
+    return list;
+  }, [calendarType, examDateRange, workingTimeQuery.data]);
+
+  const workingTimes = filteredWorkingTimes;
+
   const eventsByDay = useMemo(() => {
     const acc: Record<string, WorkingTime[]> = {};
     for (const day of daysOfWeek) {
       acc[day] = [];
     }
-    workingTimes.forEach((item) => {
+    const list = filteredWorkingTimes;
+    list.forEach((item) => {
       const day = normalizeDay(item.day, item.date);
       if (!day) return;
       acc[day] = [...(acc[day] ?? []), item];
@@ -1198,7 +1305,7 @@ export const WorkingTimePage = () => {
       });
     }
     return acc;
-  }, [workingTimes]);
+  }, [filteredWorkingTimes]);
 
   const scheduleStart = scheduleConfig.startMinutes;
   const scheduleEnd = scheduleConfig.endMinutes;
@@ -1546,6 +1653,7 @@ export const WorkingTimePage = () => {
             classrooms={classrooms}
             groups={groups}
             fixedWorkingType={calendarType}
+            examDateRanges={examDateRanges}
             contextLabels={{
               journey: currentJourneyLabel,
               semester: currentSemesterLabel,
@@ -1584,102 +1692,127 @@ export const WorkingTimePage = () => {
             <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground space-y-1">
               <div>Année académique : {currentYearLabel}</div>
               <div>Session par défaut : {sessionOptions[0]?.label}</div>
+              {examDateLimitReached ? (
+                <div className="text-red-600">
+                  Limite atteinte : 2 plages d&apos;examens maximum pour cette
+                  année.
+                </div>
+              ) : null}
             </div>
 
-            <form
-              className="space-y-4"
-              onSubmit={handleSubmitExamDate(handleExamDateSubmit)}
-            >
-              <input
-                type="hidden"
-                {...registerExamDate("id_academic_year")}
-              />
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="exam-date-from">
-                    Date de début
-                  </label>
-                  <Input
-                    id="exam-date-from"
-                    type="date"
-                    className={cn(
-                      examDateErrors.date_from &&
-                        "border-destructive text-destructive"
-                    )}
-                    {...registerExamDate("date_from", {
-                      required: "La date de début est obligatoire"
-                    })}
-                  />
-                  {examDateErrors.date_from ? (
-                    <p className="text-xs text-destructive">
-                      {examDateErrors.date_from.message as string}
-                    </p>
-                  ) : null}
+            {examDateLimitReached && !editingExamDate ? null : (
+              <form
+                className="space-y-4"
+                onSubmit={handleSubmitExamDate(handleExamDateSubmit)}
+              >
+                <input
+                  type="hidden"
+                  {...registerExamDate("id_academic_year")}
+                />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" htmlFor="exam-date-from">
+                      Date de début
+                    </label>
+                    <Input
+                      id="exam-date-from"
+                      type="date"
+                      min={todayDateString}
+                      className={cn(
+                        examDateErrors.date_from &&
+                          "border-destructive text-destructive"
+                      )}
+                      {...registerExamDate("date_from", {
+                        required: "La date de début est obligatoire",
+                        validate: (val) =>
+                          val >= todayDateString ||
+                          "La date de début doit être postérieure à aujourd'hui"
+                      })}
+                    />
+                    {examDateErrors.date_from ? (
+                      <p className="text-xs text-destructive">
+                        {examDateErrors.date_from.message as string}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" htmlFor="exam-date-to">
+                      Date de fin
+                    </label>
+                    <Input
+                      id="exam-date-to"
+                      type="date"
+                      min={watchExamDate("date_from") || todayDateString}
+                      className={cn(
+                        examDateErrors.date_to &&
+                          "border-destructive text-destructive"
+                      )}
+                      {...registerExamDate("date_to", {
+                        required: "La date de fin est obligatoire",
+                        validate: (val) => {
+                          const start = watchExamDate("date_from") || todayDateString;
+                          if (!val) return "La date de fin est obligatoire";
+                          if (val < start)
+                            return "La date de fin doit être après la date de début";
+                          if (val < todayDateString)
+                            return "La date de fin doit être postérieure à aujourd'hui";
+                          return true;
+                        }
+                      })}
+                    />
+                    {examDateErrors.date_to ? (
+                      <p className="text-xs text-destructive">
+                        {examDateErrors.date_to.message as string}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="exam-date-to">
-                    Date de fin
+                  <label className="text-sm font-medium" htmlFor="exam-session">
+                    Session
                   </label>
-                  <Input
-                    id="exam-date-to"
-                    type="date"
-                    className={cn(
-                      examDateErrors.date_to &&
-                        "border-destructive text-destructive"
-                    )}
-                    {...registerExamDate("date_to", {
-                      required: "La date de fin est obligatoire"
-                    })}
-                  />
-                  {examDateErrors.date_to ? (
-                    <p className="text-xs text-destructive">
-                      {examDateErrors.date_to.message as string}
-                    </p>
-                  ) : null}
+                  <Select
+                    value={watchExamDate("session") || "Normal"}
+                    onValueChange={(value: WorkingSessionType) =>
+                      setExamDateValue("session", value)
+                    }
+                  >
+                    <SelectTrigger id="exam-session" className="h-11">
+                      <SelectValue placeholder="Session" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sessionOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="exam-session">
-                  Session
-                </label>
-                <Select
-                  value={watchExamDate("session") || "Normal"}
-                  onValueChange={(value: WorkingSessionType) =>
-                    setExamDateValue("session", value)
-                  }
-                >
-                  <SelectTrigger id="exam-session" className="h-11">
-                    <SelectValue placeholder="Session" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sessionOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={closeExamDateModal}
-                  disabled={isExamDateSubmitting}
-                >
-                  Fermer
-                </Button>
-                <Button type="submit" disabled={isExamDateSubmitting}>
-                  {isExamDateSubmitting
-                    ? "Enregistrement…"
-                    : editingExamDate
-                      ? "Modifier"
-                      : "Créer"}
-                </Button>
-              </div>
-            </form>
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={closeExamDateModal}
+                    disabled={isExamDateSubmitting}
+                  >
+                    Fermer
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isExamDateSubmitting}
+                  >
+                    {isExamDateSubmitting
+                      ? "Enregistrement…"
+                      : editingExamDate
+                        ? "Modifier"
+                        : "Créer"}
+                  </Button>
+                </div>
+              </form>
+            )}
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
