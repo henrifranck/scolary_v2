@@ -7,7 +7,7 @@ from typing import Any
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from .teacher import Teacher
+from .teacher import TeacherWithRelation
 from .constituent_element import ConstituentElement
 from .academic_year import AcademicYear
 from .constituent_element_optional_group import ConstituentElementOptionalGroup
@@ -49,7 +49,7 @@ class ConstituentElementOffering(ConstituentElementOfferingInDBBase):
 class ConstituentElementOfferingWithRelation(ConstituentElementOfferingInDBBase):
     constituent_element: Optional[ConstituentElement] = None
     academic_year: Optional[AcademicYear] = None
-    teacher: Optional[Teacher] = None
+    teacher: Optional[TeacherWithRelation] = None
     constituent_element_optional_group: Optional[ConstituentElementOptionalGroup] = None
     teching_unit_offering: Optional[TeachingUnitOffering] = None
 

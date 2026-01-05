@@ -11,7 +11,8 @@ import {
   MapPin,
   Pencil,
   Plus,
-  Trash2
+  Trash2,
+  User
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
@@ -71,7 +72,9 @@ type WorkingTimeFormValues = {
   id_constituent_element_offering: string;
   id_classroom: string;
   id_group: string;
-  working_time_type: WorkingTimeTypeValue[keyof WorkingTimeTypeValue];
+  working_time_type:
+    | WorkingTimeTypeValue[keyof WorkingTimeTypeValue]
+    | keyof WorkingTimeTypeValue;
   session: WorkingSessionType;
   day: string;
   date: string;
@@ -223,13 +226,23 @@ const toFormValues = (
   end: workingTime?.end ?? "10:00"
 });
 
+const workingTimeTypeValue = {
+  COURSE: "cours",
+  TP: "tp",
+  TD: "td",
+  EXAM: "exam"
+} as const;
+
 const toPayload = (values: WorkingTimeFormValues): WorkingTimePayload => ({
   id_constituent_element_offering: Number(
     values.id_constituent_element_offering
   ),
   id_classroom: values.id_classroom ? Number(values.id_classroom) : undefined,
   id_group: values.id_group ? Number(values.id_group) : undefined,
-  working_time_type: values.working_time_type,
+  working_time_type:
+    workingTimeTypeValue[
+      values.working_time_type.toUpperCase() as keyof typeof workingTimeTypeValue
+    ],
   session: values.session,
   day: values.day,
   start: values.start,
@@ -776,6 +789,8 @@ export const WorkingTimePage = () => {
           "constituent_element_offering.constituent_element{id,name,semester,color,id_journey}",
           "constituent_element_offering{id,id_academic_year,id_teching_unit_offering,id_constituent_element,id_teacher,id_constituent_element_optional_group,weight}",
           "classroom{id,name,capacity}",
+          "constituent_element_offering.teacher{id,grade,id_user}",
+          "constituent_element_offering.teacher.user{id,first_name,last_name}",
           "group{id,group_number,semester,id_journey}",
           "group.journey{id,id_mention,name,abbreviation}"
         ]),
@@ -1213,10 +1228,31 @@ export const WorkingTimePage = () => {
                             {item.classroom ? (
                               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                                 <MapPin className="h-3 w-3" />
-                                <span>{item.classroom.name}</span>
+                                <span>{item.classroom.name}</span>,
+                                {item.constituent_element_offering?.teacher ? (
+                                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                    <User className="h-3 w-3" />
+                                    <span>
+                                      {" "}
+                                      {
+                                        item.constituent_element_offering
+                                          .teacher.grade
+                                      }{" "}
+                                      {
+                                        item.constituent_element_offering
+                                          .teacher.user?.last_name
+                                      }{" "}
+                                      {
+                                        item.constituent_element_offering
+                                          .teacher.user?.first_name
+                                      }
+                                    </span>
+                                  </div>
+                                ) : null}
                               </div>
                             ) : null}
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+
+                            {/* <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                               <Layers className="h-3 w-3" />
                               <span className="rounded-full bg-muted px-2 py-0.5 text-[10px]">
                                 {item.working_time_type}
@@ -1231,7 +1267,7 @@ export const WorkingTimePage = () => {
                                   {formatDateLabel(item.date)}
                                 </span>
                               ) : null}
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       );

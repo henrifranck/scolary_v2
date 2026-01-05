@@ -33,7 +33,7 @@ import { ConstituentElement } from "@/models/constituent-element";
 import { ConstituentElementOffering } from "@/models/constituent-element-offering";
 import { TeachingUnitOffering } from "@/models/teaching-unit-offering";
 import { TeachingUnit } from "@/models/teaching-unit";
-import { useUsers } from "@/services/user-service";
+import { User, useUsers } from "@/services/user-service";
 import { fetchJourneys as fetchJourneysByMention } from "@/services/inscription-service";
 import { fetchConstituentElements } from "@/services/constituent-element-service";
 import {
@@ -426,6 +426,8 @@ export const OfferingsPage = () => {
         relation: JSON.stringify([
           "constituent_element{id,name,semester,color,id_journey}",
           "academic_year{id,name}",
+          "teacher{grade,id_user}",
+          "teacher.user{id,first_name,last_name}",
           "constituent_element.journey{id,id_mention,name,abbreviation}"
         ]),
         limit: 400
@@ -585,10 +587,12 @@ export const OfferingsPage = () => {
   const tuOptions: TeachingUnit[] = teachingUnitListQuery.data?.data ?? [];
   const tuOfferingOptions: TeachingUnitOffering[] =
     teachingUnitOfferingQuery.data?.data ?? [];
-  const ceOptionalGroupOptions =
-    ceOptionalGroupsQuery.data?.data ?? ceOptionalGroupsQuery.data ?? [];
-  const tuOptionalGroupOptions =
-    tuOptionalGroupsQuery.data?.data ?? tuOptionalGroupsQuery.data ?? [];
+  const ceOptionalGroupOptions = Array.isArray(ceOptionalGroupsQuery.data)
+    ? ceOptionalGroupsQuery.data
+    : ceOptionalGroupsQuery.data?.data ?? [];
+  const tuOptionalGroupOptions = Array.isArray(tuOptionalGroupsQuery.data)
+    ? tuOptionalGroupsQuery.data
+    : tuOptionalGroupsQuery.data?.data ?? [];
   const [teacherSearch, setTeacherSearch] = useState("");
   const [debouncedTeacherSearch, setDebouncedTeacherSearch] = useState("");
 
@@ -632,6 +636,9 @@ export const OfferingsPage = () => {
   const currentJourneyLabel =
     availableJourneys.find((journey) => journey.id === currentJourneyId)
       ?.label ?? "Non défini";
+  const currentAcademicYearLabel =
+    academicYearOptions.find((year) => year.id === filters.id_year)?.label ??
+    (filters.id_year ? `Année ${filters.id_year}` : "Année académique");
   const selectedCE = ceOptions.find(
     (ce) => String(ce.id) === ceForm.watch("id_constituent_element")
   );
@@ -945,7 +952,9 @@ export const OfferingsPage = () => {
       <div className="rounded-lg border bg-background p-5 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Offres</h2>
+            <h2 className="text-lg font-semibold">
+              Offres des matieres pour l&apos;année {currentAcademicYearLabel}
+            </h2>
             <p className="text-xs text-muted-foreground">
               Créez, éditez ou supprimez les offres EC et UE.
             </p>
@@ -987,13 +996,11 @@ export const OfferingsPage = () => {
                   className="flex items-center justify-between rounded border bg-background px-3 py-2"
                 >
                   <div className="flex flex-col">
-                    <span className="font-medium">
-                      {ce?.name ?? "EC"}{" "}
-                      {ce?.semester ? `· ${ce.semester}` : ""}
-                    </span>
+                    <span className="font-medium">{ce?.name ?? "EC"} </span>
                     <span className="text-xs text-muted-foreground">
-                      {(offer as any).academic_year?.name ?? ""}{" "}
-                      {ce?.journey?.name ?? ce?.journey?.abbreviation ?? ""}
+                      {offer?.teacher
+                        ? ` ${offer.teacher.grade} ${offer.teacher.user?.first_name} ${offer.teacher.user?.last_name}`
+                        : ""}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1272,12 +1279,13 @@ export const OfferingsPage = () => {
                       />
                     </div>
                     <SelectItem value={emptySelectValue}>Aucun</SelectItem>
-                    {teacherOptions.map((teacher: any) => (
-                      <SelectItem key={teacher.id} value={String(teacher.id)}>
-                        {teacher.first_name} {teacher.last_name}{" "}
-                        {teacher.teacher?.grade
-                          ? `· ${teacher.teacher.grade}`
-                          : ""}
+                    {teacherOptions.map((user: User) => (
+                      <SelectItem
+                        key={user.id}
+                        value={String(user.teacher?.id)}
+                      >
+                        {user.first_name} {user.last_name}{" "}
+                        {user.teacher?.grade ? `· ${user.teacher.grade}` : ""}
                       </SelectItem>
                     ))}
                     {teacherQuery.isFetching ? (

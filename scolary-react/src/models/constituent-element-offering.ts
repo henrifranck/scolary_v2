@@ -1,3 +1,4 @@
+import { Teacher } from "@/services/teacher-service";
 import { AcademicYear } from "./academic-year";
 import { ConstituentElement } from "./constituent-element";
 import { Journey } from "./journey";
@@ -10,8 +11,11 @@ export interface ConstituentElementOffering {
   id_constituent_element_optional_group?: number | null;
   id_teching_unit_offering?: number | null;
   weight?: number | null;
-  constituent_element?: (ConstituentElement & { journey?: Journey | null }) | null;
+  constituent_element?:
+    | (ConstituentElement & { journey?: Journey | null })
+    | null;
   academic_year?: AcademicYear | null;
+  teacher?: Teacher;
 }
 
 export type ConstituentElementOfferingListQuery = Record<
