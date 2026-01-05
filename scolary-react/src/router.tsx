@@ -27,6 +27,7 @@ import { UniversityInfoPage } from "./pages/admin/university-info/university-inf
 import { TeachingUnitPage } from "./pages/admin/teaching-unit/teaching-unit-page";
 import { ConstituentElementPage } from "./pages/admin/constituent-elements/constituent-elements-page";
 import { GroupsPage } from "./pages/admin/groups-page";
+import { OfferingsPage } from "./pages/admin/offerings-page";
 import { AvailableServicesPage } from "./pages/admin/available-services/available-services-page";
 import { RequiredDocumentsPage } from "./pages/admin/required-documents/required-documents-page";
 import { EnrollmentFeesPage } from "./pages/admin/enrollment-fees/enrollment-fees-page";
@@ -241,6 +242,12 @@ const universityInfoRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: "university-info",
   component: UniversityInfoPage
+});
+
+const offeringsRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "offerings",
+  component: OfferingsPage
 });
 
 const filesRoute = createRoute({
@@ -477,6 +484,7 @@ const routeTree = rootRoute.addChildren([
     subjectsRoute,
     mentionsRoute,
     journeysRoute,
+    offeringsRoute,
     filesRoute,
     permissionsRoute,
     teachingUnitRoute,

@@ -19,13 +19,6 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import {
   ConstituentElement,
   ConstituentElementPayload
 } from "@/models/constituent-element";
@@ -41,7 +34,7 @@ import { ActionButton } from "@/components/action-button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
-import { Journey } from "@/models/journey";
+import { Badge } from "@/components/ui/badge";
 
 type ConstituentElementFilters = {
   id_mention: string;
@@ -67,13 +60,14 @@ const defaultFormValues: ConstituentElementFormValues = {
 };
 
 const toFormValues = (
-  constituentElements?: ConstituentElement | null
+  constituentElements?: ConstituentElement | null,
+  fallback?: { id_journey?: string; semester?: string }
 ): ConstituentElementFormValues => ({
   name: constituentElements?.name ?? "",
   id_journey: constituentElements?.id_journey
     ? String(constituentElements.id_journey)
-    : "",
-  semester: constituentElements?.semester ?? "",
+    : fallback?.id_journey ?? "",
+  semester: constituentElements?.semester ?? fallback?.semester ?? "",
   color: constituentElements?.color ?? ""
 });
 
@@ -90,8 +84,10 @@ interface ConstituentElementFormProps {
   mode: "create" | "edit";
   initialValues?: ConstituentElementFormValues;
   isSubmitting: boolean;
-  journeyOptions: JourneyOption[];
-  semesterOptions: string[];
+  journeyLabel: string;
+  semesterLabel: string;
+  journeyId: string;
+  semesterValue: string;
   onSubmit: (values: ConstituentElementFormValues) => Promise<void>;
   onCancel: () => void;
 }
@@ -102,8 +98,10 @@ const ConstituentElementForm = ({
   onSubmit,
   onCancel,
   isSubmitting,
-  journeyOptions,
-  semesterOptions
+  journeyLabel,
+  semesterLabel,
+  journeyId,
+  semesterValue
 }: ConstituentElementFormProps) => {
   const {
     register,
@@ -116,17 +114,14 @@ const ConstituentElementForm = ({
     defaultValues: initialValues ?? defaultFormValues
   });
 
-  const selectedPlugged = watch("id_journey");
-
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
   }, [initialValues, reset]);
 
   useEffect(() => {
-    if (!selectedPlugged && journeyOptions.length > 0) {
-      setValue("id_journey", String(journeyOptions[0].id));
-    }
-  }, [journeyOptions, selectedPlugged, setValue]);
+    setValue("id_journey", journeyId);
+    setValue("semester", semesterValue);
+  }, [journeyId, semesterValue, setValue]);
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -149,37 +144,6 @@ const ConstituentElementForm = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="mention-plugged">
-          Parcours
-        </label>
-        <Select
-          value={watch("id_journey")}
-          onValueChange={(value) => setValue("id_journey", value)}
-        >
-          <SelectTrigger
-            className={cn(
-              "h-11",
-              errors.id_journey && "border-destructive text-destructive"
-            )}
-          >
-            <SelectValue placeholder="Select plugged" />
-          </SelectTrigger>
-          <SelectContent>
-            {journeyOptions.map((journey: JourneyOption) => (
-              <SelectItem key={journey.id} value={String(journey.id)}>
-                {journey.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.id_journey ? (
-          <p className="text-xs text-destructive">
-            {errors.id_journey.message}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="color">
           Couleur
         </label>
@@ -194,32 +158,11 @@ const ConstituentElementForm = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="mention-plugged">
-          Semestre
-        </label>
-        <Select
-          value={watch("semester")}
-          onValueChange={(value) => setValue("semester", value)}
-        >
-          <SelectTrigger
-            className={cn(
-              "h-11",
-              errors.semester && "border-destructive text-destructive"
-            )}
-          >
-            <SelectValue placeholder="Selectioner le Semestre" />
-          </SelectTrigger>
-          <SelectContent>
-            {semesterOptions.map((semester: string) => (
-              <SelectItem key={semester} value={semester}>
-                {semester}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.semester ? (
-          <p className="text-xs text-destructive">{errors.semester.message}</p>
-        ) : null}
+        <p className="text-sm font-medium">Parcours &amp; Semestre</p>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">{journeyLabel}</Badge>
+          <Badge variant="outline">{semesterLabel}</Badge>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -622,6 +565,9 @@ export const ConstituentElementPage = () => {
 
   const isSubmitting =
     createConstituentElement.isPending || updateConstituentElement.isPending;
+  const journeyLabel =
+    availableJourneys.find((j) => j.id === filters.id_journey)?.label ??
+    "Parcours sélectionné";
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -707,12 +653,17 @@ export const ConstituentElementPage = () => {
           </DialogHeader>
           <ConstituentElementForm
             mode={editingUnit ? "edit" : "create"}
-            initialValues={toFormValues(editingUnit)}
+            initialValues={toFormValues(editingUnit, {
+              id_journey: filters.id_journey,
+              semester: filters.semester
+            })}
             onSubmit={handleSubmit}
             onCancel={closeForm}
             isSubmitting={isSubmitting}
-            journeyOptions={availableJourneys}
-            semesterOptions={semesters}
+            journeyLabel={journeyLabel}
+            semesterLabel={filters.semester || "Semestre sélectionné"}
+            journeyId={filters.id_journey}
+            semesterValue={filters.semester}
           />
         </DialogContent>
       </Dialog>

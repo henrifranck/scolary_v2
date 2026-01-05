@@ -6,11 +6,12 @@ from datetime import datetime, time, date
 from typing import Any
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, field_validator
-from .teaching_unit_offering import TeachingUnitOffering
+from .teaching_unit_offering import TeachingUnitOfferingWithRelation
 
 
 class ConstituentElementOptionalGroupBase(BaseModel):
     id_teaching_unit_offering: Optional[int] = None
+    name: Optional[str] = None
     selection_regle: Optional[str] = None
 
 
@@ -34,7 +35,7 @@ class ConstituentElementOptionalGroup(ConstituentElementOptionalGroupInDBBase):
 
 
 class ConstituentElementOptionalGroupWithRelation(ConstituentElementOptionalGroupInDBBase):
-    teaching_unit: Optional[TeachingUnitOffering] = None
+    teaching_unit_offering: Optional[TeachingUnitOfferingWithRelation] = None
 
 
 class ConstituentElementOptionalGroupInDB(ConstituentElementOptionalGroupInDBBase):

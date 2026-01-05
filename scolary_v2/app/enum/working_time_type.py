@@ -5,4 +5,4 @@ class WorkingTimeTypeEnum(Enum):
     COURSE = "cours"
     TP = "tp"
     TD = "td"
-    EXAM = "Exam"
+    EXAM = "exam"

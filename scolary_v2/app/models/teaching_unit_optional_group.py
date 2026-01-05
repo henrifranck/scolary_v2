@@ -13,6 +13,7 @@ class TeachingUnitOptionalGroup(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     id_journey = Column(Integer, ForeignKey('journey.id'))
     semester = Column(String(255))
+    name = Column(String(255))
     selection_regle = Column(Text)
 
     # default column

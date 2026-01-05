@@ -10,7 +10,7 @@ from pydantic import field_validator
 from app.enum.working_time_type import WorkingTimeTypeEnum
 from app.enum.session_type import SessionTypeEnum
 from .classroom import Classroom
-from .constituent_element_offering import ConstituentElementOffering
+from .constituent_element_offering import ConstituentElementOfferingWithRelation
 from .group import Group
 
 
@@ -74,7 +74,7 @@ class WorkingTime(WorkingTimeInDBBase):
 
 
 class WorkingTimeWithRelation(WorkingTimeInDBBase):
-    constituent_element_offering: Optional[ConstituentElementOffering] = None
+    constituent_element_offering: Optional[ConstituentElementOfferingWithRelation] = None
     group: Optional[Group] = None
     classroom: Optional[Classroom] = None
 

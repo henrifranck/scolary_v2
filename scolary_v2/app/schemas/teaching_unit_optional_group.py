@@ -12,6 +12,7 @@ from .journey import Journey
 class TeachingUnitOptionalGroupBase(BaseModel):
     id_journey: Optional[int] = None
     semester: Optional[str] = None
+    name: Optional[str] = None
     selection_regle: Optional[str] = None
 
 

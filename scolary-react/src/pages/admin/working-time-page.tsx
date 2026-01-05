@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Calendar as CalendarIcon,
@@ -34,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useLookupOptions } from "@/hooks/use-lookup-options";
@@ -42,19 +43,6 @@ import { fetchJourneys as fetchJourneysByMention } from "@/services/inscription-
 import { fetchClassrooms } from "@/services/classroom-service";
 import { fetchGroups } from "@/services/group-service";
 import { fetchConstituentElementOfferings } from "@/services/constituent-element-offering-service";
-import { fetchConstituentElements } from "@/services/constituent-element-service";
-import { fetchTeachingUnits } from "@/services/teaching-unit-service";
-import {
-  useCreateConstituentElementOffering,
-  useDeleteConstituentElementOffering,
-  useUpdateConstituentElementOffering
-} from "@/services/constituent-element-offering-service";
-import {
-  useCreateTeachingUnitOffering,
-  fetchTeachingUnitOfferings,
-  useDeleteTeachingUnitOffering,
-  useUpdateTeachingUnitOffering
-} from "@/services/teaching-unit-offering-service";
 import {
   fetchWorkingTimes,
   useCreateWorkingTime,
@@ -65,28 +53,12 @@ import {
   WorkingSessionType,
   WorkingTime,
   WorkingTimePayload,
-  WorkingTimeType
+  WorkingTimeType,
+  WorkingTimeTypeValue
 } from "@/models/working-time";
 import { ConstituentElementOffering } from "@/models/constituent-element-offering";
 import { Classroom } from "@/models/classroom";
 import { Group } from "@/models/group";
-import { TeachingUnitOffering } from "@/models/teaching-unit-offering";
-import { ConstituentElement } from "@/models/constituent-element";
-import { TeachingUnit } from "@/models/teaching-unit";
-import {
-  useConstituentElementOptionalGroups,
-  useCreateConstituentElementOptionalGroup
-} from "@/services/constituent-element-optional-group-service";
-import {
-  useTeachingUnitOptionalGroups,
-  useCreateTeachingUnitOptionalGroup,
-  useDeleteTeachingUnitOptionalGroup,
-  useUpdateTeachingUnitOptionalGroup
-} from "@/services/teaching-unit-optional-group-service";
-import {
-  useDeleteConstituentElementOptionalGroup,
-  useUpdateConstituentElementOptionalGroup
-} from "@/services/constituent-element-optional-group-service";
 
 type WorkingTimeFilters = {
   id_year: string;
@@ -99,33 +71,12 @@ type WorkingTimeFormValues = {
   id_constituent_element_offering: string;
   id_classroom: string;
   id_group: string;
-  working_time_type: WorkingTimeType;
+  working_time_type: WorkingTimeTypeValue[keyof WorkingTimeTypeValue];
   session: WorkingSessionType;
   day: string;
   date: string;
   start: string;
   end: string;
-};
-
-type ConstituentElementOfferingFormValues = {
-  id_constituent_element: string;
-  id_academic_year: string;
-  weight: string;
-  id_constituent_element_optional_group: string;
-  id_teching_unit_offering: string;
-  id_teacher: string;
-};
-
-type TeachingUnitOfferingFormValues = {
-  id_teaching_unit: string;
-  id_academic_year: string;
-  credit: string;
-  id_teaching_unit_optional_group: string;
-};
-
-type OptionalGroupFormValues = {
-  name: string;
-  description: string;
 };
 
 type Feedback = { type: "success" | "error"; text: string };
@@ -175,10 +126,10 @@ const dayAliases: Record<string, string> = {
 };
 
 const workingTypeOptions: { value: string; label: string }[] = [
-  { value: "cours", label: "Cours" },
-  { value: "tp", label: "Travaux pratiques" },
-  { value: "td", label: "Travaux dirigés" },
-  { value: "Exam", label: "Examen" }
+  { value: "COURSE", label: "Cours" },
+  { value: "TP", label: "Travaux pratiques" },
+  { value: "TD", label: "Travaux dirigés" },
+  { value: "EXAM", label: "Examen" }
 ];
 const workingTypeTabs = workingTypeOptions;
 
@@ -191,33 +142,12 @@ const defaultFormValues: WorkingTimeFormValues = {
   id_constituent_element_offering: "",
   id_classroom: "",
   id_group: "",
-  working_time_type: "COURSE",
+  working_time_type: "cours",
   session: "Normal",
   day: "Lundi",
   date: "",
   start: defaultStartTime,
   end: defaultEndTime
-};
-
-const defaultCEOfferingValues: ConstituentElementOfferingFormValues = {
-  id_constituent_element: "",
-  id_academic_year: "",
-  weight: "",
-  id_constituent_element_optional_group: "",
-  id_teching_unit_offering: "",
-  id_teacher: ""
-};
-
-const defaultTUOfferingValues: TeachingUnitOfferingFormValues = {
-  id_teaching_unit: "",
-  id_academic_year: "",
-  credit: "",
-  id_teaching_unit_optional_group: ""
-};
-
-const defaultOptionalGroupValues: OptionalGroupFormValues = {
-  name: "",
-  description: ""
 };
 
 const getDayFromDate = (value?: string | null) => {
@@ -285,7 +215,7 @@ const toFormValues = (
     ? String(workingTime.id_classroom)
     : "",
   id_group: workingTime?.id_group ? String(workingTime.id_group) : "",
-  working_time_type: workingTime?.working_time_type ?? "COURSE",
+  working_time_type: workingTime?.working_time_type ?? "cours",
   session: workingTime?.session ?? "Normal",
   day: normalizeDay(workingTime?.day, workingTime?.date) ?? "Monday",
   date: workingTime?.date ? workingTime.date.split("T")[0] : "",
@@ -619,18 +549,6 @@ export const WorkingTimePage = () => {
   const createWorkingTime = useCreateWorkingTime();
   const updateWorkingTime = useUpdateWorkingTime();
   const deleteWorkingTime = useDeleteWorkingTime();
-  const createCEOffering = useCreateConstituentElementOffering();
-  const createTUOffering = useCreateTeachingUnitOffering();
-  const updateCEOffering = useUpdateConstituentElementOffering();
-  const updateTUOffering = useUpdateTeachingUnitOffering();
-  const deleteCEOffering = useDeleteConstituentElementOffering();
-  const deleteTUOffering = useDeleteTeachingUnitOffering();
-  const createCEOptionalGroup = useCreateConstituentElementOptionalGroup();
-  const createTUOptionalGroup = useCreateTeachingUnitOptionalGroup();
-  const deleteCEOptionalGroup = useDeleteConstituentElementOptionalGroup();
-  const deleteTUOptionalGroup = useDeleteTeachingUnitOptionalGroup();
-  const updateCEOptionalGroup = useUpdateConstituentElementOptionalGroup();
-  const updateTUOptionalGroup = useUpdateTeachingUnitOptionalGroup();
 
   const { mentionOptions, academicYearOptions } = useLookupOptions({
     includeMentions: true,
@@ -796,7 +714,7 @@ export const WorkingTimePage = () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
   }, [filters]);
 
-  const [calendarType, setCalendarType] = useState<WorkingTimeType>("COURSE");
+  const [calendarType, setCalendarType] = useState<WorkingTimeType>("cours");
 
   const workingTimeQuery = useQuery({
     queryKey: ["working-times", { filters, calendarType }],
@@ -943,193 +861,11 @@ export const WorkingTimePage = () => {
     enabled: Boolean(filters.id_journey)
   });
 
-  const constituentElementListQuery = useQuery({
-    queryKey: [
-      "working-time",
-      "ce-list",
-      filters.id_mention,
-      filters.id_journey,
-      filters.semester,
-      filters.id_year
-    ],
-    queryFn: () => {
-      const wheres: Array<Record<string, any>> = [];
-      if (filters.id_mention) {
-        wheres.push({
-          key: "journey.id_mention",
-          operator: "==",
-          value: Number(filters.id_mention)
-        });
-      }
-      if (filters.id_journey) {
-        wheres.push({
-          key: "id_journey",
-          operator: "==",
-          value: Number(filters.id_journey)
-        });
-      }
-      if (filters.semester) {
-        wheres.push({
-          key: "semester",
-          operator: "==",
-          value: filters.semester
-        });
-      }
-      return fetchConstituentElements({
-        where: JSON.stringify(wheres),
-        relation: JSON.stringify([
-          "journey{id,name,abbreviation,id_mention}",
-          "journey.mention{id,name}"
-        ]),
-        limit: 400
-      });
-    }
-  });
-
-  const teachingUnitListQuery = useQuery({
-    queryKey: [
-      "working-time",
-      "tu-list",
-      filters.id_mention,
-      filters.id_journey,
-      filters.semester,
-      filters.id_year
-    ],
-    queryFn: () => {
-      const wheres: Array<Record<string, any>> = [];
-      if (filters.id_mention) {
-        wheres.push({
-          key: "journey.id_mention",
-          operator: "==",
-          value: Number(filters.id_mention)
-        });
-      }
-      if (filters.id_journey) {
-        wheres.push({
-          key: "id_journey",
-          operator: "==",
-          value: Number(filters.id_journey)
-        });
-      }
-      if (filters.semester) {
-        wheres.push({
-          key: "semester",
-          operator: "==",
-          value: filters.semester
-        });
-      }
-      return fetchTeachingUnits({
-        where: JSON.stringify(wheres),
-        relation: JSON.stringify([
-          "journey{id,name,abbreviation,id_mention}",
-          "journey.mention{id,name}"
-        ]),
-        limit: 400
-      });
-    }
-  });
-
-  const teachingUnitOfferingQuery = useQuery({
-    queryKey: [
-      "working-time",
-      "tu-offerings",
-      filters.id_mention,
-      filters.id_journey,
-      filters.semester,
-      filters.id_year
-    ],
-    queryFn: () => {
-      const wheres: Array<Record<string, any>> = [];
-      if (filters.id_year) {
-        wheres.push({
-          key: "id_academic_year",
-          operator: "==",
-          value: Number(filters.id_year)
-        });
-      }
-      if (filters.id_mention) {
-        wheres.push({
-          key: "teaching_unit.journey.id_mention",
-          operator: "==",
-          value: Number(filters.id_mention)
-        });
-      }
-      if (filters.id_journey) {
-        wheres.push({
-          key: "teaching_unit.id_journey",
-          operator: "==",
-          value: Number(filters.id_journey)
-        });
-      }
-      if (filters.semester) {
-        wheres.push({
-          key: "teaching_unit.semester",
-          operator: "==",
-          value: filters.semester
-        });
-      }
-      return fetchTeachingUnitOfferings({
-        where: JSON.stringify(wheres),
-        relation: JSON.stringify([
-          "teaching_unit{id,name,semester,id_journey}",
-          "teaching_unit.journey{id,name,abbreviation,id_mention}",
-          "academic_year{id,name}"
-        ]),
-        limit: 400
-      });
-    }
-  });
-
-  const ceOptionalGroupsQuery = useConstituentElementOptionalGroups();
-  const tuOptionalGroupsQuery = useTeachingUnitOptionalGroups();
-
   const workingTimes = workingTimeQuery.data?.data ?? [];
   const offerings = offeringsQuery.data?.data ?? [];
   const classrooms = classroomsQuery.data?.data ?? [];
   const groups = groupsQuery.data?.data ?? [];
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
-  const [offeringDialogOpen, setOfferingDialogOpen] = useState(false);
-  const [offeringTab, setOfferingTab] = useState<"ec" | "ue">("ec");
-  const [optionalGroupDialogOpen, setOptionalGroupDialogOpen] = useState(false);
-  const [optionalGroupTab, setOptionalGroupTab] = useState<"ec" | "ue">("ec");
-  const [editingOptionalGroupId, setEditingOptionalGroupId] = useState<
-    number | null
-  >(null);
-  const [manageOfferingsDialogOpen, setManageOfferingsDialogOpen] =
-    useState(false);
-  const [editingCEOfferingId, setEditingCEOfferingId] = useState<number | null>(
-    null
-  );
-  const [editingTUOfferingId, setEditingTUOfferingId] = useState<number | null>(
-    null
-  );
-  const ceForm = useForm<ConstituentElementOfferingFormValues>({
-    defaultValues: defaultCEOfferingValues
-  });
-  const tuForm = useForm<TeachingUnitOfferingFormValues>({
-    defaultValues: defaultTUOfferingValues
-  });
-  const optionalGroupForm = useForm<OptionalGroupFormValues>({
-    defaultValues: defaultOptionalGroupValues
-  });
-  const ceOptions: ConstituentElement[] =
-    constituentElementListQuery.data?.data ?? [];
-  const tuOptions: TeachingUnit[] = teachingUnitListQuery.data?.data ?? [];
-  const tuOfferingOptions: TeachingUnitOffering[] =
-    teachingUnitOfferingQuery.data?.data ?? [];
-  const ceOptionalGroupOptions =
-    ceOptionalGroupsQuery.data?.data ?? ceOptionalGroupsQuery.data ?? [];
-  const tuOptionalGroupOptions =
-    tuOptionalGroupsQuery.data?.data ?? tuOptionalGroupsQuery.data ?? [];
-
-  const resetOfferingForms = useCallback(() => {
-    ceForm.reset(defaultCEOfferingValues);
-    tuForm.reset(defaultTUOfferingValues);
-    optionalGroupForm.reset(defaultOptionalGroupValues);
-    setEditingOptionalGroupId(null);
-    setEditingCEOfferingId(null);
-    setEditingTUOfferingId(null);
-  }, [ceForm, tuForm, optionalGroupForm]);
 
   const handleFiltersChange = useCallback((next: any) => {
     setFilters((prev) => ({
@@ -1202,139 +938,6 @@ export const WorkingTimePage = () => {
     }
   }, [deleteWorkingTime, workingTimeQuery, workingTimeToDelete]);
 
-  const handleCreateCEOffering = ceForm.handleSubmit(
-    async (values: ConstituentElementOfferingFormValues) => {
-      const linkedUE = values.id_teching_unit_offering;
-      if (!linkedUE || linkedUE === emptySelectValue) {
-        ceForm.setError("id_teching_unit_offering", {
-          type: "required",
-          message: "L'offre UE liée est obligatoire"
-        });
-        return;
-      }
-      ceForm.clearErrors("id_teching_unit_offering");
-      const payload: any = {
-        id_constituent_element: values.id_constituent_element
-          ? Number(values.id_constituent_element)
-          : undefined,
-        id_academic_year: values.id_academic_year
-          ? Number(values.id_academic_year)
-          : undefined,
-        weight: values.weight ? Number(values.weight) : undefined,
-        id_constituent_element_optional_group:
-          values.id_constituent_element_optional_group
-            ? Number(values.id_constituent_element_optional_group)
-            : undefined,
-        id_teching_unit_offering:
-          linkedUE && linkedUE !== emptySelectValue
-            ? Number(linkedUE)
-            : undefined,
-        id_teacher: values.id_teacher ? Number(values.id_teacher) : undefined
-      };
-      if (editingCEOfferingId) {
-        await updateCEOffering.mutateAsync({
-          id: editingCEOfferingId,
-          payload
-        });
-        setFeedback({
-          type: "success",
-          text: "Offre EC mise à jour."
-        });
-      } else {
-        await createCEOffering.mutateAsync(payload);
-        setFeedback({
-          type: "success",
-          text: "Offre EC créée."
-        });
-      }
-      resetOfferingForms();
-      await offeringsQuery.refetch();
-      await ceOptionalGroupsQuery.refetch();
-      setOfferingDialogOpen(false);
-    }
-  );
-
-  const handleCreateTUOffering = tuForm.handleSubmit(
-    async (values: TeachingUnitOfferingFormValues) => {
-      const payload: any = {
-        id_teaching_unit: values.id_teaching_unit
-          ? Number(values.id_teaching_unit)
-          : undefined,
-        id_academic_year: values.id_academic_year
-          ? Number(values.id_academic_year)
-          : undefined,
-        credit: values.credit ? Number(values.credit) : undefined,
-        id_teaching_unit_optional_group: values.id_teaching_unit_optional_group
-          ? Number(values.id_teaching_unit_optional_group)
-          : undefined
-      };
-      if (editingTUOfferingId) {
-        await updateTUOffering.mutateAsync({
-          id: editingTUOfferingId,
-          payload
-        });
-        setFeedback({
-          type: "success",
-          text: "Offre UE mise à jour."
-        });
-      } else {
-        await createTUOffering.mutateAsync(payload);
-        setFeedback({
-          type: "success",
-          text: "Offre UE créée."
-        });
-      }
-      resetOfferingForms();
-      await teachingUnitOfferingQuery.refetch();
-      await teachingUnitListQuery.refetch();
-      await tuOptionalGroupsQuery.refetch();
-      setOfferingDialogOpen(false);
-    }
-  );
-
-  const handleCreateOptionalGroup = optionalGroupForm.handleSubmit(
-    async (values: OptionalGroupFormValues) => {
-      try {
-        if (optionalGroupTab === "ec") {
-          if (editingOptionalGroupId) {
-            await updateCEOptionalGroup.mutateAsync({
-              id: editingOptionalGroupId,
-              payload: values
-            });
-          } else {
-            await createCEOptionalGroup.mutateAsync(values);
-          }
-          await ceOptionalGroupsQuery.refetch();
-        } else {
-          if (editingOptionalGroupId) {
-            await updateTUOptionalGroup.mutateAsync({
-              id: editingOptionalGroupId,
-              payload: values
-            });
-          } else {
-            await createTUOptionalGroup.mutateAsync(values);
-          }
-          await tuOptionalGroupsQuery.refetch();
-        }
-        setFeedback({
-          type: "success",
-          text: editingOptionalGroupId
-            ? "Groupe optionnel mis à jour."
-            : "Groupe optionnel créé."
-        });
-        optionalGroupForm.reset(defaultOptionalGroupValues);
-        setEditingOptionalGroupId(null);
-        setOptionalGroupDialogOpen(false);
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Impossible de créer le groupe optionnel.";
-        setFeedback({ type: "error", text: message });
-      }
-    }
-  );
-
   const eventsByDay = useMemo(() => {
     const acc: Record<string, WorkingTime[]> = {};
     for (const day of daysOfWeek) {
@@ -1381,45 +984,18 @@ export const WorkingTimePage = () => {
             semestre pour planifier les séances sur le calendrier.
           </p>
         </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="h-4 w-4" />
-          Ajouter un horaire
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => {
-            resetOfferingForms();
-            if (filters.id_year) {
-              ceForm.setValue("id_academic_year", String(filters.id_year));
-              tuForm.setValue("id_academic_year", String(filters.id_year));
-            }
-            setOfferingDialogOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter une offre EC/UE
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => {
-            optionalGroupForm.reset(defaultOptionalGroupValues);
-            setEditingOptionalGroupId(null);
-            setOptionalGroupDialogOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          Nouveau groupe optionnel
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => setManageOfferingsDialogOpen(true)}
-        >
-          <Layers className="h-4 w-4" />
-          Gérer offres
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            Ajouter un horaire
+          </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/admin/offerings">
+              <Layers className="h-4 w-4" />
+              Gérer les offres EC/UE
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 rounded-lg border bg-background p-5 shadow-sm">
@@ -1667,501 +1243,6 @@ export const WorkingTimePage = () => {
           </div>
         </div>
       </div>
-
-      <Dialog open={offeringDialogOpen} onOpenChange={setOfferingDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Ajouter une offre</DialogTitle>
-            <DialogDescription>
-              Créez rapidement une offre d&apos;élément constitutif ou
-              d&apos;unité d&apos;enseignement. Tous les champs sont
-              facultatifs.
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs
-            value={offeringTab}
-            onValueChange={(value) => setOfferingTab(value as "ec" | "ue")}
-          >
-            <TabsList className="grid grid-cols-2 mb-4 bg-muted">
-              <TabsTrigger value="ec">Offre EC</TabsTrigger>
-              <TabsTrigger value="ue">Offre UE</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          {offeringTab === "ec" ? (
-            <form className="space-y-3" onSubmit={handleCreateCEOffering}>
-              <div className="grid gap-3 md:grid-cols-2">
-                <Select
-                  value={ceForm.watch("id_constituent_element")}
-                  onValueChange={(value) =>
-                    ceForm.setValue("id_constituent_element", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner l'EC" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={emptySelectValue}>Aucun</SelectItem>
-                    {ceOptions.map((ce) => (
-                      <SelectItem key={ce.id} value={String(ce.id)}>
-                        {ce.name} {ce.semester ? `· ${ce.semester}` : ""}{" "}
-                        {ce.journey?.name ?? ce.journey?.abbreviation ?? ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Année académique (affichée seulement)"
-                  value={
-                    academicYearOptions.find(
-                      (year) => year.id === ceForm.watch("id_academic_year")
-                    )?.label || ""
-                  }
-                  disabled
-                  readOnly
-                />
-                <Input
-                  type="number"
-                  placeholder="Poids"
-                  {...ceForm.register("weight")}
-                />
-                <Select
-                  value={ceForm.watch("id_constituent_element_optional_group")}
-                  onValueChange={(value) =>
-                    ceForm.setValue(
-                      "id_constituent_element_optional_group",
-                      value
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Groupe optionnel EC (facultatif)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={emptySelectValue}>Aucun</SelectItem>
-                    {ceOptionalGroupOptions.map((group: any) => (
-                      <SelectItem key={group.id} value={String(group.id)}>
-                        {group.name ?? `Groupe ${group.id}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={ceForm.watch("id_teching_unit_offering")}
-                  onValueChange={(value) =>
-                    ceForm.setValue("id_teching_unit_offering", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Offre UE liée (facultatif)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={emptySelectValue}>Aucune</SelectItem>
-                    {tuOfferingOptions.map((offer) => (
-                      <SelectItem key={offer.id} value={String(offer.id)}>
-                        {offer.teaching_unit?.name ?? "UE"}{" "}
-                        {offer.teaching_unit?.semester
-                          ? `· ${offer.teaching_unit.semester}`
-                          : ""}{" "}
-                        {offer.academic_year?.name
-                          ? `· ${offer.academic_year.name}`
-                          : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {ceForm.formState.errors.id_teching_unit_offering ? (
-                  <p className="text-xs text-destructive">
-                    {ceForm.formState.errors.id_teching_unit_offering.message}
-                  </p>
-                ) : null}
-                <Select
-                  value={ceForm.watch("id_teacher")}
-                  onValueChange={(value) =>
-                    ceForm.setValue("id_teacher", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Enseignant (facultatif)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={emptySelectValue}>Aucun</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setOfferingDialogOpen(false)}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" disabled={createCEOffering.isPending}>
-                  {createCEOffering.isPending
-                    ? "Création…"
-                    : "Créer l'offre EC"}
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <form className="space-y-3" onSubmit={handleCreateTUOffering}>
-              <div className="grid gap-3 md:grid-cols-2">
-                <Select
-                  value={tuForm.watch("id_teaching_unit")}
-                  onValueChange={(value) =>
-                    tuForm.setValue("id_teaching_unit", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner l'UE" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={emptySelectValue}>Aucune</SelectItem>
-                    {tuOptions.map((tu) => (
-                      <SelectItem key={tu.id} value={String(tu.id)}>
-                        {tu.name} {tu.semester ? `· ${tu.semester}` : ""}{" "}
-                        {tu.journey?.name ?? tu.journey?.abbreviation ?? ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Année académique (affichée seulement)"
-                  value={
-                    academicYearOptions.find(
-                      (year) => year.id === tuForm.watch("id_academic_year")
-                    )?.label || ""
-                  }
-                  disabled
-                  readOnly
-                />
-                <Input
-                  type="number"
-                  placeholder="Crédits"
-                  {...tuForm.register("credit")}
-                />
-                <Select
-                  value={tuForm.watch("id_teaching_unit_optional_group")}
-                  onValueChange={(value) =>
-                    tuForm.setValue("id_teaching_unit_optional_group", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Groupe optionnel UE (facultatif)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={emptySelectValue}>Aucun</SelectItem>
-                    {tuOptionalGroupOptions.map((group: any) => (
-                      <SelectItem key={group.id} value={String(group.id)}>
-                        {group.name ?? `Groupe ${group.id}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setOfferingDialogOpen(false)}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" disabled={createTUOffering.isPending}>
-                  {createTUOffering.isPending
-                    ? "Création…"
-                    : "Créer l'offre UE"}
-                </Button>
-              </div>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={manageOfferingsDialogOpen}
-        onOpenChange={setManageOfferingsDialogOpen}
-      >
-        <DialogContent className="sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Offres EC / UE</DialogTitle>
-            <DialogDescription>
-              Consultez, éditez ou supprimez les offres existantes.
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs defaultValue="ec">
-            <TabsList className="grid grid-cols-2 bg-muted mb-4">
-              <TabsTrigger value="ec">Offres EC</TabsTrigger>
-              <TabsTrigger value="ue">Offres UE</TabsTrigger>
-            </TabsList>
-            <div className="space-y-3">
-              <TabsContent value="ec" className="space-y-2">
-                {(offerings ?? []).map((offer: any) => {
-                  const ce = offer.constituent_element;
-                  return (
-                    <div
-                      key={offer.id}
-                      className="flex items-center justify-between rounded border bg-background px-3 py-2"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {ce?.constituent_element?.name ?? "EC"}{" "}
-                          {ce?.constituent_element?.semester
-                            ? `· ${ce.constituent_element.semester}`
-                            : ""}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {ce?.academic_year?.name ?? ""}{" "}
-                          {ce?.constituent_element?.journey?.name ??
-                            ce?.constituent_element?.journey?.abbreviation ??
-                            ""}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setOfferingDialogOpen(true);
-                            setOfferingTab("ec");
-                            setEditingCEOfferingId(Number(offer.id));
-                            ceForm.reset({
-                              id_constituent_element: ce?.constituent_element
-                                ?.id
-                                ? String(ce.constituent_element.id)
-                                : "",
-                              id_academic_year: ce?.academic_year?.id
-                                ? String(ce.academic_year.id)
-                                : "",
-                              weight: offer.weight ? String(offer.weight) : "",
-                              id_constituent_element_optional_group:
-                                offer.id_constituent_element_optional_group
-                                  ? String(
-                                      offer.id_constituent_element_optional_group
-                                    )
-                                  : "",
-                              id_teching_unit_offering:
-                                offer.id_teching_unit_offering
-                                  ? String(offer.id_teching_unit_offering)
-                                  : "",
-                              id_teacher: offer.id_teacher
-                                ? String(offer.id_teacher)
-                                : ""
-                            });
-                          }}
-                        >
-                          Éditer
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() =>
-                            deleteCEOffering.mutate(Number(offer.id), {
-                              onSuccess: () => {
-                                offeringsQuery.refetch();
-                                workingTimeQuery.refetch();
-                                resetOfferingForms();
-                              }
-                            })
-                          }
-                        >
-                          Supprimer
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </TabsContent>
-              <TabsContent value="ue" className="space-y-2">
-                {(teachingUnitOfferingQuery.data?.data ?? []).map(
-                  (offer: any) => {
-                    const tu = offer.teaching_unit;
-                    return (
-                      <div
-                        key={offer.id}
-                        className="flex items-center justify-between rounded border bg-background px-3 py-2"
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {tu?.name ?? "UE"}{" "}
-                            {tu?.semester ? `· ${tu.semester}` : ""}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {offer.academic_year?.name ?? ""}{" "}
-                            {tu?.journey?.name ??
-                              tu?.journey?.abbreviation ??
-                              ""}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setOfferingDialogOpen(true);
-                              setOfferingTab("ue");
-                              setEditingTUOfferingId(Number(offer.id));
-                              tuForm.reset({
-                                id_teaching_unit: tu?.id ? String(tu.id) : "",
-                                id_academic_year: offer.academic_year?.id
-                                  ? String(offer.academic_year.id)
-                                  : "",
-                                credit: offer.credit
-                                  ? String(offer.credit)
-                                  : "",
-                                id_teaching_unit_optional_group:
-                                  offer.id_teaching_unit_optional_group
-                                    ? String(
-                                        offer.id_teaching_unit_optional_group
-                                      )
-                                    : ""
-                              });
-                            }}
-                          >
-                            Éditer
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() =>
-                              deleteTUOffering.mutate(Number(offer.id), {
-                                onSuccess: () => {
-                                  teachingUnitOfferingQuery.refetch();
-                                  workingTimeQuery.refetch();
-                                  resetOfferingForms();
-                                }
-                              })
-                            }
-                          >
-                            Supprimer
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  }
-                )}
-              </TabsContent>
-            </div>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={optionalGroupDialogOpen}
-        onOpenChange={setOptionalGroupDialogOpen}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Ajouter un groupe optionnel</DialogTitle>
-            <DialogDescription>
-              Créez un groupe optionnel pour une offre EC ou UE.
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs
-            value={optionalGroupTab}
-            onValueChange={(value) => setOptionalGroupTab(value as "ec" | "ue")}
-          >
-            <TabsList className="grid grid-cols-2 bg-muted mb-4">
-              <TabsTrigger value="ec">Groupe EC</TabsTrigger>
-              <TabsTrigger value="ue">Groupe UE</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <form className="space-y-3" onSubmit={handleCreateOptionalGroup}>
-            <Input
-              placeholder="Nom du groupe"
-              {...optionalGroupForm.register("name")}
-            />
-            <Input
-              placeholder="Description"
-              {...optionalGroupForm.register("description")}
-            />
-            <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground">
-              {optionalGroupTab === "ec" ? "Listes EC :" : "Listes UE :"}
-              <div className="mt-2 space-y-1">
-                {(optionalGroupTab === "ec"
-                  ? ceOptionalGroupOptions
-                  : tuOptionalGroupOptions
-                ).map((group: any) => (
-                  <div
-                    key={group.id}
-                    className="flex items-center justify-between rounded border bg-background px-2 py-1"
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium text-foreground">
-                        {group.name ?? `Groupe ${group.id}`}
-                      </span>
-                      {group.description ? (
-                        <span className="text-[11px] text-muted-foreground">
-                          {group.description}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => {
-                          setEditingOptionalGroupId(group.id);
-                          setOptionalGroupTab(
-                            optionalGroupTab === "ec" ? "ec" : "ue"
-                          );
-                          optionalGroupForm.reset({
-                            name: group.name ?? "",
-                            description: group.description ?? ""
-                          });
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7 text-destructive"
-                        onClick={() => {
-                          if (optionalGroupTab === "ec") {
-                            deleteCEOptionalGroup.mutate(Number(group.id), {
-                              onSuccess: () => ceOptionalGroupsQuery.refetch()
-                            });
-                          } else {
-                            deleteTUOptionalGroup.mutate(Number(group.id), {
-                              onSuccess: () => tuOptionalGroupsQuery.refetch()
-                            });
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setOptionalGroupDialogOpen(false)}
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                disabled={
-                  createCEOptionalGroup.isPending ||
-                  createTUOptionalGroup.isPending
-                }
-              >
-                {createCEOptionalGroup.isPending ||
-                createTUOptionalGroup.isPending
-                  ? "Création…"
-                  : "Créer le groupe"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-3xl">

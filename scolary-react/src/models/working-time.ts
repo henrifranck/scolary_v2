@@ -2,7 +2,13 @@ import { Classroom } from "./classroom";
 import { ConstituentElementOffering } from "./constituent-element-offering";
 import { Group } from "./group";
 
-export type WorkingTimeType = "COURSE" | "TP" | "TD" | "EXAM";
+export type WorkingTimeType = "cours" | "tp" | "td" | "exam";
+export type WorkingTimeTypeValue = {
+  COURSE: "cours";
+  TP: "tp";
+  TD: "td";
+  EXAM: "exam";
+};
 export type WorkingSessionType = "Normal" | "Rattrapage";
 
 export interface WorkingTime {

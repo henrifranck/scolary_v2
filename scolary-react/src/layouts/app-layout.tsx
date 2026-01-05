@@ -261,6 +261,12 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
             roles: ["admin"]
           },
           {
+            to: "/admin/offerings",
+            label: "Offerings",
+            icon: ListChecks,
+            roles: ["admin"]
+          },
+          {
             to: "/admin/working-time",
             label: "Working time",
             icon: CalendarClock,
