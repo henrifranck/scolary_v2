@@ -53,6 +53,7 @@ class CRUDStudent(CRUDBase[Student, StudentCreate, StudentUpdate]):
             db: Session,
             *,
             id_mention: int,
+            id_journey: int,
             semester: str = "",
             semester2: str = "",
             id_year: int,
@@ -68,7 +69,11 @@ class CRUDStudent(CRUDBase[Student, StudentCreate, StudentUpdate]):
             )
             .join(RegisterSemester, RegisterSemester.id_annual_register == AnnualRegister.id)
             .join(Journey, Journey.id == RegisterSemester.id_journey)
-            .filter(AnnualRegister.id_academic_year == id_year, Journey.id_mention == id_mention)
+            .filter(
+                AnnualRegister.id_academic_year == id_year,
+                Journey.id_mention == id_mention,
+                Journey.id == id_journey,
+            )
             .group_by(AnnualRegister.num_carte, RegisterSemester.id_journey)
             .subquery()
         )

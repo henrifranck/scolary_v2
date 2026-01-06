@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -9,12 +9,14 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { PdfStreamingViewer } from "@/modules/templates/PdfStreamingViewer";
 
 type PdfViewerModalProps = {
   open: boolean;
   url?: string;
+  urls?: string[];
   title?: string;
   onOpenChange: (open: boolean) => void;
 };
@@ -22,13 +24,27 @@ type PdfViewerModalProps = {
 export function PdfViewerModal({
   open,
   url,
+  urls,
   title,
   onOpenChange
 }: PdfViewerModalProps) {
-  const resolvedUrl = useMemo(() => resolveAssetUrl(url), [url]);
-  const hasPdf = Boolean(resolvedUrl);
+  const resolvedUrls = useMemo(() => {
+    const list = urls && urls.length ? urls : url ? [url] : [];
+    return list
+      .map((entry) => resolveAssetUrl(entry))
+      .filter((entry): entry is string => Boolean(entry));
+  }, [url, urls]);
 
-  useEffect(() => {}, [open, url, resolvedUrl]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [url, urls]);
+
+  const currentUrl = resolvedUrls[activeIndex] ?? null;
+  const hasPdf = Boolean(currentUrl);
+
+  useEffect(() => {}, [open, url, currentUrl]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,21 +64,36 @@ export function PdfViewerModal({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => resolvedUrl && window.open(resolvedUrl, "_blank")}
+              onClick={() => currentUrl && window.open(currentUrl, "_blank")}
             >
               Télécharger le PDF
             </Button>
           ) : null}
         </div>
 
+        {resolvedUrls.length > 1 ? (
+          <Tabs
+            value={String(activeIndex)}
+            onValueChange={(value) => setActiveIndex(Number(value))}
+          >
+            <TabsList>
+              {resolvedUrls.map((_, idx) => (
+                <TabsTrigger key={idx} value={String(idx)}>
+                  {idx === 0 ? "Recto" : idx === 1 ? "Verso" : `PDF ${idx + 1}`}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        ) : null}
+
         <div className="flex-1">
           <ScrollArea className="h-[70vh] w-full rounded-md border bg-background">
             <div className="flex items-center justify-center p-4">
               {hasPdf ? (
                 <PdfStreamingViewer
-                  pdfUrl={resolvedUrl}
+                  pdfUrl={currentUrl as string}
                   readyPage={null}
-                  resetKey={resolvedUrl}
+                  resetKey={currentUrl as string}
                 />
               ) : (
                 <div className="text-sm text-muted-foreground">Aucun PDF sélectionné.</div>

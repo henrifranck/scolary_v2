@@ -4,6 +4,7 @@ import { User } from "./user-service";
 export type Grade = "MR" | "DR" | "PR" | "Mme";
 
 export interface Teacher {
+  id?: number;
   id_user: number;
   grade: Grade;
   max_hours_per_day?: number;

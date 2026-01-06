@@ -308,6 +308,31 @@ export const ReinscriptionPage = () => {
     });
   }, [filters.id_mention, journeyQuery.data]);
 
+  const resolveJourneyWithMaxSemester = useCallback(
+    (journeys: JourneyOption[]) => {
+      const semesterIndex = (sem?: string | null) => {
+        if (!sem) return -1;
+        const match = sem.match(/s(\d+)/i);
+        return match ? Number(match[1]) : -1;
+      };
+      let best: JourneyOption | null = null;
+      let bestScore = -1;
+      journeys.forEach((journey) => {
+        const maxSem = Math.max(
+          -1,
+          ...((journey.semesterList ?? []).map((sem) => semesterIndex(sem)) ??
+            [])
+        );
+        if (maxSem > bestScore) {
+          best = journey;
+          bestScore = maxSem;
+        }
+      });
+      return best;
+    },
+    []
+  );
+
   useEffect(() => {
     if (!filters.id_mention) {
       setFilters((previous) =>
@@ -327,9 +352,11 @@ export const ReinscriptionPage = () => {
       const hasCurrentJourney = journeyOptions.some(
         (journey) => journey.id === previous.id_journey
       );
+      const fallbackJourney =
+        resolveJourneyWithMaxSemester(journeyOptions) || journeyOptions[0];
       const nextJourneyId = hasCurrentJourney
         ? previous.id_journey
-        : (journeyOptions[0]?.id ?? "");
+        : (fallbackJourney?.id ?? "");
       const nextJourney = journeyOptions.find(
         (journey) => journey.id === nextJourneyId
       );
@@ -376,6 +403,12 @@ export const ReinscriptionPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const offset = (page - 1) * pageSize;
+
+  const resolvedJourneyForActions = useMemo(() => {
+    if (filters.id_journey) return filters.id_journey;
+    const fallback = resolveJourneyWithMaxSemester(availableJourneys);
+    return fallback?.id ?? "";
+  }, [availableJourneys, filters.id_journey, resolveJourneyWithMaxSemester]);
 
   const hasRequiredFilters = Boolean(
     filters.id_mention && filters.id_year && filters.id_journey
@@ -442,6 +475,7 @@ export const ReinscriptionPage = () => {
   const [pdfViewer, setPdfViewer] = useState<{
     open: boolean;
     url?: string;
+    urls?: string[];
     title?: string;
   }>({ open: false });
 
@@ -818,8 +852,9 @@ export const ReinscriptionPage = () => {
 
   const handlePrintCards = async () => {
     setPrintError(null);
-    if (!filters.id_mention || !filters.id_year) {
-      setPrintError("Veuillez sélectionner une mention et une année.");
+    const journeyId = resolvedJourneyForActions;
+    if (!filters.id_mention || !filters.id_year || !journeyId) {
+      setPrintError("Veuillez sélectionner une mention, une année et un parcours.");
       return;
     }
     setPrintingCards(true);
@@ -827,18 +862,21 @@ export const ReinscriptionPage = () => {
       const responses = await printStudentCards({
         mentionId: filters.id_mention,
         academicYearId: filters.id_year,
-        journeyId: filters.id_journey || undefined,
+        journeyId,
         level: semesterToLevel(filters.semester)
       });
       const result = Array.isArray(responses) ? responses[0] : undefined;
+      const back = Array.isArray(responses) ? responses[1] : undefined;
       const url = resolveAssetUrl(result?.url || result?.path);
+      const urlBack = resolveAssetUrl(back?.url || back?.path);
       if (!url) {
         throw new Error("Impossible de générer les cartes.");
       }
       setPdfViewer({
         open: true,
         url,
-        title: "Cartes étudiant - recto"
+        urls: [url, ...(urlBack ? [urlBack] : [])],
+        title: "Cartes étudiant"
       });
     } catch (error) {
       setPrintError(
@@ -853,8 +891,9 @@ export const ReinscriptionPage = () => {
 
   const handlePrintCardsBack = async () => {
     setPrintError(null);
-    if (!filters.id_mention || !filters.id_year) {
-      setPrintError("Veuillez sélectionner une mention et une année.");
+    const journeyId = resolvedJourneyForActions;
+    if (!filters.id_mention || !filters.id_year || !journeyId) {
+      setPrintError("Veuillez sélectionner une mention, une année et un parcours.");
       return;
     }
     setPrintingCardsBack(true);
@@ -862,18 +901,20 @@ export const ReinscriptionPage = () => {
       const responses = await printStudentCards({
         mentionId: filters.id_mention,
         academicYearId: filters.id_year,
-        journeyId: filters.id_journey || undefined,
+        journeyId,
         level: semesterToLevel(filters.semester)
       });
       const result = Array.isArray(responses) ? responses[1] : undefined;
       const url = resolveAssetUrl(result?.url || result?.path);
+      const recto = Array.isArray(responses) ? resolveAssetUrl(responses[0]?.url || responses[0]?.path) : null;
       if (!url) {
         throw new Error("Impossible de générer les cartes.");
       }
       setPdfViewer({
         open: true,
         url,
-        title: "Cartes étudiant - verso"
+        urls: [recto, url].filter(Boolean) as string[],
+        title: "Cartes étudiant"
       });
     } catch (error) {
       setPrintError(
@@ -1010,6 +1051,7 @@ export const ReinscriptionPage = () => {
       <PdfViewerModal
         open={pdfViewer.open}
         url={pdfViewer.url}
+        urls={pdfViewer.urls}
         title={pdfViewer.title}
         onOpenChange={(open) => setPdfViewer((prev) => ({ ...prev, open }))}
       />

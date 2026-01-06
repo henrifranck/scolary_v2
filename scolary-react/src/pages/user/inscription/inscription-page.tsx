@@ -442,6 +442,7 @@ export const InscriptionPage = () => {
   const [pdfViewer, setPdfViewer] = useState<{
     open: boolean;
     url?: string;
+    urls?: string[];
     title?: string;
   }>({ open: false });
 

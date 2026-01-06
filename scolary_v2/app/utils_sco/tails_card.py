@@ -1,6 +1,6 @@
 from typing import Any
 
-from fpdf import FPDF
+from app.pdf.PDFMark import PDFMark as FPDF
 
 def create_carte(
         pdf, pos_init_y: int, long_init_y: int, deux_et: list,
@@ -51,7 +51,7 @@ def create_carte(
 
         # Draw the card background
         pdf.image(image_fac, x=pos_x, y=pos_init_y, w=long_init_x, h=long_init_y)
-        # pdf.rect(pos_x, pos_init_y, w=long_init_x, h=long_init_y)
+        pdf.rect(pos_x, pos_init_y, w=long_init_x, h=long_init_y)
         pdf.set_text_color(0, 0, 0)  # Set text color to black
 
         # Add title (titre_1)

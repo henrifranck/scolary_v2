@@ -38,6 +38,7 @@ def _build_pdf_response(result: Union[dict, str]) -> schemas.PdfFileResponse:
 def create_carte_student(
         id_year: str,
         id_mention: str,
+        id_journey: str,
         level: str = "M2",
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
@@ -59,6 +60,13 @@ def create_carte_student(
             detail=f"College years not found.",
         )
 
+    journey = crud.journey.get(db=db, id=id_journey)
+    if not journey:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Parcours not found.",
+        )
+
     data = get_semester(level)
     semester = data[0]
     semester2 = data[1]
@@ -66,6 +74,7 @@ def create_carte_student(
     students = crud.student.get_for_carte(
         db=db,
         id_mention=mention.id,
+        id_journey=journey.id,
         id_year=id_year,
         semester=semester,
         semester2=semester2,
