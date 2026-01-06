@@ -5,7 +5,8 @@ import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
 import { cn } from "../../../lib/utils";
-import { Eye, EyeOff, Pencil } from "lucide-react";
+import { formatMadagascarPhone } from "@/lib/phone";
+import { Eye, EyeOff, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   type University,
   type UniversityPayload,
@@ -93,6 +94,7 @@ export const UniversityInfoPage = () => {
   );
   const [signatureDirty, setSignatureDirty] = useState(false);
   const [showSignature, setShowSignature] = useState(true);
+  const [phoneNumbers, setPhoneNumbers] = useState<string[]>([]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawingRef = useRef(false);
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
@@ -113,6 +115,9 @@ export const UniversityInfoPage = () => {
       : `files/${normalized}`;
     const apiBase = import.meta.env.VITE_SCOLARY_API_URL;
     try {
+      if (!apiBase) {
+        return `/${finalPath}`;
+      }
       const base = new URL(apiBase);
 
       return `${base.origin}/${finalPath}`;
@@ -126,6 +131,25 @@ export const UniversityInfoPage = () => {
     if (path.startsWith("../") || path.startsWith("files/")) return path;
     return `../${path}`;
   };
+  const handlePhoneChange = (index: number, value: string) => {
+    const formatted = formatMadagascarPhone(value);
+    setPhoneNumbers((prev) => {
+      const next = [...prev];
+      next[index] = formatted;
+      return next;
+    });
+  };
+
+  const addPhoneField = () => {
+    setPhoneNumbers((prev) => [...prev, ""]);
+  };
+
+  const removePhoneField = (index: number) => {
+    setPhoneNumbers((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      return next.length ? next : [""];
+    });
+  };
 
   useEffect(() => {
     reset(initialValues);
@@ -135,6 +159,11 @@ export const UniversityInfoPage = () => {
     setLogoFile(null);
     setDepartmentLogoFile(null);
     setSignatureDirty(false);
+    const parsedPhones = (initialValues.phone_number || "")
+      .split(/[;,]/)
+      .map((entry) => formatMadagascarPhone(entry))
+      .filter(Boolean);
+    setPhoneNumbers(parsedPhones.length ? parsedPhones : [""]);
   }, [initialValues, reset]);
 
   const handleLogoUpload = async (fileList?: FileList | null) => {
@@ -254,6 +283,14 @@ export const UniversityInfoPage = () => {
     }
   };
 
+  useEffect(() => {
+    const joinedPhones = phoneNumbers
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .join(";");
+    setValue("phone_number", joinedPhones, { shouldDirty: true });
+  }, [phoneNumbers, setValue]);
+
   const canvasToBlob = async (): Promise<Blob | null> =>
     new Promise((resolve) => {
       const canvas = canvasRef.current;
@@ -268,6 +305,12 @@ export const UniversityInfoPage = () => {
     setFeedback(null);
     try {
       const preparedValues = { ...values };
+      const joinedPhones = phoneNumbers
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .join(";");
+      preparedValues.phone_number = joinedPhones || "";
+      setValue("phone_number", joinedPhones, { shouldDirty: false });
 
       if (logoFile) {
         const uploadedLogo = await uploadFile.mutateAsync({
@@ -387,6 +430,7 @@ export const UniversityInfoPage = () => {
         <input type="hidden" {...register("logo_university")} />
         <input type="hidden" {...register("logo_departement")} />
         <input type="hidden" {...register("admin_signature")} />
+        <input type="hidden" {...register("phone_number")} />
 
         <div className="grid gap-4 rounded-lg border bg-muted/20 p-4 md:grid-cols-2">
           <div className="flex items-center gap-3">
@@ -544,13 +588,47 @@ export const UniversityInfoPage = () => {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="phone_number">
-              Phone number
+              Phone number(s)
             </label>
-            <Input
-              id="phone_number"
-              placeholder="+261 34 12 345 67"
-              {...register("phone_number")}
-            />
+            <div className="space-y-2">
+              {phoneNumbers.map((phone, index) => (
+                <div key={`phone-${index}`} className="flex items-center gap-2">
+                  <Input
+                    placeholder="+261 34 12 345 67"
+                    value={phone}
+                    onChange={(e) => handlePhoneChange(index, e.target.value)}
+                  />
+                  <div className="flex items-center gap-1">
+                    {phoneNumbers.length > 1 ? (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-9 w-9 text-destructive"
+                        onClick={() => removePhoneField(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                    {index === phoneNumbers.length - 1 ? (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="h-9 w-9"
+                        onClick={addPhoneField}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Les numéros seront enregistrés séparés par « ; » et formatés
+              automatiquement.
+            </p>
           </div>
         </div>
 

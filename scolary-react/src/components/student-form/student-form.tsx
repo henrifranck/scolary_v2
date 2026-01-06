@@ -34,35 +34,9 @@ import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { MentionOption } from "@/models/mentions";
 import { BaccalaureateSerieOption } from "@/models/baccalaureate-series";
 import { useLookupOptions } from "@/hooks/use-lookup-options";
+import { formatMadagascarPhone } from "@/lib/phone";
 
 type dialogMode = "edit" | "create";
-
-const formatMadagascarPhone = (raw: string) => {
-  const digitsOnly = raw.replace(/\D/g, "");
-  let local = digitsOnly;
-  if (local.startsWith("261")) {
-    local = local.slice(3);
-  }
-  if (local.startsWith("0")) {
-    local = local.slice(1);
-  }
-  local = local.slice(0, 9);
-  if (local && local[0] !== "3") {
-    local = `3${local.slice(1)}`;
-  }
-  const groups = [2, 2, 3, 2];
-  const parts: string[] = [];
-  let index = 0;
-  groups.forEach((len) => {
-    if (index >= local.length) {
-      return;
-    }
-    const part = local.slice(index, index + len);
-    parts.push(part);
-    index += len;
-  });
-  return `+261 ${parts.join(" ")}`.trim();
-};
 
 const createEditingSectionsState = (): Record<EditableSection, boolean> => ({
   contact: false,

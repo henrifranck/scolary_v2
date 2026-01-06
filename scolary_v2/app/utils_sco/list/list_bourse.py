@@ -40,7 +40,7 @@ class PDF(FPDF):
         pdf.add_page()
         data = {"mention": all_data["mention"], "anne": all_data["year"]}
 
-        titre = f"LISTE DES ÉTUDIANTS BOURSIER {type_.upper()}"
+        titre = f"LISTE DES ÉTUDIANTS BOURSIERS {type_.upper()}"
         PDF.add_title(pdf=pdf, data=data, title=titre)
 
         num = "N°"

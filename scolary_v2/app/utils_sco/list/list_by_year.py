@@ -19,17 +19,17 @@ def create_list_registered_by_year(
     pdf.add_page()
     header(pdf)
 
-    title = "LISTE DES ETUDIANTS INSCRITS"
+    title = "LISTE DES ÉTUDIANTS INSCRITS"
     pdf.set_font("arial", "B", 16)
     pdf.cell(0, 10, txt=title, ln=1, align="C")
     pdf.set_font("arial", "I", 12)
-    pdf.cell(0, 8, txt=f"Annee universitaire: {year_label}", ln=1, align="C")
+    pdf.cell(0, 8, txt=f"Année universitaire : {year_label}", ln=1, align="C")
 
     pdf.ln(4)
     pdf.set_font("arial", "B", 10)
     pdf.cell(10, 7, txt="N°", border=1, align="C")
-    pdf.cell(35, 7, txt="Num carte", border=1, align="C")
-    pdf.cell(105, 7, txt="Nom et prenom", border=1, align="C")
+    pdf.cell(35, 7, txt="N° Carte", border=1, align="C")
+    pdf.cell(105, 7, txt="Nom et prénom", border=1, align="C")
     pdf.cell(30, 7, txt="Niveau", border=1, align="C")
 
     pdf.set_font("arial", "", 10)

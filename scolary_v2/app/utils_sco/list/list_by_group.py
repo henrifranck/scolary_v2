@@ -58,7 +58,7 @@ def create_list_group(
 ):
     pdf.watermark(f"{str(university.department_name).capitalize()}", y=175, font_style="BI")
     pdf.add_page()
-    titre = f"LISTE DES ÉTUDIANTS GROUPE {group}"
+    titre = f"LISTE DES ÉTUDIANTS DU GROUPE {group}"
     add_title(pdf=pdf, data=data, sems=sems, title=titre)
 
     num = "N°"

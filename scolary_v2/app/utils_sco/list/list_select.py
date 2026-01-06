@@ -42,7 +42,7 @@ def create_list_select(mention: str, data: Any, students: Any, university):
     for niv in levels:
         current_students = students.get(niv, [])
         if len(current_students) != 0:
-            titre = f"LISTE DES ÉTUDIANTS ADMIS PAR SÉLÉCTION DE DOSSIER EN {niv}"
+            titre = f"LISTE DES ÉTUDIANTS ADMIS PAR SÉLECTION DE DOSSIER – {niv}"
             pdf.add_page()
             pdf.watermark(f"{str(university.department_name).capitalize()}", y=175, font_style="BI")
             add_title(pdf=pdf, data=data, title=titre)

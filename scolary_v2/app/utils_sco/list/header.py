@@ -34,7 +34,10 @@ def header(pdf: FPDF, orientation: str = "P"):
     titre5 = f"{university.department_name.upper()}"
 
     title6 = f"{university.department_address}"
-    title7 = f"email: {university.email}-Téléphone: {university.phone_number}"
+    raw_phone = str(university.phone_number or "").strip()
+    phone_parts = [part.strip() for part in raw_phone.replace(",", ";").split(";") if part.strip()]
+    phone_display = " ou ".join(phone_parts) if phone_parts else ""
+    title7 = f"email: {university.email}-Téléphone: {phone_display}"
 
     pdf.add_font("alger", "", "font/Algerian.ttf", uni=True)
 

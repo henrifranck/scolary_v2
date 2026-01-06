@@ -15,6 +15,7 @@ class WorkingTime(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     id_constituent_element_offering = Column(Integer, ForeignKey('constituent_element_offering.id'))
     id_classroom = Column(Integer, ForeignKey('classroom.id'))
+    id_teacher = Column(Integer, ForeignKey('teacher.id'))
     working_time_type = Column(Enum(WorkingTimeTypeEnum), nullable=False)
     day = Column(String(255))
     start = Column(Time)
@@ -32,6 +33,7 @@ class WorkingTime(Base):
     constituent_element_offering = relationship('ConstituentElementOffering', foreign_keys=[id_constituent_element_offering])
     classroom = relationship('Classroom', foreign_keys=[id_classroom])
     group = relationship('Group', foreign_keys=[id_group])
+    teacher = relationship('Teacher', foreign_keys=[id_teacher])
 
 
 # begin #

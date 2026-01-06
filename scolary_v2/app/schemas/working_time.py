@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic import field_validator
 from app.enum.working_time_type import WorkingTimeTypeEnum
 from app.enum.session_type import SessionTypeEnum
+from .teacher import TeacherWithRelation
 from .classroom import Classroom
 from .constituent_element_offering import ConstituentElementOfferingWithRelation
 from .group import Group
@@ -16,6 +17,7 @@ from .group import Group
 
 class WorkingTimeBase(BaseModel):
     id_constituent_element_offering: Optional[int] = None
+    id_teacher: Optional[int] = None
     working_time_type: Optional[WorkingTimeTypeEnum] = None
     day: Optional[str] = None
     start: Optional[Any] = None
@@ -64,6 +66,7 @@ class WorkingTimeInDBBase(WorkingTimeBase):
     id: Optional[int]
     id_constituent_element_offering: Optional[int] = None
     id_group: Optional[int] = None
+    id_teacher: Optional[int] = None
     id_classroom: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -76,6 +79,7 @@ class WorkingTime(WorkingTimeInDBBase):
 class WorkingTimeWithRelation(WorkingTimeInDBBase):
     constituent_element_offering: Optional[ConstituentElementOfferingWithRelation] = None
     group: Optional[Group] = None
+    teacher: Optional[TeacherWithRelation] = None
     classroom: Optional[Classroom] = None
 
 
