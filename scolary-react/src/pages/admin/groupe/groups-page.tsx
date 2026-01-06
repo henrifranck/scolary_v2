@@ -101,6 +101,27 @@ export const GroupsPage = () => {
     }
   }, [filters]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleYearChange = (event: Event) => {
+      const detail = (event as CustomEvent<string | null>).detail;
+      const nextYear =
+        typeof detail === "string"
+          ? detail
+          : window.localStorage.getItem("selected_academic_year");
+      setFilters((prev) => ({
+        ...prev,
+        id_year: nextYear && nextYear !== "all" ? nextYear : ""
+      }));
+    };
+    window.addEventListener("academicYearChanged", handleYearChange);
+    window.addEventListener("storage", handleYearChange);
+    return () => {
+      window.removeEventListener("academicYearChanged", handleYearChange);
+      window.removeEventListener("storage", handleYearChange);
+    };
+  }, []);
+
   const journeyQuery = useQuery({
     queryKey: ["groups", "journeys", filters.id_mention],
     queryFn: () => fetchJourneysByMention(Number(filters.id_mention)),
@@ -157,6 +178,13 @@ export const GroupsPage = () => {
       key: "semester",
       operator: "==",
       value: filters.semester
+    });
+  }
+  if (filters.id_year) {
+    wheres.push({
+      key: "id_academic_year",
+      operator: "==",
+      value: Number(filters.id_year)
     });
   }
 

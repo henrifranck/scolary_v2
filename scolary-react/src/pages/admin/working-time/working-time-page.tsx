@@ -77,6 +77,7 @@ type WorkingTimeFilters = {
 type WorkingTimeFormValues = {
   id_constituent_element_offering: string;
   id_classroom: string;
+  id_teacher: string;
   id_group: string;
   working_time_type: WorkingTimeType;
   session: WorkingSessionType;
@@ -107,12 +108,12 @@ const scheduleConfig = {
 const minutesToTime = (value: number) =>
   `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
 
+const emptySelectValue = "__none__";
+
 const defaultStartTime = minutesToTime(scheduleConfig.startMinutes);
 const defaultEndTime = minutesToTime(scheduleConfig.startMinutes + 120);
 const minWorkingTime = minutesToTime(scheduleConfig.startMinutes);
 const maxWorkingTime = minutesToTime(scheduleConfig.endMinutes);
-const emptySelectValue = "__none__";
-
 const daysOfWeek = scheduleConfig.workingDays;
 
 const dayAliases: Record<string, string> = {
@@ -161,6 +162,7 @@ const sessionOptions: { value: WorkingSessionType; label: string }[] = [
 const defaultFormValues: WorkingTimeFormValues = {
   id_constituent_element_offering: "",
   id_classroom: "",
+  id_teacher: "__none__",
   id_group: "",
   working_time_type: "cours",
   session: "Normal",
@@ -250,6 +252,11 @@ const toFormValues = (
   id_classroom: workingTime?.id_classroom
     ? String(workingTime.id_classroom)
     : "",
+  id_teacher: workingTime?.id_teacher
+    ? String(workingTime.id_teacher)
+    : workingTime?.constituent_element_offering?.id_teacher
+      ? String(workingTime.constituent_element_offering.id_teacher)
+      : "__none__",
   id_group: workingTime?.id_group ? String(workingTime.id_group) : "",
   working_time_type: normalizeWorkingTypeValue(workingTime?.working_time_type),
   session: workingTime?.session ?? "Normal",
@@ -264,6 +271,10 @@ const toPayload = (values: WorkingTimeFormValues): WorkingTimePayload => ({
     values.id_constituent_element_offering
   ),
   id_classroom: values.id_classroom ? Number(values.id_classroom) : undefined,
+  id_teacher:
+    values.id_teacher && values.id_teacher !== "__none__"
+      ? Number(values.id_teacher)
+      : undefined,
   id_group: values.id_group ? Number(values.id_group) : undefined,
   working_time_type: values.working_time_type,
   session: values.session,
@@ -283,7 +294,10 @@ interface WorkingTimeFormProps {
   onSubmit: (values: WorkingTimeFormValues) => Promise<void>;
   onCancel: () => void;
   fixedWorkingType: WorkingTimeType;
-  examDateRanges?: Record<WorkingSessionType, { from: string; to: string } | null>;
+  examDateRanges?: Record<
+    WorkingSessionType,
+    { from: string; to: string } | null
+  >;
   contextLabels: {
     journey: string;
     semester: string;
@@ -319,9 +333,10 @@ const WorkingTimeForm = ({
   const selectedOffering = watch("id_constituent_element_offering");
   const workingType = watch("working_time_type");
   const selectedSession = watch("session");
+  const selectedTeacher = watch("id_teacher");
   const isExam = workingType === "exam";
   const activeExamRange =
-    isExam && examDateRanges ? examDateRanges[selectedSession] ?? null : null;
+    isExam && examDateRanges ? (examDateRanges[selectedSession] ?? null) : null;
 
   useEffect(() => {
     reset(initialValues ?? defaultFormValues);
@@ -334,6 +349,35 @@ const WorkingTimeForm = ({
       setValue("day", derived);
     }
   }, [dateValue, setValue]);
+
+  const teacherOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    offerings.forEach((offering) => {
+      const teacher = offering.teacher;
+      const user = teacher?.user;
+      if (teacher?.id && user) {
+        const label =
+          `${teacher.grade ?? ""} ${user.last_name ?? ""} ${user.first_name ?? ""}`.trim();
+        map.set(String(teacher.id), label);
+      }
+    });
+    return Array.from(map.entries()).map(([value, label]) => ({
+      value,
+      label
+    }));
+  }, [offerings]);
+
+  useEffect(() => {
+    const offering = offerings.find(
+      (item) => String(item.id) === String(selectedOffering)
+    );
+    const teacherId = offering?.teacher?.id;
+    if (teacherId) {
+      setValue("id_teacher", String(teacherId));
+    } else {
+      setValue("id_teacher", "__none__");
+    }
+  }, [offerings, selectedOffering, setValue]);
 
   useEffect(() => {
     if (selectedOffering) return;
@@ -363,8 +407,9 @@ const WorkingTimeForm = ({
       <div className="rounded-md border bg-muted p-3 text-xs text-muted-foreground space-y-1">
         <div>
           Type de séance :{" "}
-          {workingTypeValueOptions[workingType as keyof typeof workingTypeValueOptions] ??
-            "—"}
+          {workingTypeValueOptions[
+            workingType as keyof typeof workingTypeValueOptions
+          ] ?? "—"}
         </div>
         <div>Parcours : {contextLabels.journey}</div>
         <div>Semestre : {contextLabels.semester}</div>
@@ -424,6 +469,40 @@ const WorkingTimeForm = ({
             {errors.id_constituent_element_offering.message}
           </p>
         ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="working-time-teacher">
+          Enseignant
+        </label>
+        <Select
+          value={watch("id_teacher")}
+          onValueChange={(value) => setValue("id_teacher", value)}
+        >
+          <SelectTrigger
+            id="working-time-teacher"
+            className={cn(
+              "h-11",
+              errors.id_teacher && "border-destructive text-destructive"
+            )}
+          >
+            <SelectValue placeholder="Sélectionner un enseignant" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">Aucun (non assigné)</SelectItem>
+            {teacherOptions.length ? (
+              teacherOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="__no_teacher" disabled>
+                Aucun enseignant disponible pour ces éléments
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
       </div>
 
       {isExam ? (
@@ -696,9 +775,7 @@ export const WorkingTimePage = () => {
   const [workingTimeToDelete, setWorkingTimeToDelete] =
     useState<WorkingTime | null>(null);
   const [isExamDateOpen, setIsExamDateOpen] = useState(false);
-  const [editingExamDate, setEditingExamDate] = useState<ExamDate | null>(
-    null
-  );
+  const [editingExamDate, setEditingExamDate] = useState<ExamDate | null>(null);
   const [examDateToDelete, setExamDateToDelete] = useState<ExamDate | null>(
     null
   );
@@ -821,8 +898,9 @@ export const WorkingTimePage = () => {
     return normalizeWorkingTypeValue(stored);
   };
 
-  const [calendarType, setCalendarType] =
-    useState<WorkingTimeType>(readStoredWorkingType);
+  const [calendarType, setCalendarType] = useState<WorkingTimeType>(
+    readStoredWorkingType
+  );
 
   const workingTimeQuery = useQuery({
     queryKey: ["working-times", { filters, calendarType }],
@@ -884,6 +962,8 @@ export const WorkingTimePage = () => {
           "constituent_element_offering.constituent_element{id,name,semester,color,id_journey}",
           "constituent_element_offering{id,id_academic_year,id_teching_unit_offering,id_constituent_element,id_teacher,id_constituent_element_optional_group,weight}",
           "classroom{id,name,capacity}",
+          "teacher{id,grade,id_user}",
+          "teacher.user{id,first_name,last_name}",
           "constituent_element_offering.teacher{id,grade,id_user}",
           "constituent_element_offering.teacher.user{id,first_name,last_name}",
           "group{id,group_number,semester,id_journey}",
@@ -932,7 +1012,9 @@ export const WorkingTimePage = () => {
         relation: JSON.stringify([
           "constituent_element{id,name,semester,color,id_journey}",
           "academic_year{id,name}",
-          "constituent_element.journey{id,id_mention,name,abbreviation}"
+          "constituent_element.journey{id,id_mention,name,abbreviation}",
+          "teacher{id,grade,id_user}",
+          "teacher.user{id,first_name,last_name}"
         ]),
         limit: 400
       });
@@ -1006,9 +1088,7 @@ export const WorkingTimePage = () => {
       id_academic_year: examDate?.id_academic_year
         ? String(examDate.id_academic_year)
         : filters.id_year || "",
-      date_from: examDate?.date_from
-        ? examDate.date_from.split("T")[0]
-        : "",
+      date_from: examDate?.date_from ? examDate.date_from.split("T")[0] : "",
       date_to: examDate?.date_to ? examDate.date_to.split("T")[0] : "",
       session: (examDate?.session as WorkingSessionType) ?? "Normal"
     }),
@@ -1146,9 +1226,7 @@ export const WorkingTimePage = () => {
       try {
         const idYearValue = values.id_academic_year || filters.id_year;
         const payload: Partial<ExamDate> = {
-          ...(idYearValue
-            ? { id_academic_year: Number(idYearValue) }
-            : {}),
+          ...(idYearValue ? { id_academic_year: Number(idYearValue) } : {}),
           date_from: values.date_from || undefined,
           date_to: values.date_to || undefined,
           session: values.session
@@ -1226,9 +1304,9 @@ export const WorkingTimePage = () => {
     );
     const maxTo = new Date(
       Math.max(
-        ...validDates
+        ...(validDates
           .map((d) => d.to?.getTime() ?? d.from?.getTime() ?? 0)
-          .filter(Boolean) as number[]
+          .filter(Boolean) as number[])
       )
     );
     if (Number.isNaN(minFrom.getTime()) || Number.isNaN(maxTo.getTime()))
@@ -1241,7 +1319,10 @@ export const WorkingTimePage = () => {
   };
 
   const examDateRanges = useMemo(() => {
-    const bySession: Record<WorkingSessionType, { from: string; to: string } | null> = {
+    const bySession: Record<
+      WorkingSessionType,
+      { from: string; to: string } | null
+    > = {
       Normal: null,
       Rattrapage: null
     };
@@ -1577,26 +1658,24 @@ export const WorkingTimePage = () => {
                               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                                 <MapPin className="h-3 w-3" />
                                 <span>{item.classroom.name}</span>,
-                                {item.constituent_element_offering?.teacher ? (
-                                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                    <User className="h-3 w-3" />
-                                    <span>
-                                      {" "}
-                                      {
-                                        item.constituent_element_offering
-                                          .teacher.grade
-                                      }{" "}
-                                      {
-                                        item.constituent_element_offering
-                                          .teacher.user?.last_name
-                                      }{" "}
-                                      {
-                                        item.constituent_element_offering
-                                          .teacher.user?.first_name
-                                      }
-                                    </span>
-                                  </div>
-                                ) : null}
+                                {(() => {
+                                  const teacher =
+                                    item.teacher ??
+                                    item.constituent_element_offering?.teacher;
+                                  const user = teacher?.user;
+                                  if (!teacher || !user) return null;
+                                  return (
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                      <User className="h-3 w-3" />
+                                      <span>
+                                        {teacher.grade
+                                          ? `${teacher.grade} `
+                                          : ""}
+                                        {user.last_name} {user.first_name}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             ) : null}
 
@@ -1711,7 +1790,10 @@ export const WorkingTimePage = () => {
                 />
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor="exam-date-from">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor="exam-date-from"
+                    >
                       Date de début
                     </label>
                     <Input
@@ -1736,7 +1818,10 @@ export const WorkingTimePage = () => {
                     ) : null}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium" htmlFor="exam-date-to">
+                    <label
+                      className="text-sm font-medium"
+                      htmlFor="exam-date-to"
+                    >
                       Date de fin
                     </label>
                     <Input
@@ -1750,7 +1835,8 @@ export const WorkingTimePage = () => {
                       {...registerExamDate("date_to", {
                         required: "La date de fin est obligatoire",
                         validate: (val) => {
-                          const start = watchExamDate("date_from") || todayDateString;
+                          const start =
+                            watchExamDate("date_from") || todayDateString;
                           if (!val) return "La date de fin est obligatoire";
                           if (val < start)
                             return "La date de fin doit être après la date de début";
@@ -1800,10 +1886,7 @@ export const WorkingTimePage = () => {
                   >
                     Fermer
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={isExamDateSubmitting}
-                  >
+                  <Button type="submit" disabled={isExamDateSubmitting}>
                     {isExamDateSubmitting
                       ? "Enregistrement…"
                       : editingExamDate
