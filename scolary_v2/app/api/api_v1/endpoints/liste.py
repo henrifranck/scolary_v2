@@ -2,8 +2,9 @@ import ast
 from pathlib import Path
 from typing import Any, List, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -23,7 +24,7 @@ from app.pdf.PDFMark import PDFMark as FPDF
 router = APIRouter()
 
 
-def _build_pdf_response(result: Union[dict, str]) -> schemas.PdfFileResponse:
+def _build_pdf_response(result: Union[dict, str], request: Request | None = None) -> schemas.PdfFileResponse:
     if isinstance(result, dict):
         path = str(result.get("path", "")).lstrip("/")
         filename = str(result.get("filename", ""))
@@ -39,7 +40,12 @@ def _build_pdf_response(result: Union[dict, str]) -> schemas.PdfFileResponse:
 
     if path and not path.endswith("/"):
         path = f"{path}/"
-    url = f"/files/{path}{filename}" if filename else ""
+    url_path = f"/files/{path}{filename}" if filename else ""
+    if request:
+        base = str(request.base_url).rstrip("/")
+        url = f"{base}{url_path}"
+    else:
+        url = url_path
     return schemas.PdfFileResponse(path=path, filename=filename, url=url)
 
 
@@ -184,47 +190,39 @@ def list_registered(
     university = crud.university.get_info(db=db)
     mention = crud.mention.get(db=db, id=journey.id_mention)
 
-    relations = []
-
-    wheres_relations = []
-
-    base_columns = []
-
-    wheres = [
-        {
-            "key": "annual_register.id_academic_year",
-            "operator": "==",
-            "value": id_year
-        },
-        {
-            "key": "annual_register.register_semester.id_journey",
-            "operator": "==",
-            "value": id_journey
-        },
-        {
-            "key": "annual_register.register_semester.semester",
-            "operator": "==",
-            "value": semester
-        }
-    ]
-
-    students = crud.student.get_multi_where_array(
-        db=db,
-        relations=relations,
-        where=wheres,
-        base_columns=base_columns,
-        where_relation=wheres_relations,
-        order_by="last_name",
-        order="ASC"
+    students = (
+        db.query(models.Student)
+        .join(models.AnnualRegister, models.AnnualRegister.num_carte == models.Student.num_carte)
+        .join(models.RegisterSemester, models.RegisterSemester.id_annual_register == models.AnnualRegister.id)
+        .filter(
+            models.AnnualRegister.id_academic_year == id_year,
+            models.RegisterSemester.id_journey == id_journey,
+            models.RegisterSemester.semester == semester,
+            models.Student.deleted_at.is_(None),
+        )
+        .order_by(models.AnnualRegister.created_at.asc(), models.Student.id.asc())
+        .all()
     )
-    all_student = []
-    for on_student in students:
-        student = {
+    all_student = [
+        {
             "last_name": on_student.last_name,
             "first_name": on_student.first_name,
             "num_carte": on_student.num_carte,
         }
-        all_student.append(student)
+        for on_student in students
+    ]
+
+    start_number = (
+        db.query(func.min(models.Group.start_number))
+        .filter(
+            models.Group.id_journey == id_journey,
+            models.Group.semester == semester,
+            models.Group.id_academic_year == id_year,
+            models.Group.deleted_at.is_(None)
+        )
+        .scalar()
+        or 1
+    )
 
     data = {
         "mention": mention.name,
@@ -232,24 +230,30 @@ def list_registered(
         "anne": accademic_years.name,
     }
     lists = create_list_registered(
-        semester, journey.abbreviation, data, all_student, university
+        semester,
+        journey.abbreviation,
+        data,
+        all_student,
+        university,
+        start_number=int(start_number)
     )
     return _build_pdf_response(lists)
 
 
 @router.get("/list_by_group/", response_model=schemas.PdfFileResponse)
 def list_by_group(
+        request: Request,
         id_year: int,
         semester: str,
-        id_journey: str,
+        id_journey: int,
         db: Session = Depends(deps.get_db),
         current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     create list registered
     """
-    accademic_years = crud.college_year.get(db=db, id=id_year)
-    if not accademic_years:
+    academic_year = crud.academic_year.get(db=db, id=id_year)
+    if not academic_year:
         raise HTTPException(
             status_code=400,
             detail=f"college_year not found.",
@@ -260,54 +264,120 @@ def list_by_group(
             status_code=400,
             detail=f" Journey not found.",
         )
-    student_group = crud.student_group.get_by_journey_and_semester(db=db, id_journey=id_journey, semester=semester)
+    group_template = (
+        db.query(models.Group)
+        .filter(
+            models.Group.id_journey == id_journey,
+            models.Group.semester == semester,
+            models.Group.id_academic_year == id_year,
+            models.Group.deleted_at.is_(None)
+        )
+        .order_by(models.Group.group_number.asc())
+        .first()
+    )
+    if not group_template or not group_template.student_count:
+        raise HTTPException(
+            status_code=400,
+            detail="Aucun groupe ou nombre d'étudiants invalide pour ce parcours/semestre."
+        )
     mention = crud.mention.get(db=db, id=journey.id_mention)
-    count_students = crud.ancien_student.get_count_by_mention_and_year(
-        db=db,
-        id_journey=id_journey,
-        semester=semester,
-        id_mention=journey.id_mention,
-        id_year=id_year,
+    count_students = (
+        db.query(func.count(func.distinct(models.Student.id)))
+        .join(models.AnnualRegister, models.AnnualRegister.num_carte == models.Student.num_carte)
+        .join(models.RegisterSemester, models.RegisterSemester.id_annual_register == models.AnnualRegister.id)
+        .filter(
+            models.AnnualRegister.id_academic_year == id_year,
+            models.RegisterSemester.id_journey == id_journey,
+            models.RegisterSemester.semester == semester,
+            models.Student.deleted_at.is_(None)
+        )
+        .scalar()
+        or 0
     )
     skip = 0
     group = 1
     pdf = FPDF("P", "mm", "a4")
 
     data = {
-        "mention": mention.title,
-        "journey": journey.title,
-        "anne": accademic_years.title,
+        "mention": mention.name if mention else "",
+        "journey": journey.name or journey.abbreviation or "",
+        "anne": academic_year.name if academic_year else "",
     }
 
-    university = crud.university_info.get_university(db=db)
-    while skip < count_students:
-        students = crud.ancien_student.get_by_mention_and_year(
-            db=db,
-            id_journey=id_journey,
-            semester=semester,
-            id_mention=journey.id_mention,
-            id_year=id_year,
-            limit=student_group.student_count,
-            skip=skip,
+    university = crud.university.get_info(db=db)
+    if count_students == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="Aucun étudiant trouvé pour ces filtres."
         )
-        all_student = []
-        for on_student in students:
-            student = {
+
+    groups = (
+        db.query(models.Group)
+        .filter(
+            models.Group.id_journey == id_journey,
+            models.Group.semester == semester,
+            models.Group.id_academic_year == id_year,
+            models.Group.deleted_at.is_(None)
+        )
+        .order_by(models.Group.group_number.asc())
+        .all()
+    )
+    if not groups:
+        raise HTTPException(
+            status_code=400,
+            detail="Aucun groupe trouvé pour ces filtres."
+        )
+
+    for grp in groups:
+        if skip >= count_students:
+            break
+        group_size = max(
+            1,
+            int(grp.student_count or group_template.student_count or 0)
+        )
+        students = (
+            db.query(models.Student)
+            .join(models.AnnualRegister, models.AnnualRegister.num_carte == models.Student.num_carte)
+            .join(models.RegisterSemester, models.RegisterSemester.id_annual_register == models.AnnualRegister.id)
+            .filter(
+                models.AnnualRegister.id_academic_year == id_year,
+                models.RegisterSemester.id_journey == id_journey,
+                models.RegisterSemester.semester == semester,
+                models.Student.deleted_at.is_(None),
+            )
+            .order_by(models.AnnualRegister.created_at.asc(), models.Student.id.asc())
+            .offset(skip)
+            .limit(group_size)
+            .all()
+        )
+        if not students:
+            break
+        all_student = [
+            {
                 "last_name": on_student.last_name,
                 "first_name": on_student.first_name,
                 "num_carte": on_student.num_carte,
             }
-            all_student.append(student)
+            for on_student in students
+        ]
 
-        create_list_group(pdf, semester, data, all_student, group, university)
+        create_list_group(
+            pdf,
+            semester,
+            data,
+            all_student,
+            group,
+            university,
+            start_number=int(grp.start_number or (skip + 1))
+        )
         group += 1
-        skip += student_group.student_count
+        skip += len(students)
     pdf.output(
-        f"files/pdf/list/list_by_group_{semester}_{journey}.pdf", "F"
+        f"files/pdf/list/list_by_group_{semester}_{journey.id}.pdf", "F"
     )
     return _build_pdf_response(
-        {"path": "pdf/list/", "filename": f"list_by_group_{semester}_{journey}.pdf"}
-    )
+        {"path": "pdf/list/", "filename": f"list_by_group_{semester}_{journey.id}.pdf"}
+    , request=request)
 
 
 @router.get("/list_selection/", response_model=schemas.PdfFileResponse)

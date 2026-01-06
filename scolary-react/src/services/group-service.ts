@@ -1,8 +1,12 @@
-import { useQuery, type QueryKey } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 
 import { apiRequest } from "./api-client";
 import { ApiListResponse } from "@/models/shared";
-import { Group, GroupListQuery } from "@/models/group";
+import {
+  Group,
+  GroupListQuery,
+  CreateGroupPayload
+} from "@/models/group";
 
 const groupKey = ["groups"] as const;
 
@@ -44,7 +48,64 @@ export const useGroups = (query?: GroupListQuery) =>
     queryFn: () => fetchGroups(query)
   });
 
+export const createGroup = (payload: CreateGroupPayload): Promise<Group> =>
+  apiRequest<Group>("/groups/", {
+    method: "POST",
+    json: payload
+  });
+
+export const updateGroup = (
+  id: number,
+  payload: Partial<CreateGroupPayload>
+): Promise<Group> =>
+  apiRequest<Group>(`/groups/${id}`, {
+    method: "PUT",
+    json: payload
+  });
+
+export const deleteGroup = (id: number): Promise<void> =>
+  apiRequest<void>(`/groups/${id}`, {
+    method: "DELETE"
+  });
+
+export const useCreateGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createGroup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: groupKey });
+    }
+  });
+};
+
+export const useUpdateGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<CreateGroupPayload> }) =>
+      updateGroup(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: groupKey });
+    }
+  });
+};
+
+export const useDeleteGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteGroup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: groupKey });
+    }
+  });
+};
+
 export const groupService = {
   fetchGroups,
-  useGroups
+  useGroups,
+  createGroup,
+  useCreateGroup,
+  updateGroup,
+  useUpdateGroup,
+  deleteGroup,
+  useDeleteGroup
 };

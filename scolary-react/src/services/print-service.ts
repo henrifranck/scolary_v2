@@ -21,6 +21,15 @@ export const printStudentsList = (payload: PdfListPayload) =>
     }
   });
 
+export const printStudentsListByGroup = (payload: PdfListPayload) =>
+  apiRequest<PdfFileResponse>("/liste/list_by_group/", {
+    query: {
+      id_year: payload.idYear,
+      semester: payload.semester,
+      id_journey: payload.journeyId
+    }
+  });
+
 export const printSelectionList = (payload: {
   idYear: string | number;
   mentionId: string | number;

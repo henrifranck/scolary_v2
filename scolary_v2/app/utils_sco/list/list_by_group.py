@@ -47,30 +47,43 @@ def add_title(pdf: FPDF, data: Any, sems: str, title: str):
     pdf.cell(0, 8, txt=anne_univ, ln=1)
 
 
-def create_list_group(pdf: FPDF, sems: str, data: Any, students: Any, group: int, university):
+def create_list_group(
+    pdf: FPDF,
+    sems: str,
+    data: Any,
+    students: Any,
+    group: int,
+    university,
+    start_number: int = 1
+):
     pdf.watermark(f"{str(university.department_name).capitalize()}", y=175, font_style="BI")
     pdf.add_page()
     titre = f"LISTE DES ÉTUDIANTS GROUPE {group}"
     add_title(pdf=pdf, data=data, sems=sems, title=titre)
 
     num = "N°"
+    card_number = "N° Carte"
     full_name = "Nom et prénom"
 
     pdf.cell(1, 7, txt="", ln=1)
     pdf.set_font("arial", "BI", 10)
     pdf.cell(1, 5, txt="")
-    pdf.cell(25, 5, txt=num, border=1)
+    pdf.cell(20, 5, txt=num, border=1, align="C")
     pdf.cell(1, 5, txt="")
-    pdf.cell(163, 5, txt=full_name, border=1, ln=0, align="C")
-    num_ = 1
+    pdf.cell(30, 5, txt=card_number, border=1, align="C")
+    pdf.cell(1, 5, txt="")
+    pdf.cell(138, 5, txt=full_name, border=1, ln=0, align="C")
+    num_ = start_number
     for i, student in enumerate(students):
-        num_select_ = student["num_carte"]
+        num_select_ = str(student.get("num_carte") or "")
         name = f"{clear_name(student['last_name'])} {student['first_name']}"
         pdf.cell(1, 7, txt="", ln=1)
         pdf.set_font("arial", "I", 10)
         pdf.cell(1, 5, txt="")
-        pdf.cell(25, 5, txt=num_select_, border=1, ln=0)
+        pdf.cell(20, 5, txt=str(num_), border=1, ln=0, align="C")
+        pdf.cell(1, 5, txt="")
+        pdf.cell(30, 5, txt=num_select_, border=1, ln=0, align="C")
         pdf.cell(1, 5, txt="")
         pdf.set_font("arial", "I", 10)
-        pdf.cell(163, 5, txt=name, border=1, ln=0, align="L")
+        pdf.cell(138, 5, txt=name, border=1, ln=0, align="L")
         num_ += 1

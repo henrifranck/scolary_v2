@@ -225,7 +225,9 @@ from .dashboard import (
     SexCount,
     MentionSexCount,
     NationalityCount,
-    RoleCount
+    RoleCount,
+    DashboardCharts,
+    DashboardSummary
 )
 from .enrollment_fee import (
     EnrollmentFee,

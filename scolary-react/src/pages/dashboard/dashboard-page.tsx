@@ -82,6 +82,29 @@ interface DashboardSummary {
   role_counts: Array<{ role: string; count: number }>;
 }
 
+const useSectionInView = () => {
+  const [inView, setInView] = useState(false);
+
+  const observer = useMemo(
+    () =>
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            ([entry]) => setInView((prev) => prev || entry.isIntersecting),
+            { threshold: 0.1 }
+          )
+        : null,
+    []
+  );
+
+  const refCallback = (node: HTMLElement | null) => {
+    if (!observer) return;
+    observer.disconnect();
+    if (node) observer.observe(node);
+  };
+
+  return { ref: refCallback, inView };
+};
+
 const formatTrend = (
   current?: number,
   previous?: number
@@ -109,10 +132,15 @@ interface ChartData {
   [key: string]: any;
 }
 
-const fetchDashboardMetrics = async (
+const fetchDashboardSummary = async (
   query?: Record<string, string | number | boolean | undefined>
 ): Promise<DashboardSummary> =>
-  apiRequest<DashboardSummary>("/dashboard/", { query });
+  apiRequest<DashboardSummary>("/dashboard/summary", { query });
+
+const fetchDashboardCharts = async (
+  query?: Record<string, string | number | boolean | undefined>
+): Promise<DashboardSummary> =>
+  apiRequest<DashboardSummary>("/dashboard/charts", { query });
 
 const buildMentionChartData = (
   mentions: DashboardSummary["mention_counts"]
@@ -271,10 +299,12 @@ export const DashboardPage = () => {
       mentionFilter,
       academicYearFilter,
       headerAcademicYear,
-      journeyFilter
+      journeyFilter,
+      "summary"
     ],
     queryFn: () =>
-      fetchDashboardMetrics({
+      fetchDashboardSummary({
+        section: "summary",
         min_age: minAge,
         max_age: maxAge,
         mention_id: mentionFilter !== "all" ? Number(mentionFilter) : undefined,
@@ -297,29 +327,86 @@ export const DashboardPage = () => {
     staleTime: 60_000
   });
 
-  const mentionChartData = summary?.mention_counts
-    ? buildMentionChartData(summary.mention_counts)
+  const { ref: chartsRef, inView: chartsInView } = useSectionInView();
+  const [chartsEnabled, setChartsEnabled] = useState(false);
+
+  useEffect(() => {
+    if (chartsInView) {
+      setChartsEnabled(true);
+    }
+  }, [chartsInView]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setChartsEnabled(true), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const {
+    data: chartsData,
+    isPending: chartsPending
+  } = useQuery({
+    queryKey: [
+      "dashboard",
+      "metrics",
+      minAge,
+      maxAge,
+      mentionFilter,
+      academicYearFilter,
+      headerAcademicYear,
+      journeyFilter,
+      "charts"
+    ],
+    enabled: chartsEnabled,
+    queryFn: () =>
+      fetchDashboardCharts({
+        section: "charts",
+        min_age: minAge,
+        max_age: maxAge,
+        mention_id: mentionFilter !== "all" ? Number(mentionFilter) : undefined,
+        academic_year_id: (() => {
+          const fromFilter =
+            academicYearFilter !== "all"
+              ? Number(academicYearFilter)
+              : undefined;
+          if (fromFilter !== undefined && !Number.isNaN(fromFilter)) {
+            return fromFilter;
+          }
+          if (headerAcademicYear && headerAcademicYear !== "all") {
+            const parsed = Number(headerAcademicYear);
+            return Number.isNaN(parsed) ? undefined : parsed;
+          }
+          return undefined;
+        })(),
+        journey_id: journeyFilter !== "all" ? Number(journeyFilter) : undefined
+      }),
+    staleTime: 60_000
+  });
+
+  const chartsSource = chartsData ?? summary ?? null;
+
+  const mentionChartData = chartsSource?.mention_counts
+    ? buildMentionChartData(chartsSource.mention_counts)
     : [];
 
   const { data: mentionTrendData, config: mentionTrendConfig } =
-    summary?.mention_enrollments
-      ? buildMentionTrendData(summary.mention_enrollments)
+    chartsSource?.mention_enrollments
+      ? buildMentionTrendData(chartsSource.mention_enrollments)
       : { data: [] as ChartData[], config: {} as ChartConfig };
 
   const {
     data: newStudentmentionTrendData,
     config: newStudentmentionTrendConfig
-  } = summary?.new_student_mention_enrollments
-    ? buildMentionTrendData(summary.new_student_mention_enrollments)
+  } = chartsSource?.new_student_mention_enrollments
+    ? buildMentionTrendData(chartsSource.new_student_mention_enrollments)
     : { data: [] as ChartData[], config: {} as ChartConfig };
 
   const ageChartData = useMemo(
     () =>
-      summary?.age_distribution?.map((bucket) => ({
+      chartsSource?.age_distribution?.map((bucket) => ({
         name: `${bucket.age}`,
         count: bucket.count
       })) ?? [],
-    [summary?.age_distribution]
+    [chartsSource?.age_distribution]
   );
 
   const ageChartConfig: ChartConfig = {
@@ -327,21 +414,21 @@ export const DashboardPage = () => {
   };
 
   const sexChartData =
-    summary?.sex_counts?.map((row, index) => ({
+    chartsSource?.sex_counts?.map((row, index) => ({
       name: row.sex || "—",
       value: row.count,
       fill: `hsl(var(--chart-${(index % 5) + 1}))`
     })) ?? [];
 
   const roleChartData =
-    summary?.role_counts?.map((row, index) => ({
+    chartsSource?.role_counts?.map((row, index) => ({
       name: row.role || "—",
       value: row.count,
       fill: `hsl(var(--chart-${(index % 5) + 1}))`
     })) ?? [];
 
   const mentionSexChart = useMemo(() => {
-    const rows = summary?.mention_sex_counts ?? [];
+    const rows = chartsSource?.mention_sex_counts ?? [];
     const sexes = Array.from(new Set(rows.map((row) => row.sex || "—")));
     const mentionMap = new Map<number, ChartData>();
 
@@ -376,7 +463,7 @@ export const DashboardPage = () => {
   }, [summary?.mention_sex_counts]);
 
   const nationalityChartData =
-    summary?.nationality_counts?.map((row, index) => ({
+    chartsSource?.nationality_counts?.map((row, index) => ({
       name: row.name || `Nationalité ${row.id}`,
       value: row.count,
       fill: `hsl(var(--chart-${(index % 5) + 1}))`
@@ -461,7 +548,10 @@ export const DashboardPage = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid gap-6 grid-cols-1 xl:grid-cols-1">
+      <div
+        ref={chartsRef}
+        className="grid gap-6 grid-cols-1 xl:grid-cols-1"
+      >
         {/* Progression par mention (5 dernières années) */}
         <div className="rounded-lg border bg-background p-6 shadow-sm">
           <div className="mb-4">
@@ -474,7 +564,7 @@ export const DashboardPage = () => {
             </p>
           </div>
           <div className="h-72 md:h-80 min-h-[280px]">
-            {isPending ? (
+            {chartsPending && !chartsSource ? (
               <div className="flex h-full items-center justify-center">
                 <div className="text-sm text-muted-foreground">
                   Chargement du graphique...

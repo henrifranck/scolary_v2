@@ -68,3 +68,27 @@ class DashboardStats(BaseModel):
     mention_sex_counts: list[MentionSexCount]
     nationality_counts: list[NationalityCount]
     role_counts: list[RoleCount]
+
+
+class DashboardSummary(BaseModel):
+    total_students: int
+    total_mentions: int
+    total_journeys: int
+    total_users: int
+    total_teachers: int
+    students_this_year: int
+    students_previous_year: int
+    teachers_this_month: int
+    teachers_previous_month: int
+
+
+class DashboardCharts(BaseModel):
+    mention_counts: list[MentionCount]
+    academic_year_counts: list[AcademicYearCount]
+    mention_enrollments: list[MentionEnrollment]
+    new_student_mention_enrollments: list[MentionEnrollment]
+    age_distribution: list[AgeBucket]
+    sex_counts: list[SexCount]
+    mention_sex_counts: list[MentionSexCount]
+    nationality_counts: list[NationalityCount]
+    role_counts: list[RoleCount]

@@ -11,20 +11,95 @@ from app import crud, models, schemas
 router = APIRouter()
 
 
-@router.get("/", response_model=schemas.DashboardStats)
-def get_dashboard_summary(
+def compute_summary(db: Session, academic_year_id: int | None = None) -> schemas.DashboardSummary:
+    if academic_year_id:
+        total_students = (
+            db.query(func.count(func.distinct(models.Student.id)))
+            .join(models.AnnualRegister, models.AnnualRegister.num_carte == models.Student.num_carte)
+            .filter(models.AnnualRegister.id_academic_year == academic_year_id)
+            .scalar()
+            or 0
+        )
+    else:
+        total_students = crud.student.get_count_where_array(db=db)
+
+    today = date.today()
+    start_of_current_year = date(today.year, 1, 1)
+    start_of_next_year = date(today.year + 1, 1, 1)
+    start_of_previous_year = date(today.year - 1, 1, 1)
+
+    start_of_current_month = date(today.year, today.month, 1)
+    start_of_next_month = (
+        date(today.year + 1, 1, 1)
+        if today.month == 12
+        else date(today.year, today.month + 1, 1)
+    )
+    start_of_previous_month = (
+        date(today.year - 1, 12, 1)
+        if today.month == 1
+        else date(today.year, today.month - 1, 1)
+    )
+
+    students_this_year = (
+        db.query(func.count(models.Student.id))
+        .filter(
+            models.Student.created_at >= start_of_current_year,
+            models.Student.created_at < start_of_next_year,
+        )
+        .scalar()
+        or 0
+    )
+    students_previous_year = (
+        db.query(func.count(models.Student.id))
+        .filter(
+            models.Student.created_at >= start_of_previous_year,
+            models.Student.created_at < start_of_current_year,
+        )
+        .scalar()
+        or 0
+    )
+
+    teachers_this_month = (
+        db.query(func.count(models.Teacher.id))
+        .filter(
+            models.Teacher.created_at >= start_of_current_month,
+            models.Teacher.created_at < start_of_next_month,
+        )
+        .scalar()
+        or 0
+    )
+    teachers_previous_month = (
+        db.query(func.count(models.Teacher.id))
+        .filter(
+            models.Teacher.created_at >= start_of_previous_month,
+            models.Teacher.created_at < start_of_current_month,
+        )
+        .scalar()
+        or 0
+    )
+
+    return schemas.DashboardSummary(
+        total_students=total_students,
+        total_mentions=crud.mention.get_count_where_array(db=db),
+        total_journeys=crud.journey.get_count_where_array(db=db),
+        total_users=crud.user.get_count_where_array(db=db),
+        total_teachers=crud.teacher.get_count_where_array(db=db),
+        students_this_year=students_this_year,
+        students_previous_year=students_previous_year,
+        teachers_this_month=teachers_this_month,
+        teachers_previous_month=teachers_previous_month,
+    )
+
+
+def compute_chart_data(
+        db: Session,
         *,
-        min_age: int = 16,
-        max_age: int = 32,
-        mention_id: int | None = None,
-        academic_year_id: int | None = None,
-        journey_id: int | None = None,
-        db: Session = Depends(deps.get_db),
-        current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Aggregate high-level counts for the dashboard.
-    """
+        min_age: int,
+        max_age: int,
+        mention_id: int | None,
+        academic_year_id: int | None,
+        journey_id: int | None,
+) -> schemas.DashboardCharts:
     latest_academic_year_ids = (
         select(models.AcademicYear.id)
         .order_by(models.AcademicYear.name.desc())
@@ -71,6 +146,7 @@ def get_dashboard_summary(
         .group_by(models.Role.name)
         .all()
     )
+
     year_rows = (
         db.query(
             models.AcademicYear.id.label("id"),
@@ -186,7 +262,6 @@ def get_dashboard_summary(
         .all()
     )
 
-    # Age distribution
     age_expr = func.timestampdiff(literal_column("YEAR"), models.Student.date_of_birth, func.current_date())
     age_query = (
         db.query(age_expr.label("age"), func.count(func.distinct(models.Student.id)).label("count"))
@@ -250,82 +325,7 @@ def get_dashboard_summary(
         models.Mention.id, models.Mention.name, models.Student.sex
     ).all()
 
-    if academic_year_id:
-        total_students = (
-            db.query(func.count(func.distinct(models.Student.id)))
-            .join(models.AnnualRegister, models.AnnualRegister.num_carte == models.Student.num_carte)
-            .filter(models.AnnualRegister.id_academic_year == academic_year_id)
-            .scalar()
-            or 0
-        )
-    else:
-        total_students = crud.student.get_count_where_array(db=db)
-
-    today = date.today()
-    start_of_current_year = date(today.year, 1, 1)
-    start_of_next_year = date(today.year + 1, 1, 1)
-    start_of_previous_year = date(today.year - 1, 1, 1)
-
-    start_of_current_month = date(today.year, today.month, 1)
-    start_of_next_month = (
-        date(today.year + 1, 1, 1)
-        if today.month == 12
-        else date(today.year, today.month + 1, 1)
-    )
-    start_of_previous_month = (
-        date(today.year - 1, 12, 1)
-        if today.month == 1
-        else date(today.year, today.month - 1, 1)
-    )
-
-    students_this_year = (
-        db.query(func.count(models.Student.id))
-        .filter(
-            models.Student.created_at >= start_of_current_year,
-            models.Student.created_at < start_of_next_year,
-        )
-        .scalar()
-        or 0
-    )
-    students_previous_year = (
-        db.query(func.count(models.Student.id))
-        .filter(
-            models.Student.created_at >= start_of_previous_year,
-            models.Student.created_at < start_of_current_year,
-        )
-        .scalar()
-        or 0
-    )
-
-    teachers_this_month = (
-        db.query(func.count(models.Teacher.id))
-        .filter(
-            models.Teacher.created_at >= start_of_current_month,
-            models.Teacher.created_at < start_of_next_month,
-        )
-        .scalar()
-        or 0
-    )
-    teachers_previous_month = (
-        db.query(func.count(models.Teacher.id))
-        .filter(
-            models.Teacher.created_at >= start_of_previous_month,
-            models.Teacher.created_at < start_of_current_month,
-        )
-        .scalar()
-        or 0
-    )
-
-    return schemas.DashboardStats(
-        total_students=total_students,
-        total_mentions=crud.mention.get_count_where_array(db=db),
-        total_journeys=crud.journey.get_count_where_array(db=db),
-        total_users=crud.user.get_count_where_array(db=db),
-        total_teachers=crud.teacher.get_count_where_array(db=db),
-        students_this_year=students_this_year,
-        students_previous_year=students_previous_year,
-        teachers_this_month=teachers_this_month,
-        teachers_previous_month=teachers_previous_month,
+    return schemas.DashboardCharts(
         mention_counts=[
             schemas.MentionCount(id=row.id, name=row.name or "", count=row.count)
             for row in mention_rows
@@ -379,4 +379,67 @@ def get_dashboard_summary(
             schemas.RoleCount(role=row.role or "", count=row.count)
             for row in role_rows
         ],
+    )
+
+
+@router.get("/", response_model=schemas.DashboardStats)
+def get_dashboard_all(
+        *,
+        min_age: int = 16,
+        max_age: int = 32,
+        mention_id: int | None = None,
+        academic_year_id: int | None = None,
+        journey_id: int | None = None,
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Aggregate full dashboard (backward compatibility).
+    """
+    summary = compute_summary(db, academic_year_id)
+    charts = compute_chart_data(
+        db,
+        min_age=min_age,
+        max_age=max_age,
+        mention_id=mention_id,
+        academic_year_id=academic_year_id,
+        journey_id=journey_id,
+    )
+    return schemas.DashboardStats(**summary.dict(), **charts.dict())
+
+
+@router.get("/summary", response_model=schemas.DashboardSummary)
+def get_dashboard_summary_only(
+        *,
+        academic_year_id: int | None = None,
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Lightweight endpoint for summary KPIs.
+    """
+    return compute_summary(db, academic_year_id)
+
+
+@router.get("/charts", response_model=schemas.DashboardCharts)
+def get_dashboard_charts(
+        *,
+        min_age: int = 16,
+        max_age: int = 32,
+        mention_id: int | None = None,
+        academic_year_id: int | None = None,
+        journey_id: int | None = None,
+        db: Session = Depends(deps.get_db),
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Endpoint for heavy chart data.
+    """
+    return compute_chart_data(
+        db,
+        min_age=min_age,
+        max_age=max_age,
+        mention_id=mention_id,
+        academic_year_id=academic_year_id,
+        journey_id=journey_id,
     )

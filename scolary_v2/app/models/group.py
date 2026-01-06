@@ -12,7 +12,10 @@ class Group(Base):
     __tablename__ = 'group'
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     id_journey = Column(Integer, ForeignKey('journey.id'))
+    id_academic_year = Column(Integer, ForeignKey('academic_year.id'))
     semester = Column(String(255), nullable=False)
+    start_number = Column(Integer, nullable=True)
+    end_number = Column(Integer, nullable=True)
     group_number = Column(Integer, nullable=False)
     student_count = Column(Integer, nullable=False)
 
@@ -23,6 +26,7 @@ class Group(Base):
 
     # Relations
     journey = relationship('Journey', foreign_keys=[id_journey])
+    academic_year = relationship('AcademicYear', foreign_keys=[id_academic_year])
 
 
 # begin #
