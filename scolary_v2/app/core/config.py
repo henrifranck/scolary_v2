@@ -44,6 +44,23 @@ class Settings(BaseSettings):
     LAST_NAME_SUPERUSER: str = os.getenv("LAST_NAME_SUPERUSER")
     FIRST_NAME_SUPERUSER: str = os.getenv("FIRST_NAME_SUPERUSER")
     FIRST_SUPERUSER_PASSWORD: str = os.getenv("FIRST_SUPERUSER_PASSWORD")
+    MONGO_URI: str | None = os.getenv("MONGO_URI")
+    MONGO_HOST: str | None = os.getenv("MONGO_HOST")
+    MONGO_PORT: int | None = int(os.getenv("MONGO_PORT", "27017"))
+    MONGO_USER: str | None = os.getenv("MONGO_USER")
+    MONGO_PASSWORD: str | None = os.getenv("MONGO_PASSWORD")
+    MONGO_DATABASE: str = os.getenv("MONGO_DATABASE", "scolary")
+
+    @property
+    def mongo_uri(self) -> str | None:
+        if self.MONGO_URI:
+            return self.MONGO_URI
+        if not self.MONGO_HOST:
+            return None
+        auth_part = ""
+        if self.MONGO_USER and self.MONGO_PASSWORD:
+            auth_part = f"{self.MONGO_USER}:{self.MONGO_PASSWORD}@"
+        return f"mongodb://{auth_part}{self.MONGO_HOST}:{self.MONGO_PORT}/{self.MONGO_DATABASE}?authSource=admin"
 
     class Config:
         case_sensitive = True

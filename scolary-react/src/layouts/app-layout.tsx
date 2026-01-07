@@ -58,6 +58,12 @@ import {
   DropdownMenuTrigger
 } from "../components/ui/dropdown-menu";
 import { cn } from "../lib/utils";
+import { useNotifications } from "@/hooks/use-notifications";
+import {
+  fetchNotifications,
+  markNotificationRead,
+  type NotificationRecord
+} from "@/services/notification-service";
 import { useAuth } from "../providers/auth-provider";
 import type { AuthRole, AuthUser } from "../lib/auth-store";
 import { useAvailableModels } from "../services/available-model-service";
@@ -154,6 +160,12 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
             to: "/admin/available-models",
             label: "Available models",
             icon: Layers,
+            roles: ["admin"]
+          },
+          {
+            to: "/admin/notification-templates",
+            label: "Modèles de notifications",
+            icon: Bell,
             roles: ["admin"]
           }
         ]
@@ -524,6 +536,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const availableModels = availableModelsResponse?.data ?? [];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const notificationEvent = useNotifications(Boolean(user));
+  const [notificationBanner, setNotificationBanner] = useState<NotificationRecord | null>(null);
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const isReinscriptionPage =
     location.pathname.startsWith("/re-registration") ||
@@ -615,6 +630,30 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     router.navigate({ to: "/auth/login" });
   };
 
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    fetchNotifications()
+      .then((res) => setNotifications(res.data || []))
+      .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (notificationEvent) {
+      const record: NotificationRecord = {
+        ...(notificationEvent as any),
+        _id: (notificationEvent as any)?._id || `${Date.now()}`,
+        read: false
+      };
+      setNotificationBanner(record);
+      setNotifications((prev) => [record, ...prev].slice(0, 50));
+    }
+  }, [notificationEvent]);
+
   useEffect(() => {
     if (!currentUser || !user) {
       return;
@@ -695,6 +734,15 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
     return breadcrumbs;
   };
+
+  const buildNotificationDescription = useCallback((notif: NotificationRecord) => {
+    const base =
+      notif.message ||
+      notif.full_name ||
+      (typeof notif._id === "string" ? notif._id : "") ||
+      "";
+    return base || "Notification";
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1022,12 +1070,86 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           {/* Right section - Notifications, theme toggle, and user menu */}
           <div className="flex items-center gap-2">
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                3
-              </span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 ? (
+                    <span className="absolute -top-1 -right-1 min-h-[14px] min-w-[14px] rounded-full bg-red-500 px-1 text-[10px] text-white flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  ) : null}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifications.length ? (
+                  notifications.slice(0, 10).map((notif) => (
+                    <DropdownMenuItem
+                      key={notif._id}
+                      className="flex items-start gap-2"
+                      onClick={() => {
+                        if (!notif.read) {
+                          markNotificationRead(notif._id).catch(() => {});
+                          setNotifications((prev) =>
+                            prev.map((n) =>
+                              n._id === notif._id ? { ...n, read: true } : n
+                            )
+                          );
+                        }
+                        setNotificationBanner(notif);
+                      }}
+                    >
+                      <div className="mt-1">
+                        <span
+                          className={cn(
+                            "inline-block h-2 w-2 rounded-full",
+                            notif.read ? "bg-muted-foreground" : "bg-green-500"
+                          )}
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1 text-xs">
+                        <p className="text-foreground font-medium">
+                          {notif.title ||
+                            (notif.type === "student_created"
+                              ? "Nouvel étudiant créé"
+                              : notif.type === "annual_register_created"
+                                ? "Nouvelle inscription annuelle"
+                                : notif.type || "Notification")}
+                        </p>
+                        <p className="text-muted-foreground">
+                          {buildNotificationDescription(notif)}
+                        </p>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                    Aucune notification
+                  </DropdownMenuItem>
+                )}
+                {notifications.length ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-xs text-primary"
+                      onClick={() => {
+                        const unread = notifications.filter((n) => !n.read);
+                        unread.forEach((n) =>
+                          markNotificationRead(n._id).catch(() => {})
+                        );
+                        setNotifications((prev) =>
+                          prev.map((n) => ({ ...n, read: true }))
+                        );
+                      }}
+                    >
+                      Marquer tout comme lu
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Theme toggle */}
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
@@ -1088,6 +1210,45 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           {children}
         </main>
       </div>
+
+      {notificationBanner ? (
+        <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-lg border bg-background shadow-lg">
+          <div className="flex items-start gap-2 p-3">
+            <div className="mt-0.5 rounded-full bg-primary/10 p-1">
+              <Bell className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium text-foreground">Notification</p>
+              <p className="text-xs text-muted-foreground">
+                {notificationBanner.message ??
+                  (notificationBanner.type === "student_created"
+                    ? `Nouvel étudiant créé : ${notificationBanner.full_name ?? ""}`
+                    : notificationBanner.type
+                      ? `Événement : ${notificationBanner.type}`
+                      : "Nouvelle notification")}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => {
+                if (notificationBanner?._id) {
+                  markNotificationRead(notificationBanner._id).catch(() => {});
+                  setNotifications((prev) =>
+                    prev.map((n) =>
+                      n._id === notificationBanner._id ? { ...n, read: true } : n
+                    )
+                  );
+                }
+                setNotificationBanner(null);
+              }}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

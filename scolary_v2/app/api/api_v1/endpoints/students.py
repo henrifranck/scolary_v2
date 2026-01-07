@@ -14,6 +14,7 @@ import re
 
 from app.enum.register_type import RegisterTypeEnum
 from app.utils import get_level_from_number
+from app.core.notifications import schedule_notification
 
 router = APIRouter()
 from app.api import deps
@@ -239,6 +240,19 @@ def create_student(
         data["num_select"] = generate_num_select(db, data.get("id_mention"))
 
     student = crud.student.create(db=db, obj_in=schemas.StudentNewCreate(**data))
+    try:
+        schedule_notification(
+            {
+                "type": "student_created",
+                "student_id": student.id,
+                "full_name": f"{student.last_name} {student.first_name}".strip(),
+                "mention_id": student.id_mention,
+                "journey_id": data.get("id_journey") or None,
+                "target_roles": ["admin"],
+            }
+        )
+    except Exception:
+        pass
     return student
 
 

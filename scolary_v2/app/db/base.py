@@ -45,3 +45,4 @@ from app.models.service_required_document import AvailableServiceRequiredDocumen
 from app.models.cms_page import CmsPage # noqa
 from app.models.teacher import Teacher # noqa
 from app.models.plugged import Plugged # noqa
+from app.models.notification_template import NotificationTemplate # noqa

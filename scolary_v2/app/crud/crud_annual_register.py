@@ -29,7 +29,7 @@ class CRUDAnnualRegister(CRUDBase[AnnualRegister, AnnualRegisterCreate, AnnualRe
             obj_in: AnnualRegisterCreate,
             user_id: int = None,
             commit: bool = True,
-            refresh: bool = True,
+            refresh: bool = True
     ) -> AnnualRegister:
         data = obj_in.model_dump()
         if (

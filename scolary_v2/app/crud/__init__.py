@@ -43,3 +43,4 @@ from .crud_cms_page import cms_page
 from .crud_available_service_required_document import available_service_required_document
 from .crud_teacher import teacher
 from .crud_plugged import plugged
+from .crud_notification_template import notification_template

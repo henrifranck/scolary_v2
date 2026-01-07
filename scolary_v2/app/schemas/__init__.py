@@ -289,3 +289,10 @@ from .plugged import (
     PluggedUpdate,
     ResponsePlugged
 )
+
+from .notification_template import (
+    NotificationTemplateBase,
+    NotificationTemplateCreate,
+    NotificationTemplateUpdate,
+    NotificationTemplateOut,
+)

@@ -4,6 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from app.api import deps
 from app import crud, models, schemas
+from app.core.notifications import schedule_notification
 import ast
 
 router = APIRouter()
@@ -49,6 +50,22 @@ def create_annual_register(
     Create new annual_register.
     """
     annual_register = crud.annual_register.create(db=db, obj_in=annual_register_in)
+    try:
+        schedule_notification(
+            {
+                "type": "annual_register_created",
+                "annual_register_id": annual_register.id,
+                "student_id": getattr(annual_register, "id_student", None),
+                "id_academic_year": getattr(annual_register, "id_academic_year", None),
+                "target_roles": ["admin"],
+                "template_vars": {
+                    "card_number": annual_register.num_carte,
+                    "accademic_year": f"{annual_register.academic_year.name}"
+                }
+            }
+        )
+    except Exception:
+        pass
     return annual_register
 
 

@@ -86,7 +86,7 @@ def create_carte_student(
         data["supperadmin"] = f"{user.last_name} {user.first_name}"
     data["mention"] = mention.name
 
-    data["key"] = year.id, mention.id
+    data["key"] = year.code
     data["level"] = level
     data["img_carte"] = mention.background
     heads = heads_card.parcourir_et(students, data, university)

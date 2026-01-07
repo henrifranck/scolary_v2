@@ -42,6 +42,7 @@ import { BaccalaureateSeriesPage } from "./pages/admin/baccalaureate-series/bacc
 import { NationalitysPage } from "./pages/admin/nationality/nationality";
 import { ClassroomsPage } from "./pages/admin/classroom/classroom";
 import { PluggedPage } from "./pages/admin/plugged/plugged-page";
+import { NotificationTemplatesPage } from "./pages/admin/notification-templates/notification-templates-page";
 
 const ensureAuthenticated = ({ context }: { context: AppRouterContext }) => {
   const { status } = context.authStore.getState();
@@ -418,6 +419,13 @@ const classroomManagerRoute = createRoute({
   component: ClassroomsPage
 });
 
+const notificationTemplatesRoute = createRoute({
+  getParentRoute: () => adminRoute,
+  path: "notification-templates",
+  component: NotificationTemplatesPage,
+  beforeLoad: ensureAuthenticated
+});
+
 const classroomManagerUserRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "classroom",
@@ -499,7 +507,8 @@ const routeTree = rootRoute.addChildren([
     cmsManagerRoute,
     baccalaureateSerieRoute,
     nationalityManagerRoute,
-    classroomManagerRoute
+    classroomManagerRoute,
+    notificationTemplatesRoute
   ]),
   authRoute.addChildren([loginRoute])
 ]);

@@ -2,6 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any
+from io import BytesIO
 
 import qrcode
 
@@ -31,15 +32,28 @@ def create_carte(
         candidate = Path("files") / cleaned
         return candidate.as_posix() if candidate.exists() else "images/no_image.png"
 
-    def build_qr_path(num_carte: str, payload: Any) -> str:
-        """Generate a QR code image on disk and return its path."""
-        qr_dir = Path("files/qr_codes")
-        qr_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"qr_{num_carte}.png"
-        target = qr_dir / filename
-        qr_img = qrcode.make(f"{payload}")
-        qr_img.save(target, format="PNG")
-        return target.as_posix()
+    def build_qr_image(num_carte: str, payload: Any) -> BytesIO:
+        """Generate a QR code image in memory and return a BytesIO."""
+        from qrcode.constants import ERROR_CORRECT_M
+
+        payload_str = (
+            "|".join(map(str, payload))
+            if isinstance(payload, (list, tuple, set))
+            else str(payload)
+        )
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=ERROR_CORRECT_M,
+            box_size=6,
+            border=2
+        )
+        qr.add_data(payload_str)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+        return buffer
 
     logo_univ = build_asset_path(university.logo_university)
     logo_depart = build_asset_path(university.logo_departement)
@@ -94,7 +108,7 @@ def create_carte(
         info_ += f"Mention: {data['mention']}\n"
 
         data_et = [deux_et[i]["num_carte"], data["key"]]
-        qr_path = build_qr_path(deux_et[i]["num_carte"], data_et)
+        qr_buffer = build_qr_image(deux_et[i]["num_carte"], data_et)
 
         pdf.set_font("Times", "", 8.0)
 
@@ -172,13 +186,20 @@ def create_carte(
 
         pdf.set_font("Times", "B", 14.0)
         pdf.set_xy(pos_x + absci + 2.15 * value, pos_init_y + ordon + 1.85 * value)
-        qr_dir = Path("files/qr_codes")
-        qr_dir.mkdir(parents=True, exist_ok=True)
-        qr_path = qr_dir / f"qr_{deux_et[i]['num_carte']}.png"
-        qr = qrcode.make(f"{data_et}")
-        qr.save(qr_path, format="PNG")
-        if os.path.exists(qr_path):
-            pdf.image(qr_path, w=0.6 * value, h=0.6 * value)
+        # Reserve space and draw a light border behind the QR to keep alignment visible in print
+        pdf.set_fill_color(255, 255, 255)
+        qr_size = 0.55 * value
+        qr_x = pos_x + absci + 2.1 * value
+        qr_y = pos_init_y + ordon + 1.82 * value
+        pdf.rect(qr_x, qr_y, qr_size, qr_size)
+        pdf.image(
+            qr_buffer,
+            x=qr_x,
+            y=qr_y,
+            w=qr_size,
+            h=qr_size,
+            type="PNG"
+        )
 
         pdf.set_font("Times", "BI", 9)
         pdf.set_xy(pos_x + absci + 1.9 * value, pos_init_y + ordon + 0.36 * value)

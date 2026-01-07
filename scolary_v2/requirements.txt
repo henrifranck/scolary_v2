@@ -19,3 +19,4 @@ qrcode
 pytz==2024.1
 requests==2.32.3
 httpx==0.24.1
+pymongo==4.7.2
