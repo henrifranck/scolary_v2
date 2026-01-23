@@ -44,3 +44,4 @@ from .crud_available_service_required_document import available_service_required
 from .crud_teacher import teacher
 from .crud_plugged import plugged
 from .crud_notification_template import notification_template
+from .crud_model_has_permission import model_has_permission

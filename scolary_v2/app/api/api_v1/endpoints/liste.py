@@ -1,6 +1,8 @@
 import ast
 from pathlib import Path
 from typing import Any, List, Union
+import os
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
@@ -22,6 +24,46 @@ from app.utils import (
 from app.pdf.PDFMark import PDFMark as FPDF
 
 router = APIRouter()
+
+
+def _cleanup_old_pdfs(base_dir: str) -> None:
+    """Remove PDFs (or dated folders) older than today in base_dir."""
+    try:
+        today = datetime.now().date()
+        if not os.path.isdir(base_dir):
+            return
+        for name in os.listdir(base_dir):
+            path = os.path.join(base_dir, name)
+            try:
+                stat = os.stat(path)
+            except OSError:
+                continue
+            mdate = datetime.fromtimestamp(stat.st_mtime).date()
+            if mdate < today:
+                try:
+                    if os.path.isdir(path):
+                        for root, _, files in os.walk(path, topdown=False):
+                            for f in files:
+                                os.remove(os.path.join(root, f))
+                        os.rmdir(path)
+                    else:
+                        os.remove(path)
+                except OSError:
+                    continue
+    except Exception:
+        # Best effort cleanup; do not fail the request
+        pass
+
+
+def _prepare_pdf_path(base_dir: str, filename: str) -> tuple[str, str]:
+    """Ensure date-based directory exists and return full + relative paths."""
+    _cleanup_old_pdfs(base_dir)
+    today_dir = datetime.now().strftime("%Y-%m-%d")
+    dated_dir = os.path.join(base_dir, today_dir)
+    os.makedirs(dated_dir, exist_ok=True)
+    full_path = os.path.join(dated_dir, filename)
+    rel_path = f"pdf/list/{today_dir}/{filename}"
+    return full_path, rel_path
 
 
 def _build_pdf_response(result: Union[dict, str], request: Request | None = None) -> schemas.PdfFileResponse:
@@ -372,11 +414,14 @@ def list_by_group(
         )
         group += 1
         skip += len(students)
-    pdf.output(
-        f"files/pdf/list/list_by_group_{semester}_{journey.id}.pdf", "F"
-    )
+    safe_abbr = (journey.abbreviation or journey.name or "journey").replace(" ", "_")
+    safe_year = (academic_year.name or str(id_year)).replace(" ", "_") if academic_year else "annee"
+    filename = f"groupe_{group_template.group_number or 1}_{semester}_{safe_abbr}_{safe_year}.pdf"
+    base_dir = "files/pdf/list"
+    full_path, rel_path = _prepare_pdf_path(base_dir, filename)
+    pdf.output(full_path, "F")
     return _build_pdf_response(
-        {"path": "pdf/list/", "filename": f"list_by_group_{semester}_{journey.id}.pdf"}
+        {"path": rel_path, "filename": filename}
     , request=request)
 
 

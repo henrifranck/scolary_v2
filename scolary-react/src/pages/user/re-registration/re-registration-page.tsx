@@ -41,6 +41,8 @@ import { printStudentCards, printStudentsList } from "@/services/print-service";
 import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 import { ActionButton } from "@/components/action-button";
 import { useLookupOptions } from "@/hooks/use-lookup-options";
+import { FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -406,7 +408,7 @@ export const ReinscriptionPage = () => {
 
   const resolvedJourneyForActions = useMemo(() => {
     if (filters.id_journey) return filters.id_journey;
-    const fallback = resolveJourneyWithMaxSemester(availableJourneys);
+    const fallback: any = resolveJourneyWithMaxSemester(availableJourneys);
     return fallback?.id ?? "";
   }, [availableJourneys, filters.id_journey, resolveJourneyWithMaxSemester]);
 
@@ -471,7 +473,6 @@ export const ReinscriptionPage = () => {
   const [printError, setPrintError] = useState<string | null>(null);
   const [printingList, setPrintingList] = useState(false);
   const [printingCards, setPrintingCards] = useState(false);
-  const [printingCardsBack, setPrintingCardsBack] = useState(false);
   const [pdfViewer, setPdfViewer] = useState<{
     open: boolean;
     url?: string;
@@ -854,7 +855,9 @@ export const ReinscriptionPage = () => {
     setPrintError(null);
     const journeyId = resolvedJourneyForActions;
     if (!filters.id_mention || !filters.id_year || !journeyId) {
-      setPrintError("Veuillez sélectionner une mention, une année et un parcours.");
+      setPrintError(
+        "Veuillez sélectionner une mention, une année et un parcours."
+      );
       return;
     }
     setPrintingCards(true);
@@ -889,44 +892,6 @@ export const ReinscriptionPage = () => {
     }
   };
 
-  const handlePrintCardsBack = async () => {
-    setPrintError(null);
-    const journeyId = resolvedJourneyForActions;
-    if (!filters.id_mention || !filters.id_year || !journeyId) {
-      setPrintError("Veuillez sélectionner une mention, une année et un parcours.");
-      return;
-    }
-    setPrintingCardsBack(true);
-    try {
-      const responses = await printStudentCards({
-        mentionId: filters.id_mention,
-        academicYearId: filters.id_year,
-        journeyId,
-        level: semesterToLevel(filters.semester)
-      });
-      const result = Array.isArray(responses) ? responses[1] : undefined;
-      const url = resolveAssetUrl(result?.url || result?.path);
-      const recto = Array.isArray(responses) ? resolveAssetUrl(responses[0]?.url || responses[0]?.path) : null;
-      if (!url) {
-        throw new Error("Impossible de générer les cartes.");
-      }
-      setPdfViewer({
-        open: true,
-        url,
-        urls: [recto, url].filter(Boolean) as string[],
-        title: "Cartes étudiant"
-      });
-    } catch (error) {
-      setPrintError(
-        error instanceof Error
-          ? error.message
-          : "Impossible de générer les cartes."
-      );
-    } finally {
-      setPrintingCardsBack(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {isPageLoading && (
@@ -941,21 +906,25 @@ export const ReinscriptionPage = () => {
             Re-inscription
           </h1>
           <p className="text-sm text-muted-foreground">
-            Filter students by semester, mention and journey to follow their
-            re-inscription status.
+            Filtrez par semestre, mention et parcours pour suivre le statut de
+            réinscription.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={handleCreateStudent}>
-            Create student
+            Créer un étudiant
           </Button>
           <Button
             size="sm"
             variant="secondary"
             onClick={handlePrintList}
             disabled={printingList || !filters.id_year}
+            className="gap-2"
           >
-            {printingList ? "Preparing..." : "Print list"}
+            <FileText
+              className={cn("h-4 w-4", printingList && "animate-spin")}
+            />
+            {printingList ? "Préparation..." : "Imprimer la liste"}
           </Button>
           <Button
             size="sm"
@@ -963,15 +932,7 @@ export const ReinscriptionPage = () => {
             onClick={handlePrintCards}
             disabled={printingCards || !filters.id_mention}
           >
-            {printingCards ? "Preparing..." : "Print cards (front)"}
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handlePrintCardsBack}
-            disabled={printingCardsBack || !filters.id_mention}
-          >
-            {printingCardsBack ? "Preparing..." : "Print cards (back)"}
+            {printingCards ? "Préparation..." : "Imprimer les cartes"}
           </Button>
         </div>
       </div>

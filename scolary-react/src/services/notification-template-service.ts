@@ -6,12 +6,14 @@ export type NotificationTemplate = {
   key: string;
   title: string;
   template: string;
+  target_roles?: string[];
 };
 
 export type NotificationTemplatePayload = {
   key: string;
   title: string;
   template: string;
+  target_roles?: string[];
 };
 
 export const fetchNotificationTemplates = (): Promise<NotificationTemplate[]> =>

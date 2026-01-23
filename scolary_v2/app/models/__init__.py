@@ -44,3 +44,4 @@ from .cms_page import CmsPage
 from .teacher import Teacher
 from .plugged import Plugged
 from .notification_template import NotificationTemplate
+from .model_has_permission import ModelHasPermission

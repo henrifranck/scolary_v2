@@ -302,16 +302,16 @@ export const AcademicFilters = ({
 
   const mentionPlaceholder =
     shouldFetchMentions && mentionsFetching
-      ? "Loading mentions..."
-      : "Select mention";
+      ? "Chargement des mentions..."
+      : "Sélectionner une mention";
 
   const journeyPlaceholder = resolvedJourneysLoading
-    ? "Loading journeys..."
+    ? "Chargement des parcours..."
     : value.id_mention
       ? availableJourneys.length
-        ? "Select journey"
-        : "No journey available"
-      : "Select mention first";
+        ? "Sélectionner un parcours"
+        : "Aucun parcours disponible"
+      : "Sélectionnez d'abord une mention";
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -320,11 +320,11 @@ export const AcademicFilters = ({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-lg font-semibold">Academic Filters</h3>
+            <h3 className="text-lg font-semibold">Filtres académiques</h3>
           </div>
           {showActiveFilters && getActiveFiltersCount() > 0 && (
             <Badge variant="secondary" className="gap-1">
-              {getActiveFiltersCount()} active
+              {getActiveFiltersCount()} actif(s)
             </Badge>
           )}
         </div>
@@ -338,12 +338,12 @@ export const AcademicFilters = ({
             {collapsed ? (
               <>
                 <Eye className="h-4 w-4" />
-                Show filters
+                Afficher les filtres
               </>
             ) : (
               <>
                 <EyeOff className="h-4 w-4" />
-                Hide filters
+                Masquer les filtres
               </>
             )}
           </Button>
@@ -415,7 +415,7 @@ export const AcademicFilters = ({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-muted-foreground" />
-                  <label className="text-sm font-medium">Journey</label>
+                  <label className="text-sm font-medium">Parcours</label>
                 </div>
                 <Select
                   value={value.id_journey}
@@ -439,7 +439,7 @@ export const AcademicFilters = ({
                       ))
                     ) : (
                       <SelectItem value="__no_journey" disabled>
-                        No journey available
+                        Aucun parcours disponible
                       </SelectItem>
                     )}
                   </SelectContent>
@@ -452,7 +452,7 @@ export const AcademicFilters = ({
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-muted-foreground" />
-                  <label className="text-sm font-medium">Level</label>
+                  <label className="text-sm font-medium">Niveau</label>
                 </div>
                 <Select
                   value={value.level ?? ""}
@@ -464,7 +464,7 @@ export const AcademicFilters = ({
                   }
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Select level" />
+                    <SelectValue placeholder="Sélectionner un niveau" />
                   </SelectTrigger>
                   <SelectContent>
                     {resolvedLevelOptions.length ? (
@@ -493,7 +493,7 @@ export const AcademicFilters = ({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
-                <label className="text-sm font-medium">Semester</label>
+                <label className="text-sm font-medium">Semestre</label>
               </div>
               <Tabs
                 value={value.semester}

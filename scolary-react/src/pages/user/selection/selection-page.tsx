@@ -32,13 +32,14 @@ import {
   softDeleteStudent,
   updateStudentProfile
 } from "@/services/student-service";
-import { Pencil, Trash2 } from "lucide-react";
+import { FileText, Pencil, Trash2 } from "lucide-react";
 import { useLookupOptions } from "@/hooks/use-lookup-options";
 import { printSelectionList } from "@/services/print-service";
 import { resolveAssetUrl } from "@/lib/resolve-asset-url";
 import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ActionButton } from "@/components/action-button";
+import { cn } from "@/lib/utils";
 
 const semesters = Array.from({ length: 10 }, (_, index) => `S${index + 1}`);
 
@@ -590,7 +591,8 @@ export const DossierSelectionPage = () => {
             Dossier selection
           </h1>
           <p className="text-sm text-muted-foreground">
-            Filter students and track dossier selection progress.
+            Filtrez les étudiants et suivez l'avancement de sélection des
+            dossiers.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -601,6 +603,7 @@ export const DossierSelectionPage = () => {
             size="sm"
             variant="secondary"
             disabled={!filters.id_mention || !filters.id_year}
+            className="gap-2"
             onClick={async () => {
               setPrintError(null);
               if (!filters.id_year || !filters.id_mention) {
@@ -635,6 +638,9 @@ export const DossierSelectionPage = () => {
               }
             }}
           >
+            <FileText
+              className={cn("h-4 w-4", printingList && "animate-spin")}
+            />
             {printingList ? "Préparation..." : "Imprimer la liste"}
           </Button>
         </div>
@@ -689,7 +695,7 @@ export const DossierSelectionPage = () => {
               <div className="grid gap-2 md:grid-cols-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">
-                    Students matching filters:
+                    Étudiants correspondants :
                   </span>
                   <span className="font-semibold text-primary">
                     {students.length}
@@ -697,7 +703,7 @@ export const DossierSelectionPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">
-                    Selected semester:
+                    Semestre sélectionné :
                   </span>
                   <span className="font-semibold text-primary">
                     {filters.semester || "—"}

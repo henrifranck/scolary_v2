@@ -86,36 +86,38 @@ interface NavSection {
 }
 
 const getNavSections = (user?: AuthUser | null): NavSection[] => {
+  const isSuperuser = Boolean(user?.is_superuser || user?.role === "superuser");
+  const effectiveRole = isSuperuser ? "admin" : user?.role;
   const generalSection: NavSection = {
-    title: "General",
+    title: "Général",
     items: [
       { to: "/", label: "Accueil", icon: LayoutDashboard },
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }
+      { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard }
     ]
   };
 
-  if (user?.role === "admin") {
+  if (effectiveRole === "admin") {
     return [
       generalSection,
       {
-        title: "Academique",
+        title: "Académique",
         roles: ["admin"],
         items: [
           {
             to: "/admin/academic-years",
-            label: "Academic years",
+            label: "Années universitaires",
             icon: GraduationCap,
             roles: ["admin"]
           }
         ]
       },
       {
-        title: "Etudiant",
+        title: "Étudiant",
         roles: ["admin"],
         items: [
           {
             to: "/admin/folder-selection",
-            label: "Nouveau etudians",
+            label: "Sélection dossiers",
             icon: FolderOpen,
             roles: ["admin"]
           },
@@ -133,7 +135,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
           },
           {
             to: "/admin/trash",
-            label: "Trash",
+            label: "Corbeille",
             icon: Trash2,
             roles: ["admin"]
           }
@@ -143,10 +145,15 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         title: "Utilisateur",
         roles: ["admin"],
         items: [
-          { to: "/admin/users", label: "Users", icon: Users, roles: ["admin"] },
+          {
+            to: "/admin/users",
+            label: "Utilisateurs",
+            icon: Users,
+            roles: ["admin"]
+          },
           {
             to: "/admin/roles",
-            label: "Roles",
+            label: "Rôles",
             icon: ShieldCheck,
             roles: ["admin"]
           },
@@ -158,7 +165,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
           },
           {
             to: "/admin/available-models",
-            label: "Available models",
+            label: "Modèles disponibles",
             icon: Layers,
             roles: ["admin"]
           },
@@ -194,31 +201,31 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
           },
           {
             to: "/admin/available-services",
-            label: "Available services",
+            label: "Services disponibles",
             icon: ListChecks,
             roles: ["admin"]
           },
           {
             to: "/admin/required-documents",
-            label: "Required documents",
+            label: "Documents requis",
             icon: FileText,
             roles: ["admin"]
           },
           {
             to: "/admin/enrollment-fees",
-            label: "Enrollment fees",
+            label: "Frais d'inscription",
             icon: Banknote,
             roles: ["admin"]
           },
           {
             to: "/admin/university-info",
-            label: "University info",
+            label: "Infos université",
             icon: Building2,
             roles: ["admin"]
           },
           {
             to: "/admin/files",
-            label: "File manager",
+            label: "Gestionnaire de fichiers",
             icon: HardDrive,
             roles: ["admin"]
           },
@@ -262,29 +269,34 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         items: [
           {
             to: "/admin/teaching-unit",
-            label: "Teaching unit",
+            label: "Unité d'enseignement",
             icon: BookOpenCheck,
             roles: ["admin"]
           },
           {
             to: "/admin/constituent-elements",
-            label: "Constituent element",
+            label: "Élément constitutif",
             icon: Layers,
             roles: ["admin"]
           },
           {
             to: "/admin/offerings",
-            label: "Offerings",
+            label: "Offres de cours",
             icon: ListChecks,
             roles: ["admin"]
           },
           {
             to: "/admin/working-time",
-            label: "Working time",
+            label: "Emploi du temps",
             icon: CalendarClock,
             roles: ["admin"]
           },
-          { to: "/admin/groups", label: "Group", icon: Users, roles: ["admin"] }
+          {
+            to: "/admin/groups",
+            label: "Groupes",
+            icon: Users,
+            roles: ["admin"]
+          }
         ]
       }
     ];
@@ -293,13 +305,13 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
   return [
     generalSection,
     {
-      title: "Etudiant",
+      title: "Étudiant",
       roles: ["user"],
       items: [
         { to: "/notes", label: "Notes", icon: NotepadText, roles: ["user"] },
         {
           to: "/folder-selection",
-          label: "Nouveau etudians",
+          label: "Sélection dossiers",
           icon: FolderOpen,
           roles: ["user"]
         },
@@ -317,7 +329,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         },
         {
           to: "/trash",
-          label: "Trash",
+          label: "Corbeille",
           icon: Trash2,
           roles: ["admin"]
         },
@@ -326,7 +338,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
           label: "Concours",
           icon: Trophy,
           roles: ["user"],
-          badge: "New"
+          badge: "Nouveau"
         }
       ]
     },
@@ -343,31 +355,31 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         { to: "/journeys", label: "Parcours", icon: Route, roles: ["user"] },
         {
           to: "/available-services",
-          label: "Available services",
+          label: "Services disponibles",
           icon: ListChecks,
           roles: ["user"]
         },
         {
           to: "/required-documents",
-          label: "Required documents",
+          label: "Documents requis",
           icon: FileText,
           roles: ["user"]
         },
         {
           to: "/university-info",
-          label: "University info",
+          label: "Infos université",
           icon: Building2,
           roles: ["user"]
         },
         {
           to: "/files",
-          label: "File manager",
+          label: "Gestionnaire de fichiers",
           icon: HardDrive,
           roles: ["user"]
         },
         {
           to: "/baccalaureate-serie",
-          label: "Serie du Baccalaureat",
+          label: "Série du Baccalauréat",
           icon: HopOff,
           roles: ["user"]
         },
@@ -386,12 +398,12 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
       ]
     },
     {
-      title: "Academique",
+      title: "Académique",
       roles: ["user"],
       items: [
         {
           to: "/academic-years",
-          label: "Academic years",
+          label: "Années universitaires",
           icon: GraduationCap,
           roles: ["user"]
         }
@@ -415,19 +427,19 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         },
         {
           to: "/working-time",
-          label: "Working time",
+          label: "Emploi du temps",
           icon: CalendarClock,
           roles: ["user"]
         },
-        { to: "/groups", label: "Group", icon: Users, roles: ["user"] }
+        { to: "/groups", label: "Groupes", icon: Users, roles: ["user"] }
       ]
     },
     {
       title: "Utilisateur",
       roles: ["user"],
       items: [
-        { to: "/users", label: "Users", icon: Users, roles: ["user"] },
-        { to: "/roles", label: "Roles", icon: ShieldCheck, roles: ["user"] },
+        { to: "/users", label: "Utilisateurs", icon: Users, roles: ["user"] },
+        { to: "/roles", label: "Rôles", icon: ShieldCheck, roles: ["user"] },
         {
           to: "/permissions",
           label: "Permissions",
@@ -436,7 +448,7 @@ const getNavSections = (user?: AuthUser | null): NavSection[] => {
         },
         {
           to: "/available-models",
-          label: "Available models",
+          label: "Modèles disponibles",
           icon: Layers,
           roles: ["user"]
         }
@@ -456,7 +468,7 @@ const normalizeRouteKey = (value: string) =>
   value.trim().toLowerCase().replace(/^\/+/, "");
 
 const getPermissionEntry = (
-  permissionMap: Record<string, { get?: boolean }>,
+  permissionMap: Record<string, { get?: boolean; show?: boolean }> | null,
   key: string
 ) => {
   if (!permissionMap) {
@@ -537,7 +549,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const notificationEvent = useNotifications(Boolean(user));
-  const [notificationBanner, setNotificationBanner] = useState<NotificationRecord | null>(null);
+  const [notificationBanner, setNotificationBanner] =
+    useState<NotificationRecord | null>(null);
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const isReinscriptionPage =
@@ -553,9 +566,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const [collapsedSections, setCollapsedSections] = useState<
     Record<string, boolean>
   >({});
-  const isSuperuser = Boolean(user?.is_superuser);
+  const isSuperuser = Boolean(user?.is_superuser || user?.role === "superuser");
   const permissionMap = currentUser?.permissions ?? user?.permissions ?? null;
-  const shouldEnforcePermissions = Boolean(user) && !isSuperuser;
+  const shouldEnforcePermissions =
+    Boolean(user && permissionMap) && !isSuperuser;
   const navSections = getNavSections(user);
 
   const academicYearOptions = useMemo(
@@ -594,12 +608,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   };
 
   const filteredNavSections = navSections
-    .filter((section) => {
-      if (!section.roles) {
-        return true;
-      }
-      return user ? section.roles.includes(user.role) : false;
-    })
     .map((section) => {
       const items = section.items.filter((item) => {
         if (!isSuperuser && !hasRouteUiMatch(item.to, availableModels)) {
@@ -608,9 +616,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         if (!shouldEnforcePermissions) {
           return true;
         }
-        if (!permissionMap) {
-          return false;
-        }
         if (item.to === "/") {
           return true;
         }
@@ -618,7 +623,15 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         if (!permissionKey) {
           return false;
         }
-        return Boolean(getPermissionEntry(permissionMap, permissionKey)?.get);
+        const permissionEntry = getPermissionEntry(
+          permissionMap,
+          permissionKey
+        );
+        return Boolean(
+          permissionEntry &&
+            permissionEntry.show === true &&
+            permissionEntry.get
+        );
       });
       return { ...section, items };
     })
@@ -658,8 +671,21 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     if (!currentUser || !user) {
       return;
     }
-    const isSuperuser = currentUser.is_superuser ?? user.is_superuser;
-    const role: AuthRole = isSuperuser ? "admin" : "user";
+    const isSuperuser = Boolean(
+      (currentUser.is_superuser ??
+        user.is_superuser ??
+        currentUser.role === "superuser") ||
+        user.role === "superuser"
+    );
+    const roleNames = [
+      ...(currentUser.user_role?.map((ur) => ur.role?.name).filter(Boolean) ??
+        []),
+      ...(currentUser.roles?.map((r) => r.name).filter(Boolean) ?? []),
+      currentUser.role?.name
+    ].filter(Boolean);
+    const nextRole: AuthRole = isSuperuser
+      ? "superuser"
+      : roleNames[0]?.toString() || user.role || "user";
     const nextPermissions = currentUser.permissions ?? user.permissions ?? null;
     const samePermissions =
       JSON.stringify(user.permissions ?? null) ===
@@ -674,7 +700,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     const nextUser: AuthUser = {
       ...user,
       id: currentUser.id ? String(currentUser.id) : user.id,
-      role,
+      role: nextRole,
       is_superuser: isSuperuser,
       permissions: nextPermissions
     };
@@ -700,7 +726,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   }, [searchQuery, isReinscriptionPage]);
 
   const getRoleBadgeVariant = (role: AuthRole) => {
-    return role === "admin" ? "default" : "secondary";
+    return role === "superuser" ? "default" : "secondary";
   };
 
   const toggleSection = (sectionTitle: string) => {
@@ -735,14 +761,17 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return breadcrumbs;
   };
 
-  const buildNotificationDescription = useCallback((notif: NotificationRecord) => {
-    const base =
-      notif.message ||
-      notif.full_name ||
-      (typeof notif._id === "string" ? notif._id : "") ||
-      "";
-    return base || "Notification";
-  }, []);
+  const buildNotificationDescription = useCallback(
+    (notif: NotificationRecord) => {
+      const base =
+        notif.message ||
+        notif.full_name ||
+        (typeof notif._id === "string" ? notif._id : "") ||
+        "";
+      return base || "Notification";
+    },
+    []
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -751,21 +780,16 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     if (!user || !shouldEnforcePermissions) {
       return;
     }
-    if (!permissionMap) {
-      router.navigate({ to: "/" });
-      return;
-    }
     if (location.pathname.startsWith("/auth") || location.pathname === "/") {
       return;
     }
-    const permissionKey = resolvePermissionKey(
-      location.pathname,
-      availableModels
-    );
-    if (
-      !permissionKey ||
-      !getPermissionEntry(permissionMap, permissionKey)?.get
-    ) {
+    const permissionKey = resolvePermissionKey(location.pathname, availableModels);
+    if (!permissionKey) {
+      router.navigate({ to: "/" });
+      return;
+    }
+    const entry = getPermissionEntry(permissionMap, permissionKey);
+    if (!entry || !entry.get) {
       router.navigate({ to: "/" });
     }
   }, [
@@ -884,7 +908,13 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                 if (!item.roles) {
                   return true;
                 }
-                return user ? item.roles.includes(user.role) : false;
+                if (!user) {
+                  return false;
+                }
+                if (isSuperuser) {
+                  return true;
+                }
+                return item.roles.includes(user.role);
               });
 
               if (visibleItems.length === 0) {
@@ -1022,10 +1052,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             </div>
           </div>
 
-          {/* Center section - Academic year dropdown */}
+          {/* Centre - Sélecteur année universitaire */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-muted-foreground hidden sm:inline">
-              Academic Year
+              Année universitaire
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1039,7 +1069,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Select Academic Year</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  Sélectionner l'année universitaire
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   key="all"
@@ -1081,11 +1113,14 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                   ) : null}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuContent
+                align="end"
+                className="w-[90vw] max-w-md sm:w-80"
+              >
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {notifications.length ? (
-                  notifications.slice(0, 10).map((notif) => (
+                  notifications.slice(0, 5).map((notif) => (
                     <DropdownMenuItem
                       key={notif._id}
                       className="flex items-start gap-2"
@@ -1110,7 +1145,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                         />
                       </div>
                       <div className="flex-1 space-y-1 text-xs">
-                        <p className="text-foreground font-medium">
+                        <p className="text-foreground font-medium line-clamp-2">
                           {notif.title ||
                             (notif.type === "student_created"
                               ? "Nouvel étudiant créé"
@@ -1118,14 +1153,17 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                                 ? "Nouvelle inscription annuelle"
                                 : notif.type || "Notification")}
                         </p>
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground line-clamp-2">
                           {buildNotificationDescription(notif)}
                         </p>
                       </div>
                     </DropdownMenuItem>
                   ))
                 ) : (
-                  <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                  <DropdownMenuItem
+                    disabled
+                    className="text-xs text-muted-foreground"
+                  >
                     Aucune notification
                   </DropdownMenuItem>
                 )}
@@ -1134,17 +1172,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-xs text-primary"
-                      onClick={() => {
-                        const unread = notifications.filter((n) => !n.read);
-                        unread.forEach((n) =>
-                          markNotificationRead(n._id).catch(() => {})
-                        );
-                        setNotifications((prev) =>
-                          prev.map((n) => ({ ...n, read: true }))
-                        );
-                      }}
+                      onClick={() => router.navigate({ to: "/notifications" })}
                     >
-                      Marquer tout comme lu
+                      Voir toutes les notifications
                     </DropdownMenuItem>
                   </>
                 ) : null}
@@ -1218,7 +1248,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
               <Bell className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1 space-y-1">
-              <p className="text-sm font-medium text-foreground">Notification</p>
+              <p className="text-sm font-medium text-foreground">
+                Notification
+              </p>
               <p className="text-xs text-muted-foreground">
                 {notificationBanner.message ??
                   (notificationBanner.type === "student_created"
@@ -1237,7 +1269,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                   markNotificationRead(notificationBanner._id).catch(() => {});
                   setNotifications((prev) =>
                     prev.map((n) =>
-                      n._id === notificationBanner._id ? { ...n, read: true } : n
+                      n._id === notificationBanner._id
+                        ? { ...n, read: true }
+                        : n
                     )
                   );
                 }

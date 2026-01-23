@@ -51,6 +51,7 @@ from app.api.api_v1.endpoints import available_service_required_documents
 from app.api.api_v1.endpoints import cms_pages
 from app.api.api_v1.endpoints import teacher
 from app.api.api_v1.endpoints import plugged
+from app.api.api_v1.endpoints import model_has_permissions
 
 api_router = APIRouter()
 api_router.include_router(classrooms.router, prefix="/classrooms", tags=["classrooms"])
@@ -72,6 +73,7 @@ api_router.include_router(user_roles.router, prefix="/user_roles", tags=["user_r
 api_router.include_router(roles.router, prefix="/roles", tags=["roles"])
 api_router.include_router(permissions.router, prefix="/permissions", tags=["permissions"])
 api_router.include_router(role_permissions.router, prefix="/role_permissions", tags=["role_permissions"])
+api_router.include_router(model_has_permissions.router, prefix="/model_has_permissions", tags=["model_has_permissions"])
 api_router.include_router(user_mentions.router, prefix="/user_mentions", tags=["user_mentions"])
 
 api_router.include_router(features.router, prefix="/features", tags=["features"])

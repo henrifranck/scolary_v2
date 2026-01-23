@@ -22,18 +22,47 @@ def _db_session():
 class NotificationManager:
     def __init__(self) -> None:
         self.active_connections: List[WebSocket] = []
+        self.connection_roles: dict[WebSocket, List[str]] = {}
 
-    async def connect(self, websocket: WebSocket) -> None:
+    async def connect(self, websocket: WebSocket, roles: List[str] | None = None) -> None:
         await websocket.accept()
+        normalized_roles = []
+        if roles:
+            for r in roles:
+                if not r:
+                    continue
+                try:
+                    normalized = str(r).strip().lower()
+                except Exception:
+                    normalized = ""
+                if normalized:
+                    normalized_roles.append(normalized)
         self.active_connections.append(websocket)
+        self.connection_roles[websocket] = normalized_roles
 
     def disconnect(self, websocket: WebSocket) -> None:
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
+        if websocket in self.connection_roles:
+            self.connection_roles.pop(websocket, None)
 
     async def broadcast(self, message: Any) -> None:
         disconnected: List[WebSocket] = []
+        target_roles = []
+        if isinstance(message, dict):
+            target_roles = message.get("target_roles") or []
+            target_roles = [
+                str(r).strip().lower()
+                for r in target_roles
+                if str(r).strip()
+            ]
         for connection in self.active_connections:
+            roles = self.connection_roles.get(connection) or []
+            allowed = True
+            if target_roles:
+                allowed = any(r in target_roles for r in roles)
+            if not allowed:
+                continue
             try:
                 await connection.send_json(message)
             except Exception:
@@ -47,12 +76,12 @@ manager = NotificationManager()
 
 def _render_from_template(template_key: str | None, variables: dict | None):
     if not template_key:
-        return None, None
+        return None, None, None
     with _db_session() as db:
         try:
             tpl = notification_template.get_by_key(db, key=template_key)
             if not tpl or not tpl.template:
-                return None, None
+                return None, None, None
             vars_dict = variables or {}
             try:
                 rendered_body = tpl.template.format(**vars_dict)
@@ -63,19 +92,43 @@ def _render_from_template(template_key: str | None, variables: dict | None):
                 rendered_title = tpl.title.format(**vars_dict) if tpl.title else tpl.title
             except Exception:
                 rendered_title = tpl.title
-            return rendered_body, rendered_title
+            return rendered_body, rendered_title, tpl.target_roles or None
         except Exception:
-            return None, None
+            return None, None, None
 
 
 def _prepare_notification_payload(message: Any) -> Any:
     if not isinstance(message, dict):
         return message
     payload = dict(message)
+    print(payload)
     template_key = payload.get("template_key") or payload.get("type")
-    rendered_body, rendered_title = _render_from_template(
+    rendered_body, rendered_title, template_roles = _render_from_template(
         template_key, payload.get("template_vars")
     )
+
+    # Normalize roles to lowercase strings to avoid mismatches
+    def _normalize_roles(value):
+        if not value:
+            return []
+        print(value, type(value))
+        if isinstance(value, str):
+            return [value.strip().lower()] if value.strip() else []
+        print(value, type(value))
+        roles = []
+        for r in value:
+            try:
+                normalized = str(r).strip().lower()
+            except Exception:
+                normalized = ""
+            if normalized:
+                roles.append(normalized)
+        return roles
+
+    if template_roles and not payload.get("target_roles"):
+        payload["target_roles"] = _normalize_roles(template_roles)
+    if "target_roles" in payload:
+        payload["target_roles"] = _normalize_roles(payload.get("target_roles"))
     if rendered_body:
         # Store the rendered text under message for UI and keep raw template key
         payload.setdefault("message", rendered_body)
@@ -95,6 +148,7 @@ def schedule_notification(message: Any) -> None:
             doc = {
                 **(prepared if isinstance(prepared, dict) else {"message": str(prepared)}),
                 "read": False,
+                "read_by": [],
                 "created_at": time(),
             }
             result = coll.insert_one(doc)

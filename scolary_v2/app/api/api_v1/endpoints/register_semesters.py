@@ -58,30 +58,20 @@ def create_register_semester(
     )
     if duplicate:
         raise HTTPException(status_code=409, detail="RegisterSemester already exists for this annual register.")
+   
     register_semester = crud.register_semester.create(db=db, obj_in=register_semester_in)
     try:
-        journey_name = None
-        try:
-            journey_rel = getattr(register_semester, "journey", None)
-            if journey_rel and getattr(journey_rel, "name", None):
-                print("nahazo ako", journey_rel)
-                journey_name = journey_rel.name
-            elif register_semester.id_journey:
-                print("tsy nahazo ako", journey_rel)
-                journey_obj = crud.journey.get(db=db, id=register_semester.id_journey)
-                if journey_obj and getattr(journey_obj, "name", None):
-                    journey_name = journey_obj.name
-        except Exception:
-            journey_name = None
         schedule_notification(
             {
                 "type": "student_registered",
-                "target_roles": ["Admin"],
-                "template_vars": {
-                    "card_number": register_semester.annual_register.num_carte,
-                    "journey": journey_name,
-                    "semester": register_semester.semester,
-                }
+                "template_vars": register_semester_in.template_vars
+                #     {
+                #     "card_number": register_semester.annual_register.num_carte,
+                #     "journey": journey_name,
+                #     "semester": register_semester.semester,
+                #     "full_name": student_full_name,
+                #     "academic_year": accademic_year
+                # }
             }
         )
     except Exception:

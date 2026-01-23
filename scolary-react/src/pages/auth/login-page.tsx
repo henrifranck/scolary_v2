@@ -37,7 +37,14 @@ export const LoginPage = () => {
       const response = await loginWithCredentials(values.email, values.password);
       const currentUser = await fetchCurrentUser();
       const isSuperuser = currentUser?.is_superuser ?? response.is_superuser;
-      const role = isSuperuser ? 'admin' : 'user';
+      const roleNames = [
+        ...(currentUser?.user_role?.map((ur) => ur.role?.name).filter(Boolean) ?? []),
+        ...(currentUser?.roles?.map((r) => r.name).filter(Boolean) ?? []),
+        currentUser?.role?.name
+      ].filter(Boolean);
+      const primaryRole = isSuperuser
+        ? 'superuser'
+        : roleNames[0]?.toString() || 'user';
       const displayName =
         [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ') ||
         values.email.split('@')[0];
@@ -45,12 +52,12 @@ export const LoginPage = () => {
         id: currentUser?.id ? String(currentUser.id) : crypto.randomUUID(),
         name: displayName,
         email: values.email,
-        role,
+        role: primaryRole,
         permissions: currentUser?.permissions ?? null,
         is_superuser: isSuperuser ?? undefined
       });
 
-      const destination = role === 'admin' ? '/admin/academic-years' : '/dashboard';
+      const destination = isSuperuser ? '/admin/academic-years' : '/dashboard';
       router.navigate({ to: destination });
     } catch (error) {
       const message =

@@ -23,6 +23,7 @@ class RegisterSemesterBase(BaseModel):
 class RegisterSemesterCreate(RegisterSemesterBase):
     semester: str
     repeat_status: RepeatStatusEnum
+    template_vars: Any = None
 
 
 class RegisterSemesterUpdate(RegisterSemesterBase):

@@ -833,13 +833,12 @@ export const InscriptionPage = () => {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Inscription</h1>
           <p className="text-sm text-muted-foreground">
-            Filter students by semester, mention and journey to follow their
-            inscription status.
+            Filtrez par semestre, mention et parcours pour suivre le statut d'inscription.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={handleCreateStudent}>
-            Create student
+            Créer un étudiant
           </Button>
         </div>
       </div>
@@ -862,7 +861,7 @@ export const InscriptionPage = () => {
               <div className="grid gap-2 md:grid-cols-3">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">
-                    Students matching filters:
+                    Étudiants correspondants :
                   </span>
                   <span className="font-semibold text-primary">
                     {displayedStudentCount}
@@ -870,7 +869,7 @@ export const InscriptionPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">
-                    Available journeys:
+                    Parcours disponibles :
                   </span>
                   <span className="font-semibold text-primary">
                     {availableJourneys.length}
@@ -878,7 +877,7 @@ export const InscriptionPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">
-                    Selected semester:
+                    Semestre sélectionné :
                   </span>
                   <span className="font-semibold text-primary">
                     {filters.semester || "—"}

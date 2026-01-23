@@ -7,21 +7,16 @@ from typing import Any
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from .model_has_permission import ModelHasPermission
 
 class PermissionBase(BaseModel):
     name: Optional[str] = None
-    model_name: Optional[str] = None
-    method_post: Optional[bool] = False
-    method_get: Optional[bool] = False
-    method_put: Optional[bool] = False
-    method_delete: Optional[bool] = False
 
     model_config = ConfigDict(protected_namespaces=())
 
 
 class PermissionCreate(PermissionBase):
     name: str
-    model_name: str
 
 
 class PermissionUpdate(PermissionBase):
@@ -35,11 +30,11 @@ class PermissionInDBBase(PermissionBase):
 
 
 class Permission(PermissionInDBBase):
-    pass
+    model_has_permission: Optional[List[ModelHasPermission]] = None
 
 
 class PermissionWithRelation(PermissionInDBBase):
-    pass
+    model_has_permission: Optional[List[ModelHasPermission]] = None
 
 
 class PermissionInDB(PermissionInDBBase):

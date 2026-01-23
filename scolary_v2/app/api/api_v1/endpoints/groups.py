@@ -50,6 +50,20 @@ def create_group(
     return group
 
 
+@router.post('/bulk', response_model=list[schemas.Group])
+def create_groups_bulk(
+        *,
+        db: Session = Depends(deps.get_db),
+        groups_in: list[schemas.GroupCreate],
+        current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Create multiple groups in one request.
+    """
+    groups = crud.group.create_multi(db=db, objs_in=groups_in)
+    return groups
+
+
 @router.put('/{group_id}', response_model=schemas.Group)
 def update_group(
         *,

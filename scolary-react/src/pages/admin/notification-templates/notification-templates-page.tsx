@@ -21,11 +21,13 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { fetchRoles } from "@/services/role-service";
 
 type TemplateForm = {
   key: string;
   title: string;
   template: string;
+  target_roles: string[];
 };
 
 export const NotificationTemplatesPage = () => {
@@ -34,7 +36,8 @@ export const NotificationTemplatesPage = () => {
   const [formValues, setFormValues] = useState<TemplateForm>({
     key: "",
     title: "",
-    template: ""
+    template: "",
+    target_roles: []
   });
   const [confirmDelete, setConfirmDelete] = useState<NotificationTemplate | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -45,6 +48,11 @@ export const NotificationTemplatesPage = () => {
       const res = await fetchNotificationTemplates();
       return res || [];
     }
+  });
+  const rolesQuery = useQuery({
+    queryKey: ["roles", "notification-templates"],
+    queryFn: () => fetchRoles({ limit: 200 }),
+    staleTime: 5 * 60 * 1000
   });
 
   const createMutation = useMutation({
@@ -68,7 +76,7 @@ export const NotificationTemplatesPage = () => {
     } else {
       await createMutation.mutateAsync(formValues);
     }
-    setFormValues({ key: "", title: "", template: "" });
+    setFormValues({ key: "", title: "", template: "", target_roles: [] });
     setEditing(null);
     setIsDialogOpen(false);
   };
@@ -95,6 +103,15 @@ export const NotificationTemplatesPage = () => {
         )
       },
       {
+        accessorKey: "target_roles",
+        header: "Rôles cibles",
+        cell: ({ row }) => {
+          const roles = row.original.target_roles ?? [];
+          if (!roles.length) return <span className="text-muted-foreground">Tous</span>;
+          return <span className="text-sm text-muted-foreground">{roles.join(", ")}</span>;
+        }
+      },
+      {
         id: "actions",
         header: "",
         cell: ({ row }) => (
@@ -107,7 +124,8 @@ export const NotificationTemplatesPage = () => {
                 setFormValues({
                   key: row.original.key,
                   title: row.original.title,
-                  template: row.original.template
+                  template: row.original.template,
+                  target_roles: row.original.target_roles ?? []
                 });
                 setIsDialogOpen(true);
               }}
@@ -232,6 +250,43 @@ export const NotificationTemplatesPage = () => {
                   setFormValues((prev) => ({ ...prev, template: e.target.value }))
                 }
               />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-medium">Rôles ciblés</label>
+                <span className="text-xs text-muted-foreground">
+                  Vide = visible par tous
+                </span>
+              </div>
+              <div className="grid gap-2 rounded-md border p-3 max-h-52 overflow-y-auto">
+                {(rolesQuery.data?.data ?? []).map((role) => {
+                  const checked = formValues.target_roles.includes(role.name);
+                  return (
+                    <label
+                      key={role.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...formValues.target_roles, role.name]
+                            : formValues.target_roles.filter((r) => r !== role.name);
+                          setFormValues((prev) => ({ ...prev, target_roles: next }));
+                        }}
+                      />
+                      <span>{role.name}</span>
+                    </label>
+                  );
+                })}
+                {!rolesQuery.data?.data?.length && (
+                  <p className="text-sm text-muted-foreground">
+                    Aucun rôle disponible.
+                  </p>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

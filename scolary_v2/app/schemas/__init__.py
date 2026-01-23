@@ -296,3 +296,10 @@ from .notification_template import (
     NotificationTemplateUpdate,
     NotificationTemplateOut,
 )
+
+from .model_has_permission import (
+    ModelHasPermission,
+    ModelHasPermissionCreate,
+    ModelHasPermissionUpdate,
+    ResponseModelHasPermission
+)

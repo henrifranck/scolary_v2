@@ -8,6 +8,7 @@ from app.api import deps
 from app import schemas, models
 from app.core.notifications import manager
 from app.core.mongo import get_notifications_collection
+from app.db.session import SessionLocal
 
 router = APIRouter()
 
@@ -31,8 +32,15 @@ def list_notifications(
     coll = get_notifications_collection()
     if coll is None:
         raise HTTPException(status_code=503, detail="Notifications storage not configured.")
-    roles = _get_roles_from_user(current_user)
-    print(roles)
+    value = _get_roles_from_user(current_user)
+    roles = []
+    for r in value:
+        try:
+            normalized = str(r).strip().lower()
+        except Exception:
+            normalized = ""
+        if normalized:
+            roles.append(normalized)
     query = {
         "$or": [
             {"target_roles": {"$exists": False}},
@@ -43,6 +51,8 @@ def list_notifications(
     docs = coll.find(query).sort("created_at", -1).limit(limit)
     results = []
     for doc in docs:
+        read_by = doc.get("read_by", []) or []
+        doc["read"] = current_user.id in read_by
         doc["_id"] = str(doc.get("_id"))
         results.append(doc)
     return {"data": results}
@@ -70,7 +80,7 @@ def mark_notification_read(
                 {"target_roles": {"$in": roles}}
             ]
         },
-        {"$set": {"read": True}}
+        {"$addToSet": {"read_by": current_user.id}}
     )
     if not result.matched_count:
         raise HTTPException(status_code=404, detail="Notification not found or not allowed")
@@ -80,15 +90,32 @@ def mark_notification_read(
 @router.websocket("/notifications")
 async def websocket_notifications(websocket: WebSocket):
     token = websocket.query_params.get("token") or websocket.headers.get("Authorization", "").replace("Bearer ", "")
+    roles: list[str] = []
     if token:
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[deps.security.ALGORITHM])
-            schemas.TokenPayload(**payload)
+            token_data = schemas.TokenPayload(**payload)
+            with SessionLocal() as db:
+                user = (
+                    db.query(models.User)
+                    .filter(models.User.id == token_data.id)
+                    .join(models.UserRole, models.UserRole.id_user == models.User.id, isouter=True)
+                    .join(models.Role, models.Role.id == models.UserRole.id_role, isouter=True)
+                    .all()
+                )
+                if user:
+                    roles = []
+                    try:
+                        for ur in getattr(user[0], "user_role", []) or []:
+                            if ur.role and ur.role.name:
+                                roles.append(ur.role.name)
+                    except Exception:
+                        pass
         except (JWTError, ValidationError):
             # If token is invalid, continue without user context (best effort)
             pass
 
-    await manager.connect(websocket)
+    await manager.connect(websocket, roles)
     try:
         while True:
             # We don't expect messages from clients yet; just keep connection alive.

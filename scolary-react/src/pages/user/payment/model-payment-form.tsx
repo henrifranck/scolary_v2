@@ -55,6 +55,7 @@ interface ReinscriptionAnnualFormProps {
   defaultMentionId?: string;
   disabledEditing?: boolean;
   registerType: string;
+  studentFullName?: string;
   onRegistrationStatusChange?: (hasRegistration: boolean) => void;
 }
 
@@ -68,6 +69,7 @@ export const ReinscriptionAnnualRegister = ({
   defaultMentionId,
   disabledEditing = false,
   registerType,
+  studentFullName,
   onRegistrationStatusChange
 }: ReinscriptionAnnualFormProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -1278,6 +1280,22 @@ export const ReinscriptionAnnualRegister = ({
         if (!semesterEntry.repeat_status) {
           throw new Error("Veuillez sélectionner un statut de redoublement.");
         }
+        const journeyName =
+          semesterEntry.journey?.name ??
+          semesterEntry.journey?.abbreviation ??
+          journeyOptions.find(
+            (journey) => Number(journey.id) === Number(journeyId)
+          )?.label ??
+          "";
+        const academicYearName =
+          draft.academic_year?.name ?? currentAcademicYearName;
+        const templateVars = {
+          card_number: cardNumber?.trim() ?? "",
+          journey: journeyName,
+          semester: semesterEntry.semester ?? "",
+          full_name: (studentFullName ?? "").trim(),
+          academic_year: academicYearName ?? ""
+        };
         if (
           annualRegisterDrafts.some((annual, annualIndex) => {
             if (annualIndex === index) {
@@ -1315,7 +1333,8 @@ export const ReinscriptionAnnualRegister = ({
             id_annual_register: annualId,
             semester: semesterEntry.semester,
             repeat_status: semesterEntry.repeat_status,
-            id_journey: journeyId
+            id_journey: journeyId,
+            template_vars: templateVars
           });
         }
         savedRegisterSemester = {

@@ -117,6 +117,16 @@ const extractErrorMessage = (
   return `Request failed with status ${fallbackStatus}`;
 };
 
+const redirectToForbidden = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  if (window.location.pathname === "/403") {
+    return;
+  }
+  window.location.replace("/403");
+};
+
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {}
@@ -147,6 +157,9 @@ export async function apiRequest<T>(
       response.status === 403
         ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
         : extractErrorMessage(detail, response.status);
+    if (response.status === 403) {
+      redirectToForbidden();
+    }
     throw new Error(message);
   }
 
@@ -195,6 +208,9 @@ export async function apiRequestBlob(
       response.status === 403
         ? "Vous n'avez pas les permissions nécessaires pour effectuer cette action."
         : extractErrorMessage(detail, response.status);
+    if (response.status === 403) {
+      redirectToForbidden();
+    }
     throw new Error(message);
   }
 

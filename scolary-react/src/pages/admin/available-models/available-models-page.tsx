@@ -199,20 +199,6 @@ const AvailableModelForm = ({
             )}
             {...register("route_ui", { required: "Route UI is required" })}
           />
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={isHiddenFromUser}
-              onChange={(event) =>
-                setValue(
-                  "route_ui",
-                  applyNoPrefix(routeUiValue ?? "", event.target.checked),
-                  { shouldDirty: true }
-                )
-              }
-            />
-            Masquer ce menu pour l'utilisateur (ajoute le prefixe no-)
-          </label>
           {errors.route_ui ? (
             <p className="text-xs text-destructive">
               {errors.route_ui.message}

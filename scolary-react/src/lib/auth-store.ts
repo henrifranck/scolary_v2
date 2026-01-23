@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-export type AuthRole = 'user' | 'admin';
+export type AuthRole = string;
 
 export interface AuthUser {
   id: string;

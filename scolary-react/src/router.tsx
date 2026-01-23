@@ -35,6 +35,7 @@ import { AvailableModelsPage } from "./pages/admin/available-models/available-mo
 import { FileManagerPage } from "./pages/admin/files/files-page";
 import { CmsManagerPage } from "./pages/admin/cms/cms-manager-page";
 import { LoginPage } from "./pages/auth/login-page";
+import { NotificationsPage } from "./pages/notifications/notifications-page";
 import type { AuthRole } from "./lib/auth-store";
 import type { AppRouterContext } from "./router-context";
 import { Route as rootRoute } from "./routes/__root";
@@ -43,6 +44,7 @@ import { NationalitysPage } from "./pages/admin/nationality/nationality";
 import { ClassroomsPage } from "./pages/admin/classroom/classroom";
 import { PluggedPage } from "./pages/admin/plugged/plugged-page";
 import { NotificationTemplatesPage } from "./pages/admin/notification-templates/notification-templates-page";
+import { ForbiddenPage } from "./pages/error/forbidden-page";
 
 const ensureAuthenticated = ({ context }: { context: AppRouterContext }) => {
   const { status } = context.authStore.getState();
@@ -93,6 +95,19 @@ const cmsPublicRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "pages/$slug",
   component: CmsPublicPage
+});
+
+const forbiddenRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "403",
+  component: ForbiddenPage
+});
+
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "notifications",
+  component: NotificationsPage,
+  beforeLoad: ensureAuthenticated
 });
 
 const reinscriptionRoute = createRoute({
@@ -452,9 +467,11 @@ const loginRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
+  forbiddenRoute,
   publicationsRoute,
   workingTimePublicRoute,
   cmsPublicRoute,
+  notificationsRoute,
   dashboardRoute,
   userNotesRoute,
   reinscriptionRoute,

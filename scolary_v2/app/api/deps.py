@@ -15,7 +15,6 @@ from app.core import security
 from app.core.config import settings
 from app.db.session import SessionLocal
 
-
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
@@ -28,9 +27,15 @@ def get_db() -> Generator:
     finally:
         db.close()
 
+
 def _build_permission_map(db: Session, user_id: int) -> dict:
-    permissions = (
-        db.query(models.Permission)
+    normalize = lambda value: (value or "unknown").strip().lower()
+    entries = (
+        db.query(models.ModelHasPermission)
+        .join(
+            models.Permission,
+            models.ModelHasPermission.id_permission == models.Permission.id
+        )
         .join(
             models.RolePermission,
             models.Permission.id == models.RolePermission.id_permission
@@ -45,26 +50,43 @@ def _build_permission_map(db: Session, user_id: int) -> dict:
     available_models = crud.available_model.get_multi_where_array(
         db=db, skip=0, limit=1000
     )
-    route_by_name = {
-        (model.name or "").strip().lower(): (model.route_api or "").strip().lower()
+    route_by_id = {
+        model.id: (model.route_api or "").strip().lower()
         for model in available_models
-        if (model.name or "").strip() and (model.route_api or "").strip()
+        if (model.route_api or "").strip()
+    }
+    name_by_id = {model.id: (model.name or "").strip() for model in available_models}
+    route_by_name = {
+        normalize(model.name): (model.route_api or "").strip().lower()
+        for model in available_models
+        if normalize(model.name) and (model.route_api or "").strip()
     }
 
     permission_map = {}
-    for permission in permissions:
-        model_name = (permission.model_name or "unknown").strip().lower()
-        route_api = route_by_name.get(model_name, model_name)
+    for row in entries:
+        model_id = getattr(row, "id_available_model", None)
+        model_name = None
+
+        if model_id and model_id in name_by_id:
+            model_name = name_by_id[model_id]
+        elif getattr(row, "available_model", None):
+            model_name = getattr(row.available_model, "name", None)
+        elif hasattr(row, "model_name"):
+            model_name = getattr(row, "model_name", None)
+
+        normalized_name = normalize(model_name)
+        route_api = route_by_id.get(model_id) or route_by_name.get(normalized_name, normalized_name)
         route_api = route_api.lstrip("/")
         entry = permission_map.setdefault(
             route_api,
             {"get": False, "post": False, "put": False, "delete": False}
         )
-        entry["get"] = entry["get"] or bool(permission.method_get)
-        entry["post"] = entry["post"] or bool(permission.method_post)
-        entry["put"] = entry["put"] or bool(permission.method_put)
-        entry["delete"] = entry["delete"] or bool(permission.method_delete)
+        entry["get"] = entry["get"] or bool(row.method_get)
+        entry["post"] = entry["post"] or bool(row.method_post)
+        entry["put"] = entry["put"] or bool(row.method_put)
+        entry["delete"] = entry["delete"] or bool(row.method_delete)
     return permission_map
+
 
 def _resolve_model_from_path(db: Session, path: str) -> str:
     api_prefix = settings.API_V1_STR.rstrip("/")
@@ -92,6 +114,7 @@ def _resolve_model_from_path(db: Session, path: str) -> str:
     parts = [part for part in trimmed.split("/") if part]
     return parts[0].lower() if parts else ""
 
+
 def _is_method_allowed(permission_map: dict, model_name: str, method: str) -> bool:
     method_key = {
         "GET": "get",
@@ -105,9 +128,10 @@ def _is_method_allowed(permission_map: dict, model_name: str, method: str) -> bo
     model_permissions = permission_map.get(model_key)
     return bool(model_permissions and model_permissions.get(method_key))
 
+
 def get_current_user(
-    db: Session = Depends(get_db),
-    token: str = Depends(reusable_oauth2)
+        db: Session = Depends(get_db),
+        token: str = Depends(reusable_oauth2)
 ) -> models.User:
     try:
         payload = jwt.decode(
@@ -122,13 +146,13 @@ def get_current_user(
 
     where = [
         {
-            "key":"id",
-            "value":token_data.id,
-            "operator":"==",
+            "key": "id",
+            "value": token_data.id,
+            "operator": "==",
         }
     ]
 
-    relation = ['user_mention.mention']
+    relation = ['user_mention.mention', 'user_role.role']
 
     user = crud.user.get_first_where_array(db, where=where, relations=relation)
     if not user:
@@ -166,9 +190,9 @@ def get_token_info(token: str = Depends(reusable_oauth2)):
 
 
 def get_current_active_user(
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    request: Request = None,
+        current_user: models.User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+        request: Request = None,
 ) -> models.User:
     if not crud.user.is_active(current_user):
         raise HTTPException(status_code=400, detail="Inactive user")
@@ -186,14 +210,13 @@ def get_current_active_user(
 
 
 def get_current_active_superuser(
-    current_user: models.User = Depends(get_current_user),
+        current_user: models.User = Depends(get_current_user),
 ) -> models.User:
     if not crud.user.is_superuser(current_user):
         raise HTTPException(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
-
 
 # begin #
 # ---write your code here--- #

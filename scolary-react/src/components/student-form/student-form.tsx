@@ -681,6 +681,13 @@ export const StudentForm = ({
                       ? formState.studentId || formState.cardNumber
                       : formState.cardNumber
                   }
+                  studentFullName={
+                    formState.fullName ||
+                    [formState.firstName, formState.lastName]
+                      .filter(Boolean)
+                      .join(" ")
+                      .trim()
+                  }
                   filters={filters}
                   defaultMentionId={formState.mentionId}
                   disabledEditing={

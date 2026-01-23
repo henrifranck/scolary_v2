@@ -20,6 +20,7 @@ import { useLookupOptions } from "@/hooks/use-lookup-options";
 import { fetchJourneys as fetchJourneysByMention } from "@/services/inscription-service";
 import {
   createGroup,
+  createGroupsBulk,
   fetchGroups,
   deleteGroup
 } from "@/services/group-service";
@@ -29,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { fetchReinscriptionsWithMeta } from "@/services/reinscription-service";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { printStudentsListByGroup } from "@/services/print-service";
+import { PdfViewerModal } from "@/components/pdf-viewer-modal";
 
 type GroupFilters = {
   id_year: string;
@@ -243,9 +245,7 @@ export const GroupsPage = () => {
   const handleFiltersChange = (next: any) => {
     setFilters((prev) => ({
       ...prev,
-      id_mention: next.id_mention,
-      id_journey: next.id_journey,
-      semester: next.semester
+      ...next
     }));
   };
 
@@ -351,8 +351,10 @@ export const GroupsPage = () => {
       };
     });
     try {
-      for (const payload of payloads) {
-        await createGroupMutation.mutateAsync(payload);
+      if (payloads.length > 1) {
+        await createGroupsBulk(payloads);
+      } else if (payloads.length === 1) {
+        await createGroupMutation.mutateAsync(payloads[0]);
       }
       setIsCreateOpen(false);
       setGroupCountInput(2);
@@ -363,6 +365,12 @@ export const GroupsPage = () => {
   };
 
   const [isPrinting, setIsPrinting] = useState(false);
+  const [pdfViewer, setPdfViewer] = useState<{
+    open: boolean;
+    url?: string;
+    urls?: string[];
+    title?: string;
+  }>({ open: false });
 
   const fetchAllGroupIds = async () => {
     const ids: number[] = [];
@@ -414,9 +422,19 @@ export const GroupsPage = () => {
         semester: filters.semester,
         journeyId: filters.id_journey
       });
-      if (pdf?.url) {
-        window.open(pdf.url, "_blank");
+      const url = pdf?.url || pdf?.path;
+      if (!url) {
+        throw new Error("Impossible de générer le PDF.");
       }
+      const journey = journeyOptions.find((j) => j.id === filters.id_journey);
+      const abbreviation = journey?.abbreviation || journey?.label || "parcours";
+      const filename = `groupe_${filters.semester}_${abbreviation}_${filters.id_year}.pdf`;
+      setPdfViewer({
+        open: true,
+        url,
+        urls: [url],
+        title: filename
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -514,6 +532,14 @@ export const GroupsPage = () => {
           <p className="text-2xl font-semibold">{totalStudentsFromGroups}</p>
         </div>
       </div>
+
+      <PdfViewerModal
+        open={pdfViewer.open}
+        url={pdfViewer.url}
+        urls={pdfViewer.urls}
+        title={pdfViewer.title}
+        onOpenChange={(open) => setPdfViewer((prev) => ({ ...prev, open }))}
+      />
 
       <div className="rounded-lg border bg-background shadow-sm">
         <div className="flex items-center justify-between border-b px-4 py-3">

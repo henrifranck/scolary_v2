@@ -54,6 +54,14 @@ export const createGroup = (payload: CreateGroupPayload): Promise<Group> =>
     json: payload
   });
 
+export const createGroupsBulk = (
+  payload: CreateGroupPayload[]
+): Promise<Group[]> =>
+  apiRequest<Group[]>("/groups/bulk", {
+    method: "POST",
+    json: payload
+  });
+
 export const updateGroup = (
   id: number,
   payload: Partial<CreateGroupPayload>

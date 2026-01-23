@@ -12,11 +12,6 @@ class Permission(Base):
     __tablename__ = 'permission'
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False, unique=True, index=True)
     name = Column(String(255), nullable=False)
-    model_name = Column(String(255), nullable=False)
-    method_post = Column(Boolean(), default=False)
-    method_get = Column(Boolean(), default=False)
-    method_put = Column(Boolean(), default=False)
-    method_delete = Column(Boolean(), default=False)
 
     # default column
     created_at = Column(DateTime, nullable=False, default=func.now())
@@ -25,6 +20,7 @@ class Permission(Base):
 
     # Relations
 
+    model_has_permission = relationship('ModelHasPermission', back_populates="permission")
 
 # begin #
 # ---write your code here--- #

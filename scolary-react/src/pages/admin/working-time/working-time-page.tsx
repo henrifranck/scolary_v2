@@ -1439,42 +1439,6 @@ export const WorkingTimePage = () => {
       </div>
 
       <div className="grid gap-4 rounded-lg border bg-background p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {feedback ? (
-            <div
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs",
-                feedback.type === "success"
-                  ? "border-green-500 text-green-600"
-                  : "border-destructive text-destructive"
-              )}
-            >
-              {feedback.text}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Ajustez les filtres académiques pour affiner le calendrier.
-            </p>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-2"
-            onClick={() => setFiltersCollapsed((prev) => !prev)}
-          >
-            <Filter className="h-4 w-4" />
-            {filtersCollapsed ? (
-              <>
-                <Eye className="h-4 w-4" /> Afficher les filtres
-              </>
-            ) : (
-              <>
-                <EyeOff className="h-4 w-4" /> Masquer les filtres
-              </>
-            )}
-          </Button>
-        </div>
-
         <AcademicFilters
           value={filters}
           onChange={handleFiltersChange}
@@ -1483,7 +1447,7 @@ export const WorkingTimePage = () => {
           semesters={semesters}
           journeysLoading={journeyQuery.isFetching}
           showLevel={false}
-          showResetButton={false}
+          showResetButton={true}
           showActiveFilters={true}
           filterClassname="grid gap-4 lg:grid-cols-2"
           collapsed={filtersCollapsed}

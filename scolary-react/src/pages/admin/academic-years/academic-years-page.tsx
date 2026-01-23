@@ -323,14 +323,14 @@ export const AcademicYearsPage = () => {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Academic years
+            Années universitaires
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage academic years available across the platform.
+            Gérez les années académiques disponibles sur la plateforme.
           </p>
         </div>
         <Button size="sm" onClick={openCreateForm}>
-          Add academic year
+          Ajouter une année académique
         </Button>
       </div>
 
@@ -348,7 +348,7 @@ export const AcademicYearsPage = () => {
             className="text-xs font-medium underline"
             onClick={() => setFeedback(null)}
           >
-            Dismiss
+            Fermer
           </button>
         </div>
       ) : null}

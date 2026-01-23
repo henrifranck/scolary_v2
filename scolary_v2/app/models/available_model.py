@@ -16,3 +16,6 @@ class AvailableModel(Base):
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime)
+
+    # Relations
+    model_has_permission = relationship('ModelHasPermission', back_populates="available_model")

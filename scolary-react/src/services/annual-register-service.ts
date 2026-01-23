@@ -58,6 +58,7 @@ export type RegisterSemesterPayload = {
   semester: string;
   repeat_status: string;
   id_journey: number;
+  template_vars?: Record<string, string>;
 };
 
 export type PaymentPayload = {

@@ -576,7 +576,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             refresh: bool = True,
     ) -> ModelType:
         # Convert to dict and ensure datetime objects are properly handled
-        obj_in_data = obj_in.model_dump()
+        obj_in_data = obj_in.model_dump(exclude={"template_vars"})
 
         # Create the database object
         db_obj = (
